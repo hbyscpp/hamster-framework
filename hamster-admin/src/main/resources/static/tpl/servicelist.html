@@ -1,0 +1,148 @@
+<div ng-controller="ServiceSearchController">
+<div class="row">
+<div class="col-lg-12">
+<div class="panel panel-default">
+<div class="panel-heading">
+服务实例搜索
+</div>
+<div class="panel-body">
+<div class="row">
+<form role="form" name="searchForm" novalidate>
+<div class="col-lg-4">
+<div class="form-group">
+     <label>服务名</label>
+     <input  class="form-control"  ng-model="searchParam.serviceName"  />
+ </div>
+ <div class="form-group">
+     <label>地址</label>
+     <input class="form-control" ng-model="searchParam.serviceAddr" />
+ </div>
+</div>
+<div class="col-lg-4">
+<div class="form-group">
+     <label>应用名</label>
+     <input class="form-control"  ng-model="searchParam.appName" />
+   
+ </div>
+ <div class="form-group">
+     <label>端口(数字类型,小于等于0代表搜索所有端口)</label>
+     <input class="form-control" type="number" ng-model="searchParam.servicePort" />
+ </div>
+</div>
+<div class="col-lg-4">
+<div class="form-group">
+     <label>版本</label>
+     <input class="form-control" ng-model="searchParam.serviceVersion" />
+ </div>
+ <div class="form-group">
+     <label>协议名</label>
+     <input class="form-control" ng-model="searchParam.serviceProtocol" />
+ </div>
+</div>
+<div class="row">
+<div class="col-lg-5"></div>
+<div class="col-lg-7">
+ <button type="submit" ng-disabled="searchForm.$invalid" ng-click="searchService()" class="btn btn-default">搜索服务</button>
+ </div>
+
+</div>
+</form>
+</div>
+
+</div>
+</div>
+</div>    
+</div> 
+<div class="row">
+<div class="col-lg-12">
+<div class="table-responsive">
+      <table class="table table-bordered table-hover table-condensed hasterm-table">
+	  <thead>
+    <tr>
+      <th style="width:19%">服务名</th>
+      <th style="width:8%">应用名</th>
+      <th style="width:19%">服务参数</th>
+      <th style="width:19%">返回类型</th>
+	  <th style="width:4%">版本</th>
+	  <th style="width:9%">地址</th>
+	  <th style="width:4%">端口</th>
+	  <th style="width:5%">协议名</th>
+	  <th style="width:7%">注册时间</th>
+	  <th style="width:6">配置</th>
+    </tr>
+	</thead>
+	<tbody>
+    <tr ng-repeat="service in servicelist">
+      <td>
+        <!-- editable username (text with validation) -->
+        <span>
+          {{ service.serviceName}}
+        </span>
+      </td>
+      <td>
+        <!-- editable status (select-local) -->
+        <span>
+          {{ service.app }}
+        </span>
+      </td>
+      <td>
+        <!-- editable group (select-remote) -->
+        <span ng-repeat="paramType in service.paramTypes track by $index">
+          {{ paramType }}
+        <br/>
+		</span>
+      </td>
+      <td>
+        <!-- editable status (select-local) -->
+        <span>
+          {{ service.returnType }}
+        </span>
+      </td>
+	  <td>
+        <!-- editable status (select-local) -->
+        <span>
+          {{ service.version }}
+        </span>
+      </td>
+	  <td>
+        <!-- editable status (select-local) -->
+        <span>
+          {{ service.host }}
+        </span>
+      </td>
+	  <td>
+        <!-- editable status (select-local) -->
+        <span>
+          {{ service.port }}
+        </span>
+      </td>
+	  <td>
+        <!-- editable status (select-local) -->
+        <span>
+          {{ service.protocol }}
+        </span>
+      </td>
+	  <td>
+        <!-- editable status (select-local) -->
+        <span>
+          {{ service.registTime }}
+        </span>
+      </td>
+	  <td>
+        <!-- editable status (select-local) -->
+        <span>
+           <button type="button" class="btn btn-default" ng-click="showConfig(service)">
+		   配置
+		   </button>
+        </span>
+      </td>
+    </tr>
+	</tbody>
+  </table>
+  </div>
+    <pagination boundary-links="true" ng-change="pageChanged()" total-items="totalItems" items-per-page="itemsPerPage" ng-model="currentPage" class="pagination-sm" previous-text="&lsaquo;" next-text="&rsaquo;" first-text="&laquo;" last-text="&raquo;"></pagination>
+
+</div>	  
+</div>    
+</div>      
+     
