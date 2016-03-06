@@ -4,12 +4,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.seaky.hamster.core.rpc.common.Constants;
-import com.seaky.hamster.core.rpc.protocol.RequestAttributeWriter;
+import com.seaky.hamster.core.rpc.protocol.RequestConvertor;
 import com.seaky.hamster.core.rpc.protocol.RequestInfo;
 import com.seaky.hamster.core.rpc.serialization.Serializer;
 import com.seaky.hamster.core.rpc.serialization.SerializerFactory;
 
-public class HamsterRequestAttrWriter implements RequestAttributeWriter<HamsterRequest> {
+public class HamsterRequestAttrWriter implements RequestConvertor<HamsterRequest> {
 
   public void writeAttachment(HamsterRequest req, String key, String value) {
     if (value == null)
@@ -18,7 +18,8 @@ public class HamsterRequestAttrWriter implements RequestAttributeWriter<HamsterR
   }
 
   @Override
-  public void write(HamsterRequest req, RequestInfo info) {
+  public HamsterRequest convert(RequestInfo info) {
+	HamsterRequest req=new HamsterRequest();
     req.setApp(info.getApp());
     req.setReferVersion(info.getReferVersion());
     req.setServiceVersion(info.getVersion());
@@ -34,6 +35,8 @@ public class HamsterRequestAttrWriter implements RequestAttributeWriter<HamsterR
         writeAttachment(req, entry.getKey(), entry.getValue());
       }
     }
+    
+    return req;
   }
 
 }

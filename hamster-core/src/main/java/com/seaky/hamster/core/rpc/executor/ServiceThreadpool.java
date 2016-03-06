@@ -8,6 +8,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.seaky.hamster.core.rpc.utils.Utils;
+
 
 public class ServiceThreadpool implements Executor{
 
@@ -44,10 +46,7 @@ public class ServiceThreadpool implements Executor{
 
 		if (!isStart)
 			return;
-		if (threadpool != null) {
-			//TODO shutdown 
-			threadpool.shutdown();
-		}
+		Utils.shutdownExecutorService(threadpool, 30);
 		isStart = false;
 
 	}

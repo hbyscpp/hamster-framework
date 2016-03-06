@@ -177,7 +177,7 @@ public final class ClientHelper {
       String serviceName = cls.getName() + "_" + method.getName();
       sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_NAME, serviceName, true));
 
-      JavaReferenceService service = client.refer(sc);
+      JavaReferenceService service = client.reference(sc);
       methodServices.put(method.getName(), service);
     }
     return methodServices;

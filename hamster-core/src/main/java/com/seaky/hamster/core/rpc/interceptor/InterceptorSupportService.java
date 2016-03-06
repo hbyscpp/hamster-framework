@@ -13,7 +13,7 @@ import com.seaky.hamster.core.rpc.protocol.ResponseInfo;
 import com.seaky.hamster.core.service.ServiceContext;
 
 // 支持拦截器的service
-public class InterceptorSupportService<Req, Rsp> {
+public abstract class InterceptorSupportService<Req, Rsp> {
 
   protected ProtocolExtensionFactory<Req, Rsp> protocolExtensionFactory;
 
@@ -23,7 +23,7 @@ public class InterceptorSupportService<Req, Rsp> {
     this.protocolExtensionFactory = protocolExtensionFactory;
   }
 
-  public boolean preProcess(ServiceContext context, List<ServiceInterceptor> interceptors) {
+  public  boolean preProcess(Object context, List<ServiceInterceptor> interceptors) {
     if (interceptors != null && interceptors.size() > 0) {
       int size = interceptors.size();
       for (int i = 0; i < size; ++i) {

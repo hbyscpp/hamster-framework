@@ -2,6 +2,11 @@ package com.seaky.hamster.core.rpc.server;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Constructor;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -9,11 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import com.seaky.hamster.core.rpc.executor.NamedThreadFactory;
 import com.seaky.hamster.core.rpc.executor.ServiceThreadpoolManager;
+import com.seaky.hamster.core.rpc.utils.Utils;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.internal.chmv8.ForkJoinPool;
-import io.netty.util.internal.chmv8.ForkJoinPool.ForkJoinWorkerThreadFactory;
 
 //全局资源的管理
 public class ServerResourceManager {
@@ -22,14 +26,14 @@ public class ServerResourceManager {
 
 	private static EventLoopGroup workerGroup = null;
 
-	private static ForkJoinPool forkjoinpool;
+	private static ExecutorService dispatcherPool;
 
 	private static boolean isStart = false;
 
 	private static ServiceThreadpoolManager serviceThreadpoolManager;
 
-	static ForkJoinPool getDispatcherPool() {
-		return forkjoinpool;
+	static ExecutorService getDispatcherPool() {
+		return dispatcherPool;
 	}
 
 	static EventLoopGroup getBossGroup() {
@@ -46,21 +50,12 @@ public class ServerResourceManager {
 	public static synchronized void start() {
 		if (isStart)
 			return;
-		try {
-			Constructor<ForkJoinPool> poolConstructor = ForkJoinPool.class
-					.getDeclaredConstructor(int.class,
-							ForkJoinWorkerThreadFactory.class,
-							UncaughtExceptionHandler.class, int.class,
-							String.class);
-			poolConstructor.setAccessible(true);
-			forkjoinpool=poolConstructor.newInstance(
-					ServerGlobalConfig.getDispatcherThreadNum(),
-					ForkJoinPool.defaultForkJoinWorkerThreadFactory, null,
-					1, "hamster-server-dispatcher-pool-worker");
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		} 
-		logger.info("dispatcher pool start, pool size is {}",
+		dispatcherPool = Executors
+				.newFixedThreadPool(
+						ServerGlobalConfig.getDispatcherThreadNum(),
+						new NamedThreadFactory(
+								"hamster-server-dispatcher-pool-worker"));
+		logger.info("server dispatcher pool start, pool size is {}",
 				ServerGlobalConfig.getDispatcherThreadNum());
 		bossGroup = new NioEventLoopGroup(
 				ServerGlobalConfig.getAcceptorThreadNum(),
@@ -98,14 +93,13 @@ public class ServerResourceManager {
 			}
 			workerGroup = null;
 			try {
-				if (forkjoinpool != null) {
-					forkjoinpool.shutdown();
-					forkjoinpool.awaitTermination(30, TimeUnit.SECONDS);
+				if (dispatcherPool != null) {
+					Utils.shutdownExecutorService(dispatcherPool, 30);
 				}
 			} catch (Exception e) {
-				logger.error("shutdown server dispatcher pool error", e);
+				logger.error("shutdown server dispatcher pool error.", e);
 			}
-			forkjoinpool = null;
+			dispatcherPool = null;
 
 			if (serviceThreadpoolManager != null) {
 				serviceThreadpoolManager.stop();

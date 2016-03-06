@@ -46,21 +46,21 @@ public class NettyServerTransport<Req, Rsp> implements
 				if (future.isSuccess()) {
 					logger.debug(
 							"send response success. server addr:{}:{},app: {},service name: {},version: {},client addr: {}:{},referApp:{},refer version:{}",
-							context.getServerHost(), context.getServerPort(),
-							context.getServiceName(), context.getApp(),
-							context.getServiceVersion(),
-							context.getClientHost(), context.getClientPort(),
-							context.getReferApp(), context.getReferVersion());
+							context.getAttribute(ServiceContext.SERVER_HOST), context.getAttribute(ServiceContext.SERVER_PORT),
+							context.getAttribute(ServiceContext.APP), context.getAttribute(ServiceContext.SERVICENAME),
+							context.getAttribute(ServiceContext.VERSION),
+							context.getAttribute(ServiceContext.CLINET_HOST), context.getAttribute(ServiceContext.CLINET_PORT),
+							context.getAttribute(ServiceContext.REFERENCE_APP), context.getAttribute(ServiceContext.REFERENCE_VERSION));
 					return;
 				}
 				if (future.cause() != null) {
 					logger.error(
 							"send response failure. server addr:{}:{},app: {},service name: {},version: {},client addr: {}:{},referApp:{},refer version:{}",
-							context.getServerHost(), context.getServerPort(),
-							context.getServiceName(), context.getApp(),
-							context.getServiceVersion(),
-							context.getClientHost(), context.getClientPort(),
-							context.getReferApp(), context.getReferVersion(),future.cause());
+							context.getAttribute(ServiceContext.SERVER_HOST), context.getAttribute(ServiceContext.SERVER_PORT),
+							context.getAttribute(ServiceContext.APP), context.getAttribute(ServiceContext.SERVICENAME),
+							context.getAttribute(ServiceContext.VERSION),
+							context.getAttribute(ServiceContext.CLINET_HOST), context.getAttribute(ServiceContext.CLINET_PORT),
+							context.getAttribute(ServiceContext.REFERENCE_APP), context.getAttribute(ServiceContext.REFERENCE_VERSION),future.cause());
 
 				}
 				
@@ -69,11 +69,11 @@ public class NettyServerTransport<Req, Rsp> implements
 
 					logger.error(
 							"send response cancel. server addr:{}:{},app: {},service name: {},version: {},client addr: {}:{},referApp:{},refer version:{}",
-							context.getServerHost(), context.getServerPort(),
-							context.getServiceName(), context.getApp(),
-							context.getServiceVersion(),
-							context.getClientHost(), context.getClientPort(),
-							context.getReferApp(), context.getReferVersion(),future.cause());
+							context.getAttribute(ServiceContext.SERVER_HOST), context.getAttribute(ServiceContext.SERVER_PORT),
+							context.getAttribute(ServiceContext.APP), context.getAttribute(ServiceContext.SERVICENAME),
+							context.getAttribute(ServiceContext.VERSION),
+							context.getAttribute(ServiceContext.CLINET_HOST), context.getAttribute(ServiceContext.CLINET_PORT),
+							context.getAttribute(ServiceContext.REFERENCE_APP), context.getAttribute(ServiceContext.REFERENCE_VERSION),future.cause());
 
 				
 				}

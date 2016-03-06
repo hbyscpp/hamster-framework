@@ -4,15 +4,18 @@ import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.seaky.hamster.core.rpc.annotation.ServiceInterceptorAnnotation;
 import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptorManager;
-import com.seaky.hamster.core.service.ServiceContext;
 
 public class Utils {
 
@@ -22,6 +25,7 @@ public class Utils {
 
   private static String CUR_PID = null;
 
+  private static Logger logger=LoggerFactory.getLogger(Utils.class);
   static {
     String name = ManagementFactory.getRuntimeMXBean().getName();
     CUR_PID = name.split("@")[0];
@@ -46,22 +50,6 @@ public class Utils {
     }
   }
 
-  public static String serviceInfo(ServiceContext sc) {
-    if (sc == null)
-      return null;
-
-    StringBuilder sb = new StringBuilder();
-
-    sb.append("service name:").append(sc.getServiceName());
-    sb.append(",version:").append(sc.getServiceVersion());
-    sb.append(",app:").append(sc.getApp());
-    sb.append(",group:").append(sc.getGroup());
-    sb.append(",refer version:").append(sc.getReferVersion());
-    sb.append(",refer app:").append(sc.getReferApp());
-    sb.append(",refer group:").append(sc.getRefergroup());
-    return sb.toString();
-
-  }
 
   private static boolean isAndroid0() {
     boolean android;
@@ -295,6 +283,24 @@ public class Utils {
       }
     }
     return sis;
+  }
+  
+  public static void shutdownExecutorService(ExecutorService pool,int waitTime)
+  {
+	  if(pool==null)
+		  return;
+	  
+	  pool.shutdown(); 
+	   try {
+	     if (!pool.awaitTermination(waitTime, TimeUnit.SECONDS)) {
+	       pool.shutdownNow(); 
+	       pool.awaitTermination(waitTime, TimeUnit.SECONDS);
+	     }
+	   } catch (InterruptedException ie) {
+	     pool.shutdownNow();
+	     Thread.currentThread().interrupt();
+	   }
+	  
   }
 
 }

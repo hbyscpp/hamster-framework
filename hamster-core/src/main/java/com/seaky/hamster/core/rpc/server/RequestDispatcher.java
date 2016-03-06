@@ -1,7 +1,5 @@
 package com.seaky.hamster.core.rpc.server;
 
-import io.netty.util.internal.chmv8.ForkJoinTask;
-
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -21,10 +19,13 @@ import com.seaky.hamster.core.rpc.exception.ServiceNotFoundException;
 import com.seaky.hamster.core.rpc.exception.ServiceSigMismatchException;
 import com.seaky.hamster.core.rpc.exception.UnknowException;
 import com.seaky.hamster.core.rpc.executor.ServiceThreadpool;
+import com.seaky.hamster.core.rpc.interceptor.ServerServiceCallContext;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.RequestInfo;
-import com.seaky.hamster.core.rpc.protocol.ResponseAttributeWriter;
+import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
 import com.seaky.hamster.core.rpc.protocol.ResponseInfo;
+import com.seaky.hamster.core.rpc.protocol.ServiceRemoteRequest;
+import com.seaky.hamster.core.rpc.protocol.ServiceRemoteResponse;
 import com.seaky.hamster.core.rpc.registeration.ServiceReferenceDescriptor;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaService;
@@ -52,16 +53,15 @@ public class RequestDispatcher<Req, Rsp> {
 			}
 		} catch (RejectedExecutionException e) {
 			for (Req req : requests) {
-				ServiceContext sc = initContext(req, transport);
-				setException(sc, new ServerResourceIsFullException(
-						"dispatcher threadpool"));
-				writeResponse(req, sc, transport);
+					ServerServiceCallContext sc = initContext(req, transport);
+					setException(sc, new ServerResourceIsFullException(
+							"dispatcher threadpool"));
+					writeResponse(sc, transport);
 			}
 		}
 	}
 
-	@SuppressWarnings("serial")
-	public static class MessagesTask<Req, Rsp> extends ForkJoinTask<Void> {
+	public static class MessagesTask<Req, Rsp> implements Runnable {
 
 		private List<Req> requests;
 
@@ -78,33 +78,23 @@ public class RequestDispatcher<Req, Rsp> {
 		}
 
 		@Override
-		public Void getRawResult() {
-			return null;
-		}
-
-		@Override
-		protected void setRawResult(Void value) {
-
-		}
-
-		@Override
-		protected boolean exec() {
+		public void run() {
 			if (requests == null || requests.size() == 0)
-				return true;
+				return;
 			for (Req req : requests) {
 				MessageTask<Req, Rsp> subTask = new MessageTask<Req, Rsp>(req,
 						dispatcher, transport);
 				try {
-					subTask.fork();
+					ServerResourceManager.getDispatcherPool().execute(subTask);
 				} catch (RejectedExecutionException e) {
-					ServiceContext sc = dispatcher.initContext(req, transport);
+					ServerServiceCallContext sc = dispatcher.initContext(req,
+							transport);
 					dispatcher.setException(sc,
 							new ServerResourceIsFullException(
 									"dispatcher threadpool"));
-					dispatcher.writeResponse(req, sc, transport);
+					dispatcher.writeResponse(sc, transport);
 				}
 			}
-			return true;
 
 		}
 
@@ -118,21 +108,19 @@ public class RequestDispatcher<Req, Rsp> {
 
 		private ServerTransport<Req, Rsp> transport;
 
-		private ServiceContext context;
+		private ServerServiceCallContext context;
 
-		private Req request;
 
 		private List<ServiceInterceptor> interceptors;
 
 		public ServiceRunner(RequestDispatcher<Req, Rsp> dispatcher,
 				JavaService service, ServerTransport<Req, Rsp> transport,
-				ServiceContext context, Req request,
+				ServerServiceCallContext context,
 				List<ServiceInterceptor> interceptors) {
 			this.dispatcher = dispatcher;
 			this.service = service;
 			this.transport = transport;
 			this.context = context;
-			this.request = request;
 			this.interceptors = interceptors;
 		}
 
@@ -142,7 +130,7 @@ public class RequestDispatcher<Req, Rsp> {
 				dispatcher.server.getInterceptorSupportService().process(
 						context, service, interceptors);
 			} finally {
-				dispatcher.writeResponse(request, context, transport);
+				dispatcher.writeResponse(context, transport);
 			}
 		}
 
@@ -150,7 +138,7 @@ public class RequestDispatcher<Req, Rsp> {
 
 	// 处理单个消息
 	@SuppressWarnings("serial")
-	public static class MessageTask<Req, Rsp> extends ForkJoinTask<Void> {
+	public static class MessageTask<Req, Rsp> implements Runnable {
 
 		private Req request;
 
@@ -165,32 +153,17 @@ public class RequestDispatcher<Req, Rsp> {
 			this.transport = transport;
 		}
 
-		@Override
-		public Void getRawResult() {
-			return null;
-		}
-
-		@Override
-		protected void setRawResult(Void value) {
-		}
-
-		@Override
-		protected boolean exec() {
-			run();
-			return true;
-		}
-
 		public void run() {
-			ServiceContext context = dispatcher.initContext(request, transport);
-			if (context.getResponseInfo().isException()) {
-				// 初始化过程中有错误发生
-				dispatcher.writeResponse(request, context, transport);
+			ServerServiceCallContext context = dispatcher.initContext(request,
+					transport);
+			if (context.getResponse().isException()) {
+				dispatcher.writeResponse(context, transport);
 				return;
 			}
-			String serviceName = context.getRequestInfo().getServiceName();
-			String app = context.getRequestInfo().getApp();
-			String serviceVersion = context.getRequestInfo().getVersion();
-			String group = context.getRequestInfo().getGroup();
+			String serviceName = context.getServiceName();
+			String app = context.getApp();
+			String serviceVersion = context.getVersion();
+			String group = context.getGroup();
 			JavaService service = dispatcher.server.findService(serviceName,
 					app, serviceVersion, group);
 			List<ServiceInterceptor> interceptors = dispatcher.server
@@ -199,47 +172,50 @@ public class RequestDispatcher<Req, Rsp> {
 			if (service == null) {
 				dispatcher.setException(context, new ServiceNotFoundException(
 						context.getServiceName()));
-				dispatcher.writeResponse(request, context, transport);
+				dispatcher.writeResponse(context, transport);
 				return;
 			}
 
 			EndpointConfig sc = context.getServiceConfig();
 
-			if (!Utils.isMatch(service.paramTypes(), context.getRequestInfo()
+			if (!Utils.isMatch(service.paramTypes(), context.getRequest()
 					.getParams())) {
 				dispatcher.setException(
 						context,
 						new ServiceSigMismatchException(context
 								.getServiceName()));
-				dispatcher.writeResponse(request, context, transport);
+				dispatcher.writeResponse(context, transport);
 				return;
 			}
 			// 1判断是否当前线程执行 还是线程池执行
 			// 开始执行,当前线程还是线程池
-			boolean useDispatcherThread = sc
-					.getValueAsBoolean(ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE,false);
+			boolean useDispatcherThread = sc.getValueAsBoolean(
+					ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE, false);
 			ServiceRunner<Req, Rsp> sr = new ServiceRunner<Req, Rsp>(
-					dispatcher, service, transport, context, request,interceptors);
+					dispatcher, service, transport, context,
+					interceptors);
 			if (!useDispatcherThread) {
-				
-				String name= sc
-					.get(ConfigConstans.PROVIDER_THREADPOOL_NAME);
+
+				String name = sc.get(ConfigConstans.PROVIDER_THREADPOOL_NAME);
 				// 线程池执行
 				ServiceThreadpool pool = null;
-				if (name == null || ConfigConstans.PROVIDER_THREADPOOL_NAME_DEFAULT.equals(name)) {
+				if (name == null
+						|| ConfigConstans.PROVIDER_THREADPOOL_NAME_DEFAULT
+								.equals(name)) {
 					pool = ServerResourceManager.getServiceThreadpoolManager()
 							.createDefault();
 				} else {
-					int maxQueue= sc
-							.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE,ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT);
-					
-					int maxThread= sc
-							.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE,ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE_DEFAULT);
-					
+					int maxQueue = sc
+							.getValueAsInt(
+									ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE,
+									ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT);
+
+					int maxThread = sc.getValueAsInt(
+							ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE,
+							ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE_DEFAULT);
+
 					pool = ServerResourceManager.getServiceThreadpoolManager()
-							.create(name,
-									maxThread,
-									maxQueue);
+							.create(name, maxThread, maxQueue);
 				}
 				try {
 					pool.execute(sr);
@@ -250,7 +226,7 @@ public class RequestDispatcher<Req, Rsp> {
 							new ServerResourceIsFullException(
 									"service threadpool name is "
 											+ pool.getName()));
-					dispatcher.writeResponse(request, context, transport);
+					dispatcher.writeResponse(context, transport);
 				}
 			} else {
 				// 当前线程执行
@@ -260,119 +236,76 @@ public class RequestDispatcher<Req, Rsp> {
 		}
 	}
 
-	private void setException(ServiceContext sc, Throwable e) {
-		if (!sc.getResponseInfo().isDone())
-			return;
-		sc.getResponseInfo().setResult(e);
+	private void setException(ServerServiceCallContext sc, Throwable e) {
+		sc.getResponse().setResult(e);
 	}
 
 	// 初始化context
 	private ServiceContext initContext(Req request,
 			ServerTransport<Req, Rsp> transport) {
-		RequestInfo info = null;
-		EndpointConfig config = null;
-		EndpointConfig referConfig = null;
+
+		ServerServiceCallContext context = new ServerServiceCallContext();
 		try {
-			info = server.getProtocolExtensionFactory()
+			ServiceRemoteRequest serviceRequest = null;
+			serviceRequest = server.getProtocolExtensionFactory()
 					.getRequestInfoExtractor().extract(request);
 
 			// 验证所需的参数
-			String errorParam = validateRequestInfo(info);
-			if (errorParam != null) {
-				// 错误的参数
-				ServiceContext sc = new ServiceContext(info, null, null,
-						transport.getLocalAddress(),
-						transport.getRemoteAddress());
-				setException(sc, new LossReqParamException(errorParam));
-				return sc;
-			}
+			validateRequestInfo(serviceRequest);
 			// 用自身的配置
-			config = server.getServiceConfig(info.getApp(),
-					info.getServiceName(), info.getVersion(), info.getGroup());
+			EndpointConfig config = server.getServiceConfig(
+					serviceRequest.getApp(), serviceRequest.getServiceName(),
+					serviceRequest.getVersion(), serviceRequest.getGroup());
 			if (config == null) {
-				ServiceContext sc = new ServiceContext(info, null, null,
-						transport.getLocalAddress(),
-						transport.getRemoteAddress());
-				setException(
-						sc,
-						new ServiceConfigNotFoundException(info.getApp(), info
-								.getServiceName(), info.getVersion(), info
-								.getGroup()));
-				return sc;
+				throw new ServiceConfigNotFoundException(
+						serviceRequest.getApp(),
+						serviceRequest.getServiceName(),
+						serviceRequest.getVersion(), serviceRequest.getGroup());
 			}
-
-			ServiceReferenceDescriptor rd = server.getRegisterationService().findRefer(
-					info.getReferApp(), info.getServiceName(),
-					info.getReferVersion(), info.getReferGroup(),
-					server.getProtocolExtensionFactory().protocolName(),
-					transport.getRemoteAddress().getAddress().getHostAddress(),
-					transport.getRemoteAddress().getPort(),
-					server.getServerConfig().getHost(), server.getServerConfig().getPort());
-			if (rd != null)
-				referConfig = rd.getConfig();
-			if (referConfig == null) {
-				ServiceContext sc = new ServiceContext(info, config, null,
-						transport.getLocalAddress(),
-						transport.getRemoteAddress());
-				setException(sc,
-						new ReferConfigNotFoundException(info.getReferApp(),
-								info.getServiceName(), info.getVersion()));
-				return sc;
-			}
-
-			ServiceContext context = new ServiceContext(info, config,
-					referConfig, transport.getLocalAddress(),
-					transport.getRemoteAddress());
-			return context;
-
 		} catch (Exception e) {
-			logger.error("init context error.", e);
-			ServiceContext context = new ServiceContext(info, config,
-					referConfig, transport.getLocalAddress(),
-					transport.getRemoteAddress());
-			setException(context, new UnknowException(e.getMessage()));
-			return context;
+			context.getResponse().setResult(e);
 		}
+
+		return context;
+
 	}
 
-	private String validateRequestInfo(RequestInfo info) {
-		if (info == null)
-			return "app";
-		if (StringUtils.isBlank(info.getApp()))
-			return "app";
-		if (StringUtils.isBlank(info.getVersion()))
-			return "service version";
-		if (StringUtils.isBlank(info.getReferApp()))
-			return "referApp";
-		if (StringUtils.isBlank(info.getServiceName()))
-			return "serviceName";
-		if (StringUtils.isBlank(info.getReferVersion()))
-			return "refer version";
-		if (StringUtils.isBlank(info.getGroup()))
-			return "group";
-		if (StringUtils.isBlank(info.getReferApp()))
-			return "refer group";
-		return null;
+	private void validateRequestInfo(ServiceRemoteRequest request) {
+		if (request == null)
+			throw new LossReqParamException("app");
+		if (StringUtils.isBlank(request.getApp()))
+			throw new LossReqParamException("app");
+		if (StringUtils.isBlank(request.getVersion()))
+			throw new LossReqParamException("version");
+		if (StringUtils.isBlank(request.getReferenceApp()))
+			throw new LossReqParamException("reference app");
+		if (StringUtils.isBlank(request.getServiceName()))
+			throw new LossReqParamException("service name");
+		if (StringUtils.isBlank(request.getReferenceVersion()))
+			throw new LossReqParamException("reference version");
+		if (StringUtils.isBlank(request.getGroup()))
+			throw new LossReqParamException("group");
+		if (StringUtils.isBlank(request.getReferenceApp()))
+			throw new LossReqParamException("reference group");
 	}
 
-	private void writeResponse(Req req, ServiceContext sc,
+	private void writeResponse(ServiceContext sc,
 			ServerTransport<Req, Rsp> transport) {
 		try {
-			ResponseInfo response = sc.getResponseInfo();
-			if (sc.getRequestInfo() != null) {
-				response.addAttchment(Constants.SEQ_NUM_KEY, sc
-						.getRequestInfo().getAttachment(Constants.SEQ_NUM_KEY));
+			ResponseInfo response = (ResponseInfo) sc.getAttribute(ServiceContext.RESPONSE_RESULT);
+			if (sc.getRequest() != null) {
+				response.addAttchment(Constants.SEQ_NUM_KEY, sc.getRequest()
+						.getAttachment(Constants.SEQ_NUM_KEY));
 			}
 			if (!response.isDone())
 				setException(sc, new NotSetResultException());
-			ResponseAttributeWriter<Req, Rsp> attrWriter = server
+			ResponseConvertor<Req, Rsp> attrWriter = server
 					.getProtocolExtensionFactory().getResponseAttrWriter();
-			Rsp rsp = server.getProtocolExtensionFactory().createResponse();
-			attrWriter.write(req, rsp, response);
+			Rsp rsp = attrWriter.convert(response);
 			// TODO 需要统计异常以及成功的次数
 			transport.send(rsp, sc);
 		} catch (Exception e) {
-			logger.error("write Response error:", e);
+			logger.error("write response error:", e);
 			return;
 		}
 	}

@@ -271,7 +271,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   }
 
   @Override
-  public JavaReferenceService findRefer(String serviceName, String referApp, String version,
+  public JavaReferenceService findReference(String serviceName, String referApp, String version,
       String group) {
     if (referApp == null || serviceName == null || version == null)
       return null;
@@ -279,7 +279,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   }
 
   @Override
-  public JavaReferenceService refer(EndpointConfig config) {
+  public JavaReferenceService reference(EndpointConfig config) {
     if (config == null)
       throw new RuntimeException("refer config can not be null");
     String referApp = config.get(ConfigConstans.REFERENCE_APP);
@@ -405,7 +405,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     return interceptorSupportService;
   }
 
-  public RegisterationService getRegistService() {
+  public RegisterationService getRegisterationService() {
     return registService;
   }
 

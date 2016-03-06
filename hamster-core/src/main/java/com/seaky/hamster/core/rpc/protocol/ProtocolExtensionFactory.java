@@ -19,9 +19,9 @@ public interface ProtocolExtensionFactory<Req, Rsp> {
 
 	ResponseInfoExtractor<Rsp> getResponsetInfoExtractor();
 	
-	ResponseAttributeWriter<Req,Rsp> getResponseAttrWriter();
+	ResponseConvertor<Req,Rsp> getResponseAttrWriter();
 	
-	RequestAttributeWriter<Req> getRequestAttrWriter();
+	RequestConvertor<Req> getRequestConvertor();
 	
 	Class<Req> getReqClass();
 

@@ -4,14 +4,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.seaky.hamster.core.rpc.common.Constants;
-import com.seaky.hamster.core.rpc.protocol.ResponseAttributeWriter;
+import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
 import com.seaky.hamster.core.rpc.protocol.ResponseInfo;
 import com.seaky.hamster.core.rpc.protocol.hamster.HamsterResponse.ObjectHolder;
 import com.seaky.hamster.core.rpc.serialization.Serializer;
 import com.seaky.hamster.core.rpc.serialization.SerializerFactory;
 
 public class HamsterResponseAttrWriter implements
-		ResponseAttributeWriter<HamsterRequest, HamsterResponse> {
+		ResponseConvertor<HamsterRequest, HamsterResponse> {
 
 	public void writeAttachment(HamsterResponse rsp, String key, String value) {
 		if (value == null)

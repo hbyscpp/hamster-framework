@@ -25,6 +25,7 @@ import com.seaky.hamster.core.rpc.exception.ServiceNotFoundException;
 import com.seaky.hamster.core.rpc.executor.ServiceThreadpool;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
+import com.seaky.hamster.core.rpc.protocol.ReferenceCall;
 import com.seaky.hamster.core.rpc.protocol.ReferenceInfo;
 import com.seaky.hamster.core.rpc.protocol.RequestInfo;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
@@ -41,9 +42,13 @@ public class AsynServiceExecutor<Req, Rsp> {
 
 	public void callService(ReferenceInfo referInfo, SettableFuture<Object> result,
 			Object[] params) {
-		RequestInfo requestInfo = new RequestInfo(null,
-				referInfo.getReferApp(), referInfo.getServiceName(), null,
-				referInfo.getVersion(), null, referInfo.getGroup(), params);
+		ReferenceCall clientRequest = new ReferenceCall();
+		
+		clientRequest.setReferApp(referInfo.getReferApp());
+		clientRequest.setReferGroup(referInfo.getGroup());
+		clientRequest.setReferVersion(referInfo.getVersion());
+		clientRequest.setServiceName(referInfo.getServiceName());
+		clientRequest.setParams(params);
 		ServiceContext sc = new ServiceContext(requestInfo,
 				referInfo.getConfig());
 		boolean notUseThreadpoolConfig = referInfo.getConfig()

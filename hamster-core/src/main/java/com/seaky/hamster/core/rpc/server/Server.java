@@ -6,7 +6,10 @@ import com.seaky.hamster.core.service.JavaService;
 
 /**
  * 
- * Server代表网络上运行一些JavaService服务的容器,我们可以从server中一个server实例上运行的服务使用相同的协议。 Req代表
+ * 一个server实例代表在某个网络地址上运行JavaService服务的容器,这些服务使用相同的协议进行通信。 
+ * Req代表协议的请求
+ * Rsp代表协议的响应
+ * server中的服务都会向RegisterationService注册
  * 
  * 
  * @author seaky
@@ -16,31 +19,29 @@ import com.seaky.hamster.core.service.JavaService;
 public interface Server<Req, Rsp> {
 
   /**
-   * 启动服务
-   * 
-   * @param registService 注册中心 不能为null
-   * @param config server的配置不能为null
+   * 启动一个服务
+  * @param registerationService 注册中心服务
+  * @param config 服务的配置
+  * @return void   
    */
-  void start(RegisterationService registService, ServerConfig config);
+  void start(RegisterationService registerationService, ServerConfig config);
 
-  /**
-   * 在Server中导出服务,服务的配置是serviceConfig，配置必须包含: SericeAppNameConfig代表service所属的应用的名字
-   * ServiceNameConfig代表服务的名字 ServiceVersionConfig代表service的版本 ConfigKeyConfig代表service相关的配置的关键字
-   * ServiceSigConfig代表服务的签名配置
-   * 
-   * 绑定成功之后，如果修改service配置，只能通过getConfigService获取配置中心来改变 直接修改serviceConfig不影响配置
-   * 
-   * @param service 服务的实例
-   * @param serviceConfig 服务的配置
-   */
+/**
+ * server中添加一个服务
+ * 服务的配置中必须包含 应用名字，服务的名字，服务的版本和服务的分组
+ * 具体的配置参见ConfigConstants
+* @param service  服务
+* @param serviceConfig 服务的配置
+ */
   void export(JavaService service, EndpointConfig serviceConfig);
 
   /**
    * 获取服务的实例
    * 
-   * @param app 服务所属的app名字
    * @param serviceName 服务的名字
+   * @param app 服务所属的app名字
    * @param version 服务的版本
+   * @param group 服务的分组
    * @return 服务的实例
    */
   JavaService findService(String serviceName, String app, String version, String group);

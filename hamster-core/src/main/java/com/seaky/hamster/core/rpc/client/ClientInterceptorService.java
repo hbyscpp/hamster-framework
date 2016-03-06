@@ -19,7 +19,7 @@ import com.seaky.hamster.core.rpc.interceptor.InterceptorSupportService;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
-import com.seaky.hamster.core.rpc.protocol.RequestAttributeWriter;
+import com.seaky.hamster.core.rpc.protocol.RequestConvertor;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.ServiceContext;
 
@@ -102,9 +102,8 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
 
     // 连接成功了,写网络
     try {
-      Req req = protocolExtensionFactory.createRequest();
-      RequestAttributeWriter<Req> reqWriter = protocolExtensionFactory.getRequestAttrWriter();
-      reqWriter.write(req, sc.getRequestInfo());
+      RequestConvertor<Req> reqWriter = protocolExtensionFactory.getRequestConvertor();
+      Req req =reqWriter.convert(sc.getRequestInfo());
       final SettableFuture<Rsp> r = transport.send(req, sc);
 
       r.addListener(new Runnable() {

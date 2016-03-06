@@ -1,14 +1,19 @@
 package com.seaky.hamster.core;
 
+
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.ConfigItem;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
+import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
+import com.seaky.hamster.core.rpc.registeration.RegisterationService;
 import com.seaky.hamster.core.rpc.server.Server;
+import com.seaky.hamster.core.rpc.server.ServerConfig;
 import com.seaky.hamster.core.service.JavaMethodServiceImpl;
 import com.seaky.hamster.core.service.JavaService;
 
@@ -18,6 +23,15 @@ public final class ServerHelper {
 
   }
 
+  public static Server<?, ?> createServer(String name,RegisterationService registerationService,ServerConfig config)
+  {
+	ProtocolExtensionFactory<?, ?> factory= ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class).findExtension(name);
+	if(factory==null)
+		throw new RuntimeException("cannot find ProtocolExtensionFactory " + name);
+	Server<?, ?> server=factory.createServer();
+	server.start(registerationService, config);
+	return server;
+  }
 
   public static <Req, Rsp> void exportInterface(Server<Req, Rsp> server, Class<?> cls,
       Object implObj, EndpointConfig commonConfig) {

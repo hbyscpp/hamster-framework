@@ -1,8 +1,10 @@
 package com.seaky.hamster.core.rpc.protocol;
 
+import com.seaky.hamster.core.service.ServiceContext;
+
 
 
 public interface RequestInfoExtractor<Req> {
 
-	RequestInfo extract(Req req);
+	void extract(Req req,ServiceContext context);
 }

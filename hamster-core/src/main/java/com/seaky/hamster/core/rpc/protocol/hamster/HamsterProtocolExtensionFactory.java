@@ -2,9 +2,9 @@ package com.seaky.hamster.core.rpc.protocol.hamster;
 
 import com.seaky.hamster.core.annotations.SPI;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
-import com.seaky.hamster.core.rpc.protocol.RequestAttributeWriter;
+import com.seaky.hamster.core.rpc.protocol.RequestConvertor;
 import com.seaky.hamster.core.rpc.protocol.RequestInfoExtractor;
-import com.seaky.hamster.core.rpc.protocol.ResponseAttributeWriter;
+import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
 import com.seaky.hamster.core.rpc.protocol.ResponseInfoExtractor;
 
 @SPI("hamster")
@@ -31,12 +31,12 @@ public class HamsterProtocolExtensionFactory implements
 	}
 
 	@Override
-	public ResponseAttributeWriter<HamsterRequest, HamsterResponse> getResponseAttrWriter() {
+	public ResponseConvertor<HamsterRequest, HamsterResponse> getResponseAttrWriter() {
 		return hamsterResponseAttrWriter;
 	}
 
 	@Override
-	public RequestAttributeWriter<HamsterRequest> getRequestAttrWriter() {
+	public RequestConvertor<HamsterRequest> getRequestConvertor() {
 		return hamsterRequestAttrWriter;
 	}
 

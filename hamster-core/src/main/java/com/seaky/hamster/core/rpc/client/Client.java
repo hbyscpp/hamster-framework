@@ -6,12 +6,9 @@ import com.seaky.hamster.core.service.JavaReferenceService;
 
 /**
  * 
- * Client代表某个协议<Req,Rsp>的客户端 通过Client的refer方法来引用远程服务，client通过注册中心来寻找服务，通过配置中心来管理客户端引用的配置
- * 远程服务可以位于1个或者多个机器之上 client提供负载策略，集群容错策略 在一个JVM中针对同一个注册中心和配置中心一个协议只需一个客户端实例
- * 同一个客户端对某个服务的引用的配置需提供下面配置: ReferAppNameConfig 代表引用的所在应用的名字 ServiceNameConfig 代表需引用的服务的名字
- * ServiceVersionConfig代表需引用的服务的版本 ServiceSigConfig服务签名类型的配置 ConfigKeyConfig代表引用的配置的key
+ * Client代表某个协议<Req,Rsp>的客户端 通过Client的reference方法来引用远程服务，client通过注册中心来寻找服务， client提供负载策略，集群容错策略 在一个JVM中针对同一个注册中心和配置中心一个协议只需一个客户端实例
  * 
- * ServiceConfig中需提供引用的配置,多个refer实例可以使用相同的配置 serviceName-referApp-配置的key来唯一定位refer配置
+ * 
  * 
  * @author seaky
  * @version @param <Req>
@@ -30,13 +27,11 @@ public interface Client<Req, Rsp> {
   void connect(RegisterationService registService, ClientConfig config);
 
   /**
-   * 引用服务ServiceConfig包含 ReferAppNameConfig 代表引用的所在应用的名字 ServiceNameConfig 代表需引用的服务的名字
-   * ServiceVersionConfig代表需引用的服务的版本 ServiceSigConfig服务签名类型的配置 ConfigKeyConfig代表引用的配置的key
-   * 
+   * EndpointConfig中需包含引用所在的app名字，引用服务的名字，引用的版本和引用的group
    * @param config 服务的配置
    * @return
    */
-  JavaReferenceService refer(EndpointConfig config);
+  JavaReferenceService reference(EndpointConfig config);
 
   /**
    * 查询引用
@@ -46,7 +41,7 @@ public interface Client<Req, Rsp> {
    * @param version 服务的版本
    * @return 服务的引用
    */
-  JavaReferenceService findRefer(String serviceName, String referApp, String version, String group);
+  JavaReferenceService findReference(String serviceName, String referApp, String version, String group);
 
   /**
    * 关闭客户端
@@ -58,6 +53,6 @@ public interface Client<Req, Rsp> {
    * 
    * @return 注册中心服务
    */
-  RegisterationService getRegistService();
+  RegisterationService getRegisterationService();
 
 }
