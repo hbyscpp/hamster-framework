@@ -40,11 +40,11 @@ public class TestClient {
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0", true));
 
 
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 2; ++i) {
       final MathReactive hello =
           ClientHelper.referReactiveInterface(cc, Math.class, MathReactive.class, sc,null);
       // 关闭
-      Observable<String> result = hello.hello(null);
+      Observable<String> result = hello.hello(String.valueOf(i));
       result.subscribe(new Action1<String>() {
 
         @Override

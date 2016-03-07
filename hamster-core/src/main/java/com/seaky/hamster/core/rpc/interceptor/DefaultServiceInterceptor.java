@@ -7,36 +7,20 @@ import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 public abstract class DefaultServiceInterceptor implements ServiceInterceptor {
 
   @Override
-  public boolean preProcess(ServiceContext context) {
+  public void preProcess(ServiceContext context) {
     if (ServiceContextUtils.getSerivePhase(context) == ProcessPhase.SERVER_CALL_SERVICE)
-      return preServerProcess(context);
+       preServerProcess(context);
     else
-      return preClientProcess(context);
+       preClientProcess(context);
   }
 
-  protected boolean preServerProcess(ServiceContext context) {
-    return true;
+  protected void preServerProcess(ServiceContext context) {
   }
 
-  protected boolean preClientProcess(ServiceContext context) {
-    return true;
+  protected void preClientProcess(ServiceContext context) {
   }
 
-  @Override
-  public void completeProcess(ServiceContext context, Throwable e) throws Exception {
-    if (ServiceContextUtils.getSerivePhase(context) == ProcessPhase.SERVER_CALL_SERVICE)
-      serverCompleteProcess(context, e);
-    else
-      clientCompleteProcess(context, e);
-  };
 
-  protected void serverCompleteProcess(ServiceContext context, Throwable e) {
-
-  }
-
-  protected void clientCompleteProcess(ServiceContext context, Throwable e) {
-
-  }
 
   @Override
   public void postProcess(ServiceContext context) {

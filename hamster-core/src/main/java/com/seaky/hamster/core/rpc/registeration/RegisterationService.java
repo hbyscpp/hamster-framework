@@ -47,8 +47,11 @@ public interface RegisterationService {
   public void unregistReference(ServiceReferenceDescriptor rd);
 
 
-  public ServiceReferenceDescriptor findRefer(String referApp, String name, String version, String group,
+  public ServiceReferenceDescriptor findReferenceDescriptor(String referApp, String name, String version, String group,
       String protocol, String referHost, int referPort, String host, int port);
+  
+  public ServiceReferenceDescriptor findReferenceDescriptor(String referApp, String name, String version, String group,
+	      String protocol, String pid,long registTime);
 
   // 获取某个服务的所有引用
   /**

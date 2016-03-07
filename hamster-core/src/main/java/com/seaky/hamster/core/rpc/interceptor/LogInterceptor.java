@@ -13,18 +13,18 @@ public class LogInterceptor extends DefaultServiceInterceptor {
   private static Logger logger = LoggerFactory.getLogger(LogInterceptor.class);
 
   @Override
-  public boolean preServerProcess(ServiceContext context) {
+  public void preServerProcess(ServiceContext context) {
 
     long curTime = System.currentTimeMillis();
     context.setAttribute("_accessTime_", curTime);
-    return true;
   }
 
   @Override
-  protected void serverCompleteProcess(ServiceContext context, Throwable e) {
+  protected void postServerProcess(ServiceContext context) {
 
     long curTime = System.currentTimeMillis();
     long costTime = curTime - (long) context.getAttribute("_accessTime_");
+    Throwable e=ServiceContextUtils.getResponse(context).getException();
     if (e != null) {
       logger.info(
           "service:{} accept request from app:{},req version :{},address:{},port:{},cost time {} ms,error {}",
@@ -41,18 +41,18 @@ public class LogInterceptor extends DefaultServiceInterceptor {
   }
 
   @Override
-  protected boolean preClientProcess(ServiceContext context) {
+  protected void preClientProcess(ServiceContext context) {
     long curTime = System.currentTimeMillis();
     context.setAttribute("_accessTime_", curTime);
-    return true;
   }
 
 
   @Override
-  protected void clientCompleteProcess(ServiceContext context, Throwable e) {
+  protected void postClientProcess(ServiceContext context) {
 
     long curTime = System.currentTimeMillis();
     long costTime = curTime - (long) context.getAttribute("_accessTime_");
+    Throwable e=ServiceContextUtils.getResponse(context).getException();
     if (e != null) {
       logger.info(
           "service:{} accept request from app:{},req version :{},address:{},port:{},cost time {} ms,error {}",

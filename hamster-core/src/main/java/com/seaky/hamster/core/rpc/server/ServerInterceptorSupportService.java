@@ -25,10 +25,9 @@ public class ServerInterceptorSupportService<Req, Rsp> extends InterceptorSuppor
     try {
       Object result = service.process(ServiceContextUtils.getRequestParams(context));
       ServiceContextUtils.getResponse(context).setResult(result);
-      postProcess(context, interceptors);
-      triggerComplete(context, interceptors, null);
+      postProcess(context, interceptors,null);
     } catch (Exception e) {
-      triggerComplete(context, interceptors, e);
+    	postProcess(context, interceptors, e);
       return;
     }
   }

@@ -7,6 +7,8 @@ import com.seaky.hamster.core.ClientHelper;
 import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.client.Client;
 import com.seaky.hamster.core.rpc.client.ClientConfig;
+import com.seaky.hamster.core.rpc.config.ConfigConstans;
+import com.seaky.hamster.core.rpc.config.ConfigItem;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.registeration.EtcdRegisterationService;
@@ -21,13 +23,16 @@ public class BenchmarkTestServiceClient extends BenchmarkClient {
 
   public static void main(String[] args) throws Exception {
     ClientConfig conf = new ClientConfig();
-    EtcdRegisterationService zkcc = new EtcdRegisterationService("hamster", "localhost:2181");
+    EtcdRegisterationService lrs = new EtcdRegisterationService("hamster", "http://localhost:2379");
     Client<?, ?> hc =
         ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
             .findExtension("hamster").createClient();
-    hc.connect(zkcc, conf);
+    hc.connect(lrs, conf);
 
     EndpointConfig sc = new EndpointConfig();
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, "testapp", true));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, "default", true));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0", true));
     BenchmarkTestService service =
         ClientHelper.referInterface(hc, BenchmarkTestService.class, sc, null);
     BenchmarkTestServiceClient client = new BenchmarkTestServiceClient(service);

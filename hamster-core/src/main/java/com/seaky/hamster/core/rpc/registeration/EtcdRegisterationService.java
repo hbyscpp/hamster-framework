@@ -130,7 +130,7 @@ public class EtcdRegisterationService implements RegisterationService {
         try {
           if (Thread.interrupted())
             return;
-          registService.registRefer(sd, true);
+          registService.registReference(sd, true);
         } catch (Exception e) {
           logger.error("heartbeat regist refer error", e);
         }
@@ -488,7 +488,7 @@ public class EtcdRegisterationService implements RegisterationService {
   @Override
   public void registReference(ServiceReferenceDescriptor rd) {
     localReferCache.put(referKey(rd), rd);
-    registRefer(rd, false);
+    registReference(rd, false);
     findServices(rd.getServiceName());
   }
 
@@ -506,7 +506,7 @@ public class EtcdRegisterationService implements RegisterationService {
 
   }
 
-  public void registRefer(ServiceReferenceDescriptor rd, boolean isAsyn) {
+  public void registReference(ServiceReferenceDescriptor rd, boolean isAsyn) {
     try {
 
       EtcdResponsePromise<EtcdKeysResponse> rsp =
@@ -534,7 +534,7 @@ public class EtcdRegisterationService implements RegisterationService {
   }
 
   @Override
-  public ServiceReferenceDescriptor findRefer(String referApp, String name, String version, String group,
+  public ServiceReferenceDescriptor findReferenceDescriptor(String referApp, String name, String version, String group,
       String protocol, String referHost, int referPort, String host, int port) {
     ConcurrentHashMap<String, ServiceReferenceDescriptor> sds = referDescriptors.get(name);
     if (sds == null)
@@ -571,6 +571,15 @@ public class EtcdRegisterationService implements RegisterationService {
     isClose = true;
     ses.shutdownNow();
   }
+
+@Override
+public ServiceReferenceDescriptor findReferenceDescriptor(String referApp,
+		String name, String version, String group, String protocol, String pid,
+		long registTime) {
+	 Utils.generateKey(name, referApp, group,
+	        version, protocol, pid, String.valueOf(registTime));
+	return null;
+}
 
 
 

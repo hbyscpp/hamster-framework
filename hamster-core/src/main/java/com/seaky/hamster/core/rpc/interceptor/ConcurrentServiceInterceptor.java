@@ -17,40 +17,38 @@ public class ConcurrentServiceInterceptor extends DefaultServiceInterceptor {
   private static ConcurrentHashMap<String, AtomicInteger> serviceCurrentAccessNumer =
       new ConcurrentHashMap<String, AtomicInteger>();
 
-  protected boolean preServerProcess(ServiceContext context) {
+  protected void preServerProcess(ServiceContext context) {
 
     int max = getConcurrentNum(ServiceContextUtils.getProviderConfig(context), true);
     if (max <= 0)
-      return true;
+      return;
     boolean isOk = checkReachMaxConcurrent(
         Utils.generateKey("server", ServiceContextUtils.getServiceName(context),
             ServiceContextUtils.getApp(context), ServiceContextUtils.getVersion(context)),
         max);
     if (isOk)
-      return true;
+      return;
     ServiceContextUtils.getResponse(context)
         .setResult(new ServiceReachMaxConcurrent(ServiceContextUtils.getApp(context),
             ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
             true));
 
-    return false;
   }
 
-  protected boolean preClientProcess(ServiceContext context) {
+  protected void preClientProcess(ServiceContext context) {
     int max = getConcurrentNum(ServiceContextUtils.getReferenceConfig(context), false);
     if (max <= 0)
-      return true;
+      return;
     boolean isOk = checkReachMaxConcurrent(Utils.generateKey("client",
         ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
         ServiceContextUtils.getReferenceVersion(context)), max);
     if (isOk)
-      return true;
+      return;
     ServiceContextUtils.getResponse(context)
         .setResult(new ServiceReachMaxConcurrent(ServiceContextUtils.getReferenceApp(context),
             ServiceContextUtils.getServiceName(context),
             ServiceContextUtils.getReferenceVersion(context), false));
 
-    return false;
   }
 
   protected void serverCompleteProcess(ServiceContext context, Throwable e) {

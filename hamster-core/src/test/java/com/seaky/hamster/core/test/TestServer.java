@@ -19,7 +19,7 @@ public class TestServer {
     // 注册中心
     EtcdRegisterationService rs =
         new EtcdRegisterationService("hamster",
-            "http://192.168.20.171:2379,http://192.168.20.172:2379,http://192.168.20.173:2379");
+            "http://localhost:2379");
 
     Server<?, ?> server =
         ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)

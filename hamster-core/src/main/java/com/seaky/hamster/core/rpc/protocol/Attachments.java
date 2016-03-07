@@ -13,6 +13,8 @@ public class Attachments {
   }
 
   public void addAttachment(String key, String value) {
+	  if(value==null)
+		  return;
     attachments.put(key, value);
   }
 

@@ -1,7 +1,7 @@
 package com.seaky.hamster.core.rpc.client;
 
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.lang.reflect.Constructor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -9,12 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import com.seaky.hamster.core.rpc.executor.NamedThreadFactory;
 import com.seaky.hamster.core.rpc.executor.ServiceThreadpoolManager;
+import com.seaky.hamster.core.rpc.utils.Utils;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.HashedWheelTimer;
-import io.netty.util.internal.chmv8.ForkJoinPool;
-import io.netty.util.internal.chmv8.ForkJoinPool.ForkJoinWorkerThreadFactory;
 
 public class ClientResourceManager {
 
@@ -26,7 +25,7 @@ public class ClientResourceManager {
 
 	private static ServiceThreadpoolManager serviceThreadpoolManager;
 
-	private static ForkJoinPool forkjoinpool;
+	private static ExecutorService asynExecutorPool;
 
 	private static Logger logger = LoggerFactory
 			.getLogger(ClientResourceManager.class);
@@ -49,28 +48,17 @@ public class ClientResourceManager {
 					ClientGlobalConfig.getDefaultPoolThreadNum(),
 					ClientGlobalConfig.getDefaultPoolMaxQueue());
 
-			try {
-				Constructor<ForkJoinPool> poolConstructor = ForkJoinPool.class
-						.getDeclaredConstructor(int.class,
-								ForkJoinWorkerThreadFactory.class,
-								UncaughtExceptionHandler.class, int.class,
-								String.class);
-				poolConstructor.setAccessible(true);
-				forkjoinpool = poolConstructor.newInstance(
-						ClientGlobalConfig.getAsynExecutorThreadNum(),
-						ForkJoinPool.defaultForkJoinWorkerThreadFactory, null,
-						1, "hamster-client-asyn-executor-worker");
-				logger.info("client asyn executor start,size is {}",
-						ClientGlobalConfig.getAsynExecutorThreadNum());
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+			asynExecutorPool = Executors.newFixedThreadPool(ClientGlobalConfig
+					.getAsynExecutorThreadNum(), new NamedThreadFactory(
+					"hamster-client-asyn-executor-worker"));
+			logger.info("client asyn executor start,size is {}",
+					ClientGlobalConfig.getAsynExecutorThreadNum());
 			isStart = true;
 		}
 	}
 
-	public static ForkJoinPool getAsynExecutorPool() {
-		return forkjoinpool;
+	public static ExecutorService getAsynExecutorPool() {
+		return asynExecutorPool;
 	}
 
 	/**
@@ -102,14 +90,13 @@ public class ClientResourceManager {
 			if (serviceThreadpoolManager != null) {
 				serviceThreadpoolManager.stop();
 			}
-			if (forkjoinpool != null) {
+			if (asynExecutorPool != null) {
 				try {
-					forkjoinpool.shutdown();
+					Utils.shutdownExecutorService(asynExecutorPool, 30);
 				} catch (Exception e) {
 					logger.error("shutdown client asyn executor  error", e);
-
 				}
-				forkjoinpool = null;
+				asynExecutorPool = null;
 			}
 			isStart = false;
 		}
@@ -129,6 +116,5 @@ public class ClientResourceManager {
 	public static ServiceThreadpoolManager getServiceThreadpoolManager() {
 		return serviceThreadpoolManager;
 	}
-
 
 }

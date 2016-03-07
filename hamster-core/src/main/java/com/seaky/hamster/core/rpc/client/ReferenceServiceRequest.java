@@ -2,8 +2,6 @@
  * Copyright (c) @2016,重庆云途交通科技有限公司.版权所有
  */
 package com.seaky.hamster.core.rpc.client;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 /**
  * @Description TODO 描述类的用途
  * @author seaky

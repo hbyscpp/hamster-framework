@@ -136,8 +136,8 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
     }
     if (cf.isSuccess()) {
       InetSocketAddress caddr = (InetSocketAddress) cf.channel().localAddress();
-      sc.setAttribute(ServiceContext.CLINET_HOST, caddr.getAddress().getHostAddress());
-      sc.setAttribute(ServiceContext.CLINET_PORT, caddr.getPort());
+      ServiceContextUtils.setClientHost(sc, caddr.getAddress().getHostAddress());
+		ServiceContextUtils.setClientPort(sc, caddr.getPort());
       // 连接成功之后更新RD
       client.updateReferenceDescriptor(sc);
       resultFuture.set(null);
@@ -202,7 +202,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
                   status.set(State.CLOSING);
                   closePending();
                   status.set(State.CLOSED);
-                  client.removeRefer(addr, localAddr);
+                  client.removeReference(addr, localAddr);
                 }
               });
             }
@@ -284,7 +284,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
         }
         if (future.isSuccess()) {
           // 发送成功，设置异步超时
-          int seconds = sc.getAttribute(ServiceContext.REFERENCE_CONFIG, EndpointConfig.class)
+          int seconds = ServiceContextUtils.getReferenceConfig(sc)
               .getValueAsInt(ConfigConstans.REFERENCE_READ_TIMEOUT,
                   ConfigConstans.REFERENCE_READ_TIMEOUT_DEFAULT);
 
@@ -295,10 +295,9 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
                   .setException(
                       new RpcTimeoutException(
                           Utils.generateKey(
-                              sc.getAttribute(ServiceContext.SERVER_HOST, String.class),
-                              String
-                                  .valueOf(sc.getAttribute(ServiceContext.SERVER_PORT, int.class))),
-                          sc.getAttribute(ServiceContext.SERVICENAME, String.class)));
+                              ServiceContextUtils.getServerHost(sc),
+                             String.valueOf(ServiceContextUtils.getServerPort(sc))),
+                             ServiceContextUtils.getServiceName(sc)));
             }
           }, seconds, TimeUnit.MILLISECONDS);
 
