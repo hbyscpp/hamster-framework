@@ -7,10 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.SettableFuture;
+import com.seaky.hamster.core.rpc.common.ServiceContext;
+import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.exception.NotSetResultException;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
-import com.seaky.hamster.core.rpc.protocol.ResponseInfo;
-import com.seaky.hamster.core.service.ServiceContext;
+import com.seaky.hamster.core.rpc.protocol.Response;
 
 // 支持拦截器的service
 public abstract class InterceptorSupportService<Req, Rsp> {
@@ -23,7 +24,7 @@ public abstract class InterceptorSupportService<Req, Rsp> {
     this.protocolExtensionFactory = protocolExtensionFactory;
   }
 
-  public  boolean preProcess(Object context, List<ServiceInterceptor> interceptors) {
+  public boolean preProcess(ServiceContext context, List<ServiceInterceptor> interceptors) {
     if (interceptors != null && interceptors.size() > 0) {
       int size = interceptors.size();
       for (int i = 0; i < size; ++i) {
@@ -64,13 +65,14 @@ public abstract class InterceptorSupportService<Req, Rsp> {
           interceptor.completeProcess(context, e);
         } catch (Exception e1) {
           logger.error("Service {} version {},interceptor {} completeProcess error.",
-              context.getServiceName(), context.getServiceVersion(), interceptor.getClass(), e1);
+              ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
+              interceptor.getClass(), e1);
         }
       }
     }
   }
 
- 
+
 
   protected void triggerComplete(ServiceContext sc, List<ServiceInterceptor> interceptors,
       Throwable proEx) {
@@ -80,14 +82,14 @@ public abstract class InterceptorSupportService<Req, Rsp> {
   public void triggerComplete(ServiceContext sc, List<ServiceInterceptor> interceptors, int index,
       Throwable proEx) {
     completeProcess(sc, interceptors, index, proEx);
-    ResponseInfo info = sc.getResponseInfo();
+    Response info = ServiceContextUtils.getResponse(sc);
     // 若未处理异常,则抛出底层未处理异常
     if (!info.isDone() && proEx != null) {
       setException(proEx, info);
     }
   }
 
-  public void setException(Throwable e, ResponseInfo info) {
+  public void setException(Throwable e, Response info) {
     if (e instanceof InvocationTargetException) {
       info.setResult(((InvocationTargetException) e).getTargetException());
     } else {
@@ -97,7 +99,7 @@ public abstract class InterceptorSupportService<Req, Rsp> {
 
   // 优先设置异常信息
   public void setFuture(ServiceContext sc, SettableFuture<Object> result) {
-    ResponseInfo responseInfo = sc.getResponseInfo();
+    Response responseInfo = ServiceContextUtils.getResponse(sc);
     if (responseInfo.isDone()) {
 
       if (responseInfo.isException()) {

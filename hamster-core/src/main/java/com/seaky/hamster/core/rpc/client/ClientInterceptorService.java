@@ -10,18 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.SettableFuture;
+import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.exception.CancelConnectToRemoteServerException;
 import com.seaky.hamster.core.rpc.exception.CancelSendToRemoteServer;
 import com.seaky.hamster.core.rpc.exception.ErrorConnectRemoteServerException;
 import com.seaky.hamster.core.rpc.exception.ErrorSendToRemoteServerException;
 import com.seaky.hamster.core.rpc.exception.RpcException;
 import com.seaky.hamster.core.rpc.interceptor.InterceptorSupportService;
-import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
-import com.seaky.hamster.core.rpc.protocol.RequestConvertor;
+import com.seaky.hamster.core.rpc.protocol.RequestExtractor;
 import com.seaky.hamster.core.rpc.utils.Utils;
-import com.seaky.hamster.core.service.ServiceContext;
 
 public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportService<Req, Rsp> {
 
@@ -33,7 +32,8 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
 
   // 真正调用远程服务
   public SettableFuture<Object> process(final ServiceContext sc,
-      final ClientTransport<Req, Rsp> transport, final Executor executor,final List<ServiceInterceptor> interceptors) {
+      final ClientTransport<Req, Rsp> transport, final Executor executor,
+      final List<ServiceInterceptor> interceptors) {
     final SettableFuture<Object> result = SettableFuture.create();
     try {
       if (interceptors != null && interceptors.size() > 0) {
@@ -67,32 +67,33 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
 
   private void connectHandler(final SettableFuture<Object> result,
       final SettableFuture<Void> connectFuture, final ClientTransport<Req, Rsp> transport,
-      final Executor executor, final ServiceContext sc, final List<ServiceInterceptor> interceptors) {
+      final Executor executor, final ServiceContext sc,
+      final List<ServiceInterceptor> interceptors) {
     try {
       connectFuture.get();
     } catch (InterruptedException e) {
       // 连接请求被中断，需要用户自行处理，非业务异常
-      CancelConnectToRemoteServerException proex =
-          new CancelConnectToRemoteServerException(sc.getServiceName(),
-              Utils.socketAddrToString(transport.getRemoteAddress()), e);
+      CancelConnectToRemoteServerException proex = new CancelConnectToRemoteServerException(
+          sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+          Utils.socketAddrToString(transport.getRemoteAddress()), e);
       triggerComplete(sc, interceptors, proex);
       setFuture(sc, result);
       Thread.currentThread().interrupt();
       return;
     } catch (CancellationException e) {
       // 连接请求被中断，需要用户自行处理，非业务异常
-      CancelConnectToRemoteServerException proex =
-          new CancelConnectToRemoteServerException(sc.getServiceName(),
-              Utils.socketAddrToString(transport.getRemoteAddress()), e);
+      CancelConnectToRemoteServerException proex = new CancelConnectToRemoteServerException(
+          sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+          Utils.socketAddrToString(transport.getRemoteAddress()), e);
       triggerComplete(sc, interceptors, proex);
       setFuture(sc, result);
       return;
     } catch (ExecutionException e) {
       // 连接请求被中断，需要用户自行处理，非业务异常
       logger.error("connect remote server error ", e.getCause());
-      ErrorConnectRemoteServerException proex =
-          new ErrorConnectRemoteServerException(sc.getServiceName(),
-              Utils.socketAddrToString(transport.getRemoteAddress()), e.getCause());
+      ErrorConnectRemoteServerException proex = new ErrorConnectRemoteServerException(
+          sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+          Utils.socketAddrToString(transport.getRemoteAddress()), e.getCause());
       triggerComplete(sc, interceptors, proex);
       setFuture(sc, result);
       return;
@@ -102,8 +103,8 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
 
     // 连接成功了,写网络
     try {
-      RequestConvertor<Req> reqWriter = protocolExtensionFactory.getRequestConvertor();
-      Req req =reqWriter.convert(sc.getRequestInfo());
+      RequestExtractor<Req> reqWriter = protocolExtensionFactory.getRequestExtractor();
+      Req req = reqWriter.extractFrom(sc);
       final SettableFuture<Rsp> r = transport.send(req, sc);
 
       r.addListener(new Runnable() {
@@ -136,14 +137,18 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
       }
     } catch (CancellationException e) {
       CancelSendToRemoteServer e1 =
-          new CancelSendToRemoteServer(sc.getServiceName(), Utils.generateKey(sc.getServerHost(),
-              String.valueOf(sc.getServerPort())), e);
+          new CancelSendToRemoteServer(sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+              Utils.generateKey(sc.getAttribute(ServiceContext.SERVER_HOST, String.class),
+                  String.valueOf(sc.getAttribute(ServiceContext.SERVER_PORT, int.class))),
+              e);
       triggerComplete(sc, interceptors, e1);
       setFuture(sc, result);
     } catch (InterruptedException e2) {
       CancelSendToRemoteServer e1 =
-          new CancelSendToRemoteServer(sc.getServiceName(), Utils.generateKey(sc.getServerHost(),
-              String.valueOf(sc.getServerPort())), e2);
+          new CancelSendToRemoteServer(sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+              Utils.generateKey(sc.getAttribute(ServiceContext.SERVER_HOST, String.class),
+                  String.valueOf(sc.getAttribute(ServiceContext.SERVER_PORT, int.class))),
+              e2);
       triggerComplete(sc, interceptors, e1);
       setFuture(sc, result);
       Thread.currentThread().interrupt();
@@ -153,8 +158,11 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
         triggerComplete(sc, interceptors, innere);
       } else {
         ErrorSendToRemoteServerException e1 =
-            new ErrorSendToRemoteServerException(sc.getServiceName(), Utils.generateKey(
-                sc.getServerHost(), String.valueOf(sc.getServerPort())), innere);
+            new ErrorSendToRemoteServerException(
+                sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+                Utils.generateKey(sc.getAttribute(ServiceContext.SERVER_HOST, String.class),
+                    String.valueOf(sc.getAttribute(ServiceContext.SERVER_PORT, int.class))),
+                innere);
         triggerComplete(sc, interceptors, e1);
       }
       setFuture(sc, result);

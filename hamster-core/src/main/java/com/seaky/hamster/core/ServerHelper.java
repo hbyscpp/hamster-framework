@@ -23,14 +23,15 @@ public final class ServerHelper {
 
   }
 
-  public static Server<?, ?> createServer(String name,RegisterationService registerationService,ServerConfig config)
-  {
-	ProtocolExtensionFactory<?, ?> factory= ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class).findExtension(name);
-	if(factory==null)
-		throw new RuntimeException("cannot find ProtocolExtensionFactory " + name);
-	Server<?, ?> server=factory.createServer();
-	server.start(registerationService, config);
-	return server;
+  public static Server<?, ?> createServer(String name, RegisterationService registerationService,
+      ServerConfig config) {
+    ProtocolExtensionFactory<?, ?> factory =
+        ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class).findExtension(name);
+    if (factory == null)
+      throw new RuntimeException("cannot find ProtocolExtensionFactory " + name);
+    Server<?, ?> server = factory.createServer();
+    server.start(registerationService, config);
+    return server;
   }
 
   public static <Req, Rsp> void exportInterface(Server<Req, Rsp> server, Class<?> cls,
@@ -59,8 +60,8 @@ public final class ServerHelper {
       throw new RuntimeException("server can not be null ");
 
     if (!cls.isAssignableFrom(implObj.getClass()))
-      throw new RuntimeException(implObj.getClass().getName() + " must be implement interface "
-          + cls.getName());
+      throw new RuntimeException(
+          implObj.getClass().getName() + " must be implement interface " + cls.getName());
     Method[] methods = cls.getMethods();
     Set<String> methodNames = new HashSet<String>();
     for (Method m : methods) {

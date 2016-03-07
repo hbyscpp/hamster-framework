@@ -4,9 +4,9 @@ public class ReferenceConfig {
 
   private String app;
 
-  private String version;
+  private String version = "1.0.0";
 
-  private String group;
+  private String group = "default";
 
   private int maxConcurrent = -1;
 

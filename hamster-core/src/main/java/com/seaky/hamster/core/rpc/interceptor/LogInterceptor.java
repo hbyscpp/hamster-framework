@@ -4,7 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.seaky.hamster.core.rpc.annotation.ServiceInterceptorAnnotation;
-import com.seaky.hamster.core.service.ServiceContext;
+import com.seaky.hamster.core.rpc.common.ServiceContext;
+import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 
 @ServiceInterceptorAnnotation(name = "log", phases = {ProcessPhase.SERVER_CALL_SERVICE})
 public class LogInterceptor extends DefaultServiceInterceptor {
@@ -15,7 +16,7 @@ public class LogInterceptor extends DefaultServiceInterceptor {
   public boolean preServerProcess(ServiceContext context) {
 
     long curTime = System.currentTimeMillis();
-    context.setAtrr("_accessTime_", curTime);
+    context.setAttribute("_accessTime_", curTime);
     return true;
   }
 
@@ -23,26 +24,26 @@ public class LogInterceptor extends DefaultServiceInterceptor {
   protected void serverCompleteProcess(ServiceContext context, Throwable e) {
 
     long curTime = System.currentTimeMillis();
-    long costTime = curTime - (long) context.getAttr("_accessTime_");
+    long costTime = curTime - (long) context.getAttribute("_accessTime_");
     if (e != null) {
-      logger
-          .info(
-              "service:{} accept request from app:{},req version :{},address:{},port:{},cost time {} ms,error {}",
-              context.getServiceName(), context.getReferApp(), context.getRequestInfo()
-                  .getVersion(), context.getClientHost(), context.getClientPort(), costTime, e);
+      logger.info(
+          "service:{} accept request from app:{},req version :{},address:{},port:{},cost time {} ms,error {}",
+          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
+          ServiceContextUtils.getVersion(context), ServiceContextUtils.getClientHost(context),
+          ServiceContextUtils.getClientPort(context), costTime, e);
     } else {
-      logger
-          .info(
-              "service:{} accept request from app:{},req version :{},address:{},port:{},cost time {} ms",
-              context.getServiceName(), context.getReferApp(), context.getRequestInfo()
-                  .getVersion(), context.getClientHost(), context.getClientPort(), costTime);
+      logger.info(
+          "service:{} accept request from app:{},req version :{},address:{},port:{},cost time {} ms",
+          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
+          ServiceContextUtils.getVersion(context), ServiceContextUtils.getClientHost(context),
+          ServiceContextUtils.getClientPort(context), costTime);
     }
   }
 
   @Override
   protected boolean preClientProcess(ServiceContext context) {
     long curTime = System.currentTimeMillis();
-    context.setAtrr("_accessTime_", curTime);
+    context.setAttribute("_accessTime_", curTime);
     return true;
   }
 
@@ -51,16 +52,19 @@ public class LogInterceptor extends DefaultServiceInterceptor {
   protected void clientCompleteProcess(ServiceContext context, Throwable e) {
 
     long curTime = System.currentTimeMillis();
-    long costTime = curTime - (long) context.getAttr("_accessTime_");
+    long costTime = curTime - (long) context.getAttribute("_accessTime_");
     if (e != null) {
       logger.info(
-          "service:{}  from app:{},req version :{},address:{},port:{},cost time {} ms,error {}",
-          context.getServiceName(), context.getReferApp(), context.getRequestInfo().getVersion(),
-          context.getClientHost(), context.getClientPort(), costTime, e);
+          "service:{} accept request from app:{},req version :{},address:{},port:{},cost time {} ms,error {}",
+          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
+          ServiceContextUtils.getVersion(context), ServiceContextUtils.getClientHost(context),
+          ServiceContextUtils.getClientPort(context), costTime, e);
     } else {
-      logger.info("service:{}  from app:{},req version :{},address:{},port:{},cost time {} ms",
-          context.getServiceName(), context.getReferApp(), context.getRequestInfo().getVersion(),
-          context.getClientHost(), context.getClientPort(), costTime);
+      logger.info(
+          "service:{} accept request from app:{},req version :{},address:{},port:{},cost time {} ms",
+          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
+          ServiceContextUtils.getVersion(context), ServiceContextUtils.getClientHost(context),
+          ServiceContextUtils.getClientPort(context), costTime);
     }
   }
 

@@ -1,7 +1,5 @@
 package com.seaky.hamster.core.rpc.client;
 
-import io.netty.util.concurrent.ImmediateEventExecutor;
-
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
@@ -14,43 +12,43 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import rx.Observable;
-import rx.subjects.ReplaySubject;
-
 import com.google.common.util.concurrent.SettableFuture;
 import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.client.cluster.ClusterServiceFactory;
 import com.seaky.hamster.core.rpc.client.loadbalancer.ServiceLoadBalancer;
 import com.seaky.hamster.core.rpc.client.router.ServiceRouter;
 import com.seaky.hamster.core.rpc.common.Constants;
+import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.exception.NotSetResultException;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
-import com.seaky.hamster.core.rpc.protocol.ReferenceInfo;
 import com.seaky.hamster.core.rpc.registeration.RegisterationService;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 import com.seaky.hamster.core.rpc.registeration.ServiceReferenceDescriptor;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaReferenceService;
-import com.seaky.hamster.core.service.ServiceContext;
+
+import io.netty.util.concurrent.ImmediateEventExecutor;
+import rx.Observable;
+import rx.subjects.ReplaySubject;
 
 public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   private static Logger logger = LoggerFactory.getLogger(AbstractClient.class);
 
-  private RegisterationService registService;
+  private RegisterationService registerationService;
 
-  static ExtensionLoader<ServiceRouter> routerExtension = ExtensionLoader
-      .getExtensionLoaders(ServiceRouter.class);
+  static ExtensionLoader<ServiceRouter> routerExtension =
+      ExtensionLoader.getExtensionLoaders(ServiceRouter.class);
 
-  static ExtensionLoader<ClusterServiceFactory> clusterExtension = ExtensionLoader
-      .getExtensionLoaders(ClusterServiceFactory.class);
+  static ExtensionLoader<ClusterServiceFactory> clusterExtension =
+      ExtensionLoader.getExtensionLoaders(ClusterServiceFactory.class);
 
-  static ExtensionLoader<ServiceLoadBalancer> loadBalanceExtension = ExtensionLoader
-      .getExtensionLoaders(ServiceLoadBalancer.class);
+  static ExtensionLoader<ServiceLoadBalancer> loadBalanceExtension =
+      ExtensionLoader.getExtensionLoaders(ServiceLoadBalancer.class);
   protected ProtocolExtensionFactory<Req, Rsp> protocolExtensionFactory;
 
   private ClientConfig config;
@@ -61,11 +59,11 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
       new ConcurrentHashMap<String, JavaReferenceService>();
 
   // key 服务端
-  private ConcurrentHashMap<String, ClientTransport<Req, Rsp>> cachedClients =
+  private ConcurrentHashMap<String, ClientTransport<Req, Rsp>> clientCache =
       new ConcurrentHashMap<String, ClientTransport<Req, Rsp>>();
 
   // key 服务端－客户端
-  private ConcurrentHashMap<String, ServiceReferenceDescriptor> referCache =
+  private ConcurrentHashMap<String, ServiceReferenceDescriptor> referenceCache =
       new ConcurrentHashMap<String, ServiceReferenceDescriptor>();
 
   private ConcurrentHashMap<ProcessPhase, ConcurrentHashMap<String, List<ServiceInterceptor>>> allservicesInterceptorsBeforeCluster =
@@ -85,7 +83,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   // 获取连接,可能需调用connect方法 TODO 动态反馈远程服务的状态,比如调用多少次 是由于网络失败，一段时间内变为
   public ClientTransport<Req, Rsp> getTransport(final ServiceProviderDescriptor sd) {
     String key = Utils.generateKey(sd.getHost(), String.valueOf(sd.getPort()));
-    ClientTransport<Req, Rsp> transport = cachedClients.get(key);
+    ClientTransport<Req, Rsp> transport = clientCache.get(key);
     if (transport != null) {
       if (!transport.isClosed()) {
         return transport;
@@ -101,17 +99,17 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
         }
       }
       lock.lock();
-      transport = cachedClients.get(key);
+      transport = clientCache.get(key);
       if (transport != null) {
         if (!transport.isClosed()) {
           return transport;
         }
       }
       // 已经关闭了
-      cachedClients.remove(key);
+      clientCache.remove(key);
       transport = createTransport(sd, config, protocolExtensionFactory, this);
       try {
-        cachedClients.put(key, transport);
+        clientCache.put(key, transport);
         return transport;
       } catch (Exception e) {
         transport.close();
@@ -124,32 +122,31 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   }
 
   // 更新
-  public void updateReferDescriptor(ServiceContext sc) {
-    String referKey =
-        Utils.generateKey(sc.getServiceName(), sc.getReferApp(), sc.getReferVersion(),
-            sc.getRefergroup());
-    ServiceReferenceDescriptor rd = referCache.get(referKey);
+  public void updateReferenceDescriptor(ServiceContext sc) {
+    String referKey = Utils.generateKey(sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+        sc.getAttribute(ServiceContext.REFERENCE_APP, String.class),
+        sc.getAttribute(ServiceContext.REFERENCE_VERSION, String.class),
+        sc.getAttribute(ServiceContext.REFERENCE_GROUP, String.class));
+    ServiceReferenceDescriptor rd = referenceCache.get(referKey);
     if (rd == null)
       throw new RuntimeException("can not found refer descriptor");
     StringBuilder sb = new StringBuilder();
-    sb.append(sc.getClientHost()).append(Constants.COLON);
-    sb.append(sc.getClientPort());
+    sb.append(sc.getAttribute(ServiceContext.CLINET_HOST, String.class)).append(Constants.COLON);
+    sb.append(sc.getAttribute(ServiceContext.CLINET_PORT));
     sb.append(Constants.COMMA);
-    sb.append(sc.getServerHost()).append(Constants.COLON);
-    sb.append(sc.getServerPort());
+    sb.append(sc.getAttribute(ServiceContext.SERVER_HOST, String.class)).append(Constants.COLON);
+    sb.append(sc.getAttribute(ServiceContext.SERVER_PORT));
     if (!rd.containPair(sb.toString())) {
       rd.addAddressPair(sb.toString());
-      registService.registRefer(rd);
+      registerationService.registReference(rd);
     }
   }
 
   public void removeRefer(InetSocketAddress serverAddress, InetSocketAddress clientAddress) {
-    String serverAddr =
-        Utils.generateKey(serverAddress.getAddress().getHostAddress(),
-            String.valueOf(serverAddress.getPort()));
-    String clientAddr =
-        Utils.generateKey(clientAddress.getAddress().getHostAddress(),
-            String.valueOf(clientAddress.getPort()));
+    String serverAddr = Utils.generateKey(serverAddress.getAddress().getHostAddress(),
+        String.valueOf(serverAddress.getPort()));
+    String clientAddr = Utils.generateKey(clientAddress.getAddress().getHostAddress(),
+        String.valueOf(clientAddress.getPort()));
     StringBuilder sb = new StringBuilder();
     sb.append(clientAddress.getAddress().getHostAddress()).append(Constants.COLON);
     sb.append(clientAddress.getPort());
@@ -167,7 +164,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
         }
       }
       lock.lock();
-      ClientTransport<Req, Rsp> transport = cachedClients.get(serverAddr);
+      ClientTransport<Req, Rsp> transport = clientCache.get(serverAddr);
       if (transport != null && transport.isConnected()) {
         String clientkey =
             Utils.generateKey(transport.getLocalAddress().getAddress().getHostAddress(),
@@ -182,7 +179,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
       } else {
         // 删除
         removeReferByAddr(sb.toString());
-        cachedClients.remove(serverAddr);
+        clientCache.remove(serverAddr);
       }
     } finally {
       lock.unlock();
@@ -191,11 +188,11 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   }
 
   private void removeReferByAddr(String addrpairs) {
-    for (ServiceReferenceDescriptor rd : referCache.values()) {
+    for (ServiceReferenceDescriptor rd : referenceCache.values()) {
       if (rd.getAddressPairs().contains(rd)) {
         rd.getAddressPairs().remove(rd);
         // 主动更新
-        registService.registRefer(rd);
+        registerationService.registReference(rd);
       }
     }
   }
@@ -214,31 +211,34 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
         new ClientInterceptorService<Req, Rsp>(protocolExtensionFactory);
   }
 
-  private JavaReferenceService getReferService(String serviceName, String referApp, String version,
-      String group) {
-    return serviceCache.get(Utils.generateKey(serviceName, referApp, version, group));
+  private JavaReferenceService getReferenceService(String serviceName, String referenceApp,
+      String referenceVersion, String referenceGroup) {
+    return serviceCache
+        .get(Utils.generateKey(serviceName, referenceApp, referenceVersion, referenceGroup));
   }
 
-  private JavaReferenceService addReferService(String serviceName, String referApp, String version,
-      String group, JavaReferenceService service) {
-    JavaReferenceService old =
-        serviceCache.putIfAbsent(Utils.generateKey(serviceName, referApp, version, group), service);
+  private JavaReferenceService addReferService(String serviceName, String referenceApp,
+      String referenceVersion, String referenceGroup, JavaReferenceService service) {
+    JavaReferenceService old = serviceCache.putIfAbsent(
+        Utils.generateKey(serviceName, referenceApp, referenceVersion, referenceGroup), service);
     if (old != null)
       return old;
     return service;
   }
 
-  private void removeReferService(String serviceName, String referApp, String version, String group) {
-    serviceCache.remove(Utils.generateKey(serviceName, referApp, version, group));
+  private void removeReferService(String serviceName, String referenceApp, String referenceVersion,
+      String referenceGroup) {
+    serviceCache
+        .remove(Utils.generateKey(serviceName, referenceApp, referenceVersion, referenceGroup));
   }
 
   @Override
-  public synchronized void connect(RegisterationService registService, ClientConfig config) {
-    if (registService == null || config == null)
+  public synchronized void connect(RegisterationService registerationService, ClientConfig config) {
+    if (registerationService == null || config == null)
       throw new IllegalArgumentException("argument can not be null");
     if (isRunning)
       throw new RuntimeException("client is starting");
-    this.registService = registService;
+    this.registerationService = registerationService;
     this.config = config;
     this.asynServiceExecutor = new AsynServiceExecutor<Req, Rsp>(this);
     ClientResourceManager.start();
@@ -250,11 +250,11 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   public synchronized void close() {
     if (isRunning) {
 
-      for (ServiceReferenceDescriptor rd : referCache.values()) {
-        registService.unregistRefer(rd);
+      for (ServiceReferenceDescriptor rd : referenceCache.values()) {
+        registerationService.unregistReference(rd);
       }
 
-      for (ClientTransport<Req, Rsp> transport : cachedClients.values()) {
+      for (ClientTransport<Req, Rsp> transport : clientCache.values()) {
 
         try {
           transport.close();
@@ -263,19 +263,19 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
         }
       }
       serviceCache.clear();
-      cachedClients.clear();
-      referCache.clear();
+      clientCache.clear();
+      referenceCache.clear();
       isRunning = false;
 
     }
   }
 
   @Override
-  public JavaReferenceService findReference(String serviceName, String referApp, String version,
-      String group) {
+  public JavaReferenceService findReferenceService(String serviceName, String referApp,
+      String version, String group) {
     if (referApp == null || serviceName == null || version == null)
       return null;
-    return getReferService(serviceName, referApp, version, group);
+    return getReferenceService(serviceName, referApp, version, group);
   }
 
   @Override
@@ -305,12 +305,12 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
       throw new IllegalArgumentException(
           "service version contains special char,service version must compose of [0-9 _ . $ a-z A-Z]");
     }
-    JavaReferenceService service = getReferService(serviceName, referApp, version, group);
+    JavaReferenceService service = getReferenceService(serviceName, referApp, version, group);
     if (service != null) {
       return service;
     }
     EndpointConfig copyOfConfig = config.deepCopy();
-    service = new ReferService<Req, Rsp>(this, referApp, serviceName, version, group, copyOfConfig);
+    service = new ReferenceService<Req, Rsp>(this, referApp, serviceName, version, group, copyOfConfig);
     service = addReferService(serviceName, referApp, version, group, service);
     ServiceReferenceDescriptor rd = new ServiceReferenceDescriptor();
     rd.setConfig(copyOfConfig);
@@ -321,18 +321,18 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     rd.setReferVersion(version);
     rd.setRegistTime(System.currentTimeMillis());
     rd.setServiceName(serviceName);
-    referCache.put(Utils.generateKey(serviceName, referApp, version, group), rd);
+    referenceCache.put(Utils.generateKey(serviceName, referApp, version, group), rd);
     // TODO 是否要check 存在服务
     try {
       String interceptors = config.get(ConfigConstans.REFERENCE_INTERCEPTORS);
-      registService.registRefer(rd);
+      registerationService.registReference(rd);
       addServiceInterceptors(serviceName, referApp, version, group, interceptors,
           ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE);
       addServiceInterceptors(serviceName, referApp, version, group, interceptors,
           ProcessPhase.CLIENT_CALL_SERVICE_INSTANCE);
     } catch (Exception e) {
       removeReferService(serviceName, referApp, version, group);
-      referCache.remove(Utils.generateKey(serviceName, referApp, version, group));
+      referenceCache.remove(Utils.generateKey(serviceName, referApp, version, group));
       throw new RuntimeException(e);
     }
     return service;
@@ -340,28 +340,47 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   Collection<ServiceProviderDescriptor> getAllServices(String serviceName) {
 
-    return registService.findServices(serviceName);
+    return registerationService.findServices(serviceName);
 
   }
 
-  public static class ReferService<Req, Rsp> implements JavaReferenceService {
+  public static class ReferenceService<Req, Rsp> implements JavaReferenceService {
 
     private AbstractClient<Req, Rsp> client;
 
-    private ReferenceInfo referInfo;
+    private String serviceName;
 
-    public ReferService(AbstractClient<Req, Rsp> client, String referApp, String serviceName,
-        String version, String group, EndpointConfig config) {
+    private String referenceApp;
+
+    private String referenceVersion;
+
+    private String referenceGroup;
+
+    // TODO config的处理
+    private EndpointConfig config;
+
+    public ReferenceService(AbstractClient<Req, Rsp> client, String referenceApp, String serviceName,
+        String referenceVersion, String referenceGroup, EndpointConfig config) {
       this.client = client;
-      this.referInfo = new ReferenceInfo(serviceName, referApp, version, group, config);
+      this.serviceName = serviceName;
+      this.referenceApp = referenceApp;
+      this.referenceGroup = referenceGroup;
+      this.referenceVersion = referenceVersion;
+      this.config = config;
     }
 
     @Override
-    public SettableFuture<Object> processAsyn(Object[] request) {
+    public SettableFuture<Object> processAsyn(Object[] params) {
       // 检查参数
 
+      ReferenceServiceRequest request = new ReferenceServiceRequest();
+      request.setServiceName(serviceName);
+      request.setReferenceApp(referenceApp);
+      request.setReferenceVersion(referenceVersion);
+      request.setReferenceGroup(referenceGroup);
+      request.setParams(params);
       SettableFuture<Object> result = SettableFuture.create();
-      client.asynServiceExecutor.callService(referInfo, result, request);
+      client.asynServiceExecutor.callService(request, result, config);
       return result;
     }
 
@@ -406,7 +425,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   }
 
   public RegisterationService getRegisterationService() {
-    return registService;
+    return registerationService;
   }
 
   private void addServiceInterceptors(String serviceName, String referApp, String version,
@@ -429,14 +448,14 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   }
 
-  public List<ServiceInterceptor> getServiceInterceptors(String serviceName, String referApp,
-      String version, String group, ProcessPhase phase) {
+  public List<ServiceInterceptor> getServiceInterceptors(String serviceName, String referenceApp,
+      String referenceVersion, String referenceGroup, ProcessPhase phase) {
     ConcurrentHashMap<String, List<ServiceInterceptor>> serviceInterceptorsMap =
         allservicesInterceptorsBeforeCluster.get(phase);
     if (serviceInterceptorsMap == null)
       return null;
 
-    return serviceInterceptorsMap.get(Utils.generateKey(serviceName, referApp, version, group));
+    return serviceInterceptorsMap.get(Utils.generateKey(serviceName, referenceApp, referenceVersion, referenceGroup));
   }
 
 }

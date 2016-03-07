@@ -3,7 +3,7 @@ package com.seaky.hamster.core.rpc.client.router;
 import java.util.List;
 
 import com.seaky.hamster.core.annotations.SPI;
-import com.seaky.hamster.core.rpc.protocol.ReferenceInfo;
+import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 
 /**
@@ -16,5 +16,6 @@ import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
  */
 @SPI("default")
 public interface ServiceRouter {
-  List<ServiceProviderDescriptor> choose(List<ServiceProviderDescriptor> allService, ReferenceInfo referInfo);
+  List<ServiceProviderDescriptor> choose(List<ServiceProviderDescriptor> allService,
+      ServiceContext context);
 }

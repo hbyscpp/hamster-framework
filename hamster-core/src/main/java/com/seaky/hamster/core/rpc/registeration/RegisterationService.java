@@ -42,9 +42,9 @@ public interface RegisterationService {
    */
   public void unregistService(ServiceProviderDescriptor sd);
 
-  public void registRefer(ServiceReferenceDescriptor rd);
+  public void registReference(ServiceReferenceDescriptor rd);
 
-  public void unregistRefer(ServiceReferenceDescriptor rd);
+  public void unregistReference(ServiceReferenceDescriptor rd);
 
 
   public ServiceReferenceDescriptor findRefer(String referApp, String name, String version, String group,

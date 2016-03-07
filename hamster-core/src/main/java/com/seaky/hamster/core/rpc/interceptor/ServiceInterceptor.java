@@ -1,6 +1,6 @@
 package com.seaky.hamster.core.rpc.interceptor;
 
-import com.seaky.hamster.core.service.ServiceContext;
+import com.seaky.hamster.core.rpc.common.ServiceContext;
 
 /**
  * 

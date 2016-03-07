@@ -2,7 +2,7 @@ package com.seaky.hamster.core.rpc.server;
 
 import java.net.InetSocketAddress;
 
-import com.seaky.hamster.core.service.ServiceContext;
+import com.seaky.hamster.core.rpc.common.ServiceContext;
 
 public interface ServerTransport<Req,Rsp> {
 

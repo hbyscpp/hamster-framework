@@ -3,7 +3,7 @@ package com.seaky.hamster.core.rpc.client;
 import java.net.InetSocketAddress;
 
 import com.google.common.util.concurrent.SettableFuture;
-import com.seaky.hamster.core.service.ServiceContext;
+import com.seaky.hamster.core.rpc.common.ServiceContext;
 
 public interface ClientTransport<Req,Rsp> {
 

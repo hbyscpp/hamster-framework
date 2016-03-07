@@ -486,7 +486,7 @@ public class EtcdRegisterationService implements RegisterationService {
   }
 
   @Override
-  public void registRefer(ServiceReferenceDescriptor rd) {
+  public void registReference(ServiceReferenceDescriptor rd) {
     localReferCache.put(referKey(rd), rd);
     registRefer(rd, false);
     findServices(rd.getServiceName());
@@ -524,7 +524,7 @@ public class EtcdRegisterationService implements RegisterationService {
   }
 
   @Override
-  public void unregistRefer(ServiceReferenceDescriptor rd) {
+  public void unregistReference(ServiceReferenceDescriptor rd) {
     localReferCache.remove(referKey(rd));
     try {
       client.delete(genConsumerPath(rd)).send();

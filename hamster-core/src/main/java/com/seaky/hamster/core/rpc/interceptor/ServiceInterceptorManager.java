@@ -17,15 +17,15 @@ public class ServiceInterceptorManager {
   private static ConcurrentHashMap<String, Class<?>> allInterceptorsClass =
       new ConcurrentHashMap<String, Class<?>>();
   static {
-    Reflections r = new Reflections(new Object());
+    Reflections r = new Reflections(new Object[0]);
     Set<Class<?>> clss = r.getTypesAnnotatedWith(ServiceInterceptorAnnotation.class);
 
     if (clss != null) {
       for (Class<?> cls : clss) {
 
         if (cls.isAssignableFrom(ServiceInterceptor.class))
-          throw new RuntimeException(cls.getName() + "must inherit from "
-              + ServiceInterceptor.class.getName());
+          throw new RuntimeException(
+              cls.getName() + "must inherit from " + ServiceInterceptor.class.getName());
         ServiceInterceptorAnnotation anno = cls.getAnnotation(ServiceInterceptorAnnotation.class);
         if (allInterceptorsClass.putIfAbsent(anno.name(), cls) != null) {
           throw new RuntimeException(anno.name() + " service interceptor has regist in "
