@@ -78,6 +78,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 	private AsynServiceExecutor<Req, Rsp> asynServiceExecutor;
 
 	// 获取连接,可能需调用connect方法 TODO 动态反馈远程服务的状态,比如调用多少次 是由于网络失败，一段时间内变为
+	//获取transport，可能处于未连接状态
 	public ClientTransport<Req, Rsp> getTransport(
 			final ServiceProviderDescriptor sd) {
 		String key = Utils.generateKey(sd.getHost(),
@@ -88,15 +89,8 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 				return transport;
 			}
 		}
-		Lock lock = lockMaps.get(key);
+		Lock lock = findLock(key);
 		try {
-			if (lock == null) {
-				lock = new ReentrantLock();
-				Lock oldlock = lockMaps.putIfAbsent(key, lock);
-				if (oldlock != null) {
-					lock = oldlock;
-				}
-			}
 			lock.lock();
 			transport = clientCache.get(key);
 			if (transport != null) {
@@ -108,17 +102,24 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 			clientCache.remove(key);
 			transport = createTransport(sd, config, protocolExtensionFactory,
 					this);
-			try {
-				clientCache.put(key, transport);
-				return transport;
-			} catch (Exception e) {
-				transport.close();
-			}
-			return null;
+			clientCache.put(key, transport);
+			return transport;
 		} finally {
 			lock.unlock();
 		}
 
+	}
+
+	private Lock findLock(String key) {
+		Lock lock = lockMaps.get(key);
+		if (lock == null) {
+			lock = new ReentrantLock();
+			Lock oldlock = lockMaps.putIfAbsent(key, lock);
+			if (oldlock != null) {
+				lock = oldlock;
+			}
+		}
+		return lock;
 	}
 
 	// 更新
@@ -128,20 +129,16 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 				ServiceContextUtils.getReferenceApp(sc),
 				ServiceContextUtils.getReferenceVersion(sc),
 				ServiceContextUtils.getReferenceGroup(sc));
+		//TODO 从注册中心获取
 		ServiceReferenceDescriptor rd = referenceCache.get(referKey);
 		if (rd == null)
 			throw new RuntimeException("can not found reference descriptor "
 					+ referKey);
-		StringBuilder sb = new StringBuilder();
-		sb.append(ServiceContextUtils.getClientHost(sc))
-				.append(Constants.COLON);
-		sb.append(ServiceContextUtils.getClientPort(sc));
-		sb.append(Constants.COMMA);
-		sb.append(ServiceContextUtils.getServerHost(sc))
-				.append(Constants.COLON);
-		sb.append(ServiceContextUtils.getServerPort(sc));
-		if (!rd.containPair(sb.toString())) {
-			rd.addAddressPair(sb.toString());
+		String pair = Utils.createServerAndClientAddress(ServiceContextUtils.getClientHost(sc), ServiceContextUtils.getClientPort(sc), ServiceContextUtils.getServerHost(sc), ServiceContextUtils.getServerPort(sc));
+		
+		if (!rd.containPair(pair)) {
+			//TODO 
+			rd.addAddressPair(pair);
 			registerationService.registReference(rd);
 		}
 	}
@@ -152,24 +149,13 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 				.getHostAddress(), String.valueOf(serverAddress.getPort()));
 		String clientAddr = Utils.generateKey(clientAddress.getAddress()
 				.getHostAddress(), String.valueOf(clientAddress.getPort()));
-		StringBuilder sb = new StringBuilder();
-		sb.append(clientAddress.getAddress().getHostAddress()).append(
-				Constants.COLON);
-		sb.append(clientAddress.getPort());
-		sb.append(Constants.COMMA);
-		sb.append(serverAddress.getAddress().getHostAddress()).append(
-				Constants.COLON);
-		sb.append(serverAddress.getPort());
+		String sb = Utils.createServerAndClientAddress(clientAddress.getAddress()
+				.getHostAddress(), clientAddress.getPort(), serverAddress.getAddress()
+				.getHostAddress(), serverAddress.getPort());
 		// 清理期间不能连接远程服务
-		Lock lock = lockMaps.get(serverAddr);
+		Lock lock = findLock(serverAddr);
 		try {
-			if (lock == null) {
-				lock = new ReentrantLock();
-				Lock oldlock = lockMaps.putIfAbsent(serverAddr, lock);
-				if (oldlock != null) {
-					lock = oldlock;
-				}
-			}
+			
 			lock.lock();
 			ClientTransport<Req, Rsp> transport = clientCache.get(serverAddr);
 			if (transport != null && transport.isConnected()) {
@@ -291,40 +277,54 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 	}
 
 	@Override
-	public JavaReferenceService reference(EndpointConfig config) {
+	public synchronized JavaReferenceService reference(EndpointConfig config) {
 		if (config == null)
 			throw new RuntimeException("refer config can not be null");
 		String referApp = config.get(ConfigConstans.REFERENCE_APP);
 		if (referApp == null || !referApp.matches(Constants.APP_NAME_ALLOW_REG)) {
 			throw new IllegalArgumentException(
-					"referApp contains special char,referApp must compose of [0-9 _ . $ a-z A-Z]");
+					"Reference app name contains special char,app name must compose of [0-9 _ -. $ a-z A-Z],but app name is "
+							+ referApp);
 		}
 
 		String serviceName = config.get(ConfigConstans.REFERENCE_NAME);
 		if (serviceName == null
 				|| !serviceName.matches(Constants.SERVICE_NAME_ALLOW_REG)) {
 			throw new IllegalArgumentException(
-					"service name contains special char,service name must compose of [0-9 _ . $ a-z A-Z]");
+					"service name contains special char,service name must compose of [0-9 _ . $ a-z A-Z],but service name is "
+							+ serviceName);
 		}
 		String version = config.get(ConfigConstans.REFERENCE_VERSION);
 
 		if (version == null
 				|| !version.matches(Constants.VERSION_NAME_ALLOW_REG)) {
 			throw new IllegalArgumentException(
-					"service version contains special char,service version must compose of [0-9 _ . $ a-z A-Z]");
+					"service version contains special char,service version must compose of [0-9.],but version is "
+							+ version);
 		}
 		Utils.checkVersionFormat(version);
 		String group = config.get(ConfigConstans.REFERENCE_GROUP);
 		if (group == null || !group.matches(Constants.GROUP_NAME_ALLOW_REG)) {
 			throw new IllegalArgumentException(
-					"service version contains special char,service version must compose of [0-9 _ . $ a-z A-Z]");
+					"service version contains special char,service version must compose of [a-zA-Z0-9_,],but group is "
+							+ group);
 		}
 		JavaReferenceService service = getReferenceService(serviceName,
 				referApp, version, group);
 		if (service != null) {
 			return service;
 		}
+
+		if (config.getValueAsBoolean(ConfigConstans.REFERENCE_CHECK_SERVICE,
+				ConfigConstans.REFERENCE_CHECK_SERVICE_DEFAULT)) {
+
+			Collection<ServiceProviderDescriptor> services = getAllServices(serviceName);
+			if (services == null || services.size() == 0)
+				throw new RuntimeException("no " + serviceName
+						+ " provider found");
+		}
 		EndpointConfig copyOfConfig = config.deepCopy();
+
 		service = new ReferenceService<Req, Rsp>(this, referApp, serviceName,
 				version, group);
 		service = addReferService(serviceName, referApp, version, group,
@@ -333,14 +333,9 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 		rd.setConfig(copyOfConfig);
 		rd.setPid(Utils.getCurrentVmPid());
 		rd.setProtocol(protocolExtensionFactory.protocolName());
-		rd.setReferApp(referApp);
-		rd.setReferGroup(group);
-		rd.setReferVersion(version);
 		rd.setRegistTime(System.currentTimeMillis());
-		rd.setServiceName(serviceName);
 		referenceCache.put(
 				Utils.generateKey(serviceName, referApp, version, group), rd);
-		// TODO 是否要check 存在服务
 		try {
 			String interceptors = config
 					.get(ConfigConstans.REFERENCE_INTERCEPTORS);

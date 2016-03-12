@@ -86,6 +86,12 @@
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-joda</artifactId>
 		</dependency>
+		<dependency>
+	<groupId>org.apache.hbase</groupId>
+	<artifactId>hbase-client</artifactId>
+	<version>1.2.0</version>
+</dependency>
+		
 	</dependencies>
 	<build>
 		<plugins>

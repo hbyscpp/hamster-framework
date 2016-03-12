@@ -9,9 +9,4 @@ package com.seaky.hamster.core.service;
  * @since 1.0.0
  */
 public interface JavaService extends Service<Object[], Object> {
-
-  public Class<?>[] paramTypes();
-
-  public Class<?> returnType();
-
 }

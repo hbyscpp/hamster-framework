@@ -9,6 +9,6 @@ package com.seaky.hamster.core.service;
  * @version 1.0.0
  * @since 1.0.0
  */
-public interface JavaReferenceService extends Service<Object[], Object>, FutureJavaService,
+public interface JavaReferenceService extends JavaService, FutureJavaService,
     ReactiveJavaService {
 }

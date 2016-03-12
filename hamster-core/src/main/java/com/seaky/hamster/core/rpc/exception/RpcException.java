@@ -73,6 +73,9 @@ public class RpcException extends RuntimeException {
 	
 	public static int EXTRACTOR_RESPONSE_EXCEPTION=25;
 
+	public static int NO_SERVICE_MATCH=26;
+	
+	
 	private int code;
 
 	public RpcException(int code, String msg) {

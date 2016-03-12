@@ -74,7 +74,7 @@ public class ClientInterceptorService<Req, Rsp> extends
 		} catch (InterruptedException e) {
 			// 连接请求被中断，需要用户自行处理，非业务异常
 			CancelConnectToRemoteServerException proex = new CancelConnectToRemoteServerException(
-					sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+					ServiceContextUtils.getServiceName(sc),
 					Utils.socketAddrToString(transport.getRemoteAddress()), e);
 			ServiceContextUtils.getResponse(sc).setResult(proex);
 			setFuture(sc, result);
@@ -83,7 +83,7 @@ public class ClientInterceptorService<Req, Rsp> extends
 		} catch (CancellationException e) {
 			// 连接请求被中断，需要用户自行处理，非业务异常
 			CancelConnectToRemoteServerException proex = new CancelConnectToRemoteServerException(
-					sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+					ServiceContextUtils.getServiceName(sc),
 					Utils.socketAddrToString(transport.getRemoteAddress()), e);
 			ServiceContextUtils.getResponse(sc).setResult(proex);
 			setFuture(sc, result);
@@ -92,7 +92,7 @@ public class ClientInterceptorService<Req, Rsp> extends
 			// 连接请求被中断，需要用户自行处理，非业务异常
 			logger.error("connect remote server error ", e.getCause());
 			ErrorConnectRemoteServerException proex = new ErrorConnectRemoteServerException(
-					sc.getAttribute(ServiceContext.SERVICENAME, String.class),
+					ServiceContextUtils.getServiceName(sc),
 					Utils.socketAddrToString(transport.getRemoteAddress()),
 					e.getCause());
 			ServiceContextUtils.getResponse(sc).setResult(proex);

@@ -42,10 +42,12 @@ public interface Constants {
 
   public static final String APP_NAME_ALLOW_REG = "[a-zA-Z0-9_\\$\\.-]+";
 
-  public static final String GROUP_NAME_ALLOW_REG = "[a-zA-Z0-9_\\$\\.]+";
+  public static final String GROUP_NAME_ALLOW_REG = "[a-zA-Z0-9_,]+";
 
   public static final String VERSION_NAME_ALLOW_REG = "[0-9.]+";
 
+  
+  public static final String INTERCEPTOR_NAME_ALLOW_REG="[0-9a-zA-Z]";
 
 
   //

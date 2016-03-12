@@ -3,23 +3,18 @@ package com.seaky.hamster.core.rpc.interceptor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.util.concurrent.SettableFuture;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.exception.NotSetResultException;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.protocol.Response;
+import com.seaky.hamster.core.rpc.trace.InterceptorChainExceptionTrace;
 
 // 支持拦截器的service
 public abstract class InterceptorSupportService<Req, Rsp> {
 
 	protected ProtocolExtensionFactory<Req, Rsp> protocolExtensionFactory;
-
-	private static Logger logger = LoggerFactory
-			.getLogger(InterceptorSupportService.class);
 
 	public InterceptorSupportService(
 			ProtocolExtensionFactory<Req, Rsp> protocolExtensionFactory) {
@@ -34,14 +29,15 @@ public abstract class InterceptorSupportService<Req, Rsp> {
 				ServiceInterceptor interceptor = interceptors.get(i);
 				try {
 					interceptor.preProcess(context);
-					boolean isNotContine = ServiceContextUtils.getResponse(
-							context).isDone();
-					if (isNotContine) {
-						postProcess(context, interceptors, i, null);
+					boolean isDone = ServiceContextUtils.getResponse(context)
+							.isDone();
+					if (isDone) {
+						postProcess(context, interceptors, i + 1, null);
 						return false;
 					}
 				} catch (Exception e) {
-					postProcess(context, interceptors, i, e);
+					addTrace(context, interceptor, true, e);
+					postProcess(context, interceptors, i + 1, e);
 					return false;
 				}
 			}
@@ -70,11 +66,24 @@ public abstract class InterceptorSupportService<Req, Rsp> {
 				try {
 					interceptor.postProcess(context);
 				} catch (Exception e1) {
+					addTrace(context, interceptor, false, e);
 					Response rsp = ServiceContextUtils.getResponse(context);
 					rsp.setResult(e1);
 				}
 			}
 		}
+	}
+
+	private void addTrace(ServiceContext context, ServiceInterceptor obj,
+			boolean isPre, Throwable e) {
+		InterceptorChainExceptionTrace exceptionTrace = ServiceContextUtils
+				.getInterceptorExceptionTrace(context);
+		if (exceptionTrace == null) {
+			exceptionTrace = new InterceptorChainExceptionTrace();
+			ServiceContextUtils.setInterceptorExceptionTrace(context,
+					exceptionTrace);
+		}
+		exceptionTrace.addException(obj, false, e);
 	}
 
 	public void setException(Throwable e, Response info) {

@@ -137,8 +137,8 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
     if (cf.isSuccess()) {
       InetSocketAddress caddr = (InetSocketAddress) cf.channel().localAddress();
       ServiceContextUtils.setClientHost(sc, caddr.getAddress().getHostAddress());
-		ServiceContextUtils.setClientPort(sc, caddr.getPort());
-      // 连接成功之后更新RD
+	  ServiceContextUtils.setClientPort(sc, caddr.getPort());
+      // 连接成功之后更新RD TODO 避免更新继续优化
       client.updateReferenceDescriptor(sc);
       resultFuture.set(null);
     }
@@ -149,6 +149,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
     final SettableFuture<Void> resultFuture = SettableFuture.create();
     State s = status.get();
     if (s == State.CLOSED || s == State.CLOSING) {
+    	//调用的瞬间 刚好连接被关闭，TODO 加入重连机制
       resultFuture.setException(new ClosedChannelException());
       return resultFuture;
     }

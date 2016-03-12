@@ -13,9 +13,11 @@ import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
  */
 public interface ServiceContext {
 
-  public static final String APP = "__APP__";
+	//TODO 控制读写
 
   public static final String SERVICENAME = "__SERVICENAME__";
+
+  public static final String APP = "__APP__";
 
   public static final String GROUP = "__GROUP__";
 
@@ -45,8 +47,7 @@ public interface ServiceContext {
 
   public static final String REFERENCE_CONFIG = "__REFERENCE_CONFIG__";
 
-  public static final String SERVICE_PHASE = "__SERVICE_PHASE__";
-
+  public static final String EXCEPTION_TRACE = "__EXCEPTION_TRACE__";
 
 
   Object getAttribute(String key);

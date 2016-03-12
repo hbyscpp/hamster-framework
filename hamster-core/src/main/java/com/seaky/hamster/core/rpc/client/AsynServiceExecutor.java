@@ -19,6 +19,7 @@ import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.exception.NoServiceAvailable;
+import com.seaky.hamster.core.rpc.exception.NoServiceMatchException;
 import com.seaky.hamster.core.rpc.exception.ServiceNotFoundException;
 import com.seaky.hamster.core.rpc.executor.ServiceThreadpool;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
@@ -115,6 +116,7 @@ public class AsynServiceExecutor<Req, Rsp> {
 		@Override
 		public void run() {
 
+			//TODO prProcess 和postProess 不保证在同一个线程执行，需要改进
 			// 1执行interceptor
 			final List<ServiceInterceptor> interceptors = client
 					.getServiceInterceptors(
@@ -141,9 +143,6 @@ public class AsynServiceExecutor<Req, Rsp> {
 			ServiceLoadBalancer loadBalancer = null;
 			try {
 				sds = chooseServiceInstances();
-				if (sds == null || sds.size() == 0)
-					throw new NoServiceAvailable(context.getAttribute(
-							ServiceContext.SERVICENAME, String.class));
 				loadBalancer = getLoadBalancer();
 				clusterService = getClusterService(loadBalancer);
 				clusterService.process(sds, executor, result);
@@ -159,15 +158,13 @@ public class AsynServiceExecutor<Req, Rsp> {
 						// 未发生任何异常
 						Object obj = result.get();
 						ServiceContextUtils.getResponse(context).setResult(obj);
-						postProcess(interceptors, size,null);
+						postProcess(interceptors, size, null);
 						return;
 					} catch (InterruptedException e) {
 						postProcess(interceptors, size, e);
 						return;
 					} catch (ExecutionException e) {
-						// 调用出现异常
 						Throwable innerException = e.getCause();
-						// 远程服务未返回结果,不执行postProcess
 						postProcess(interceptors, size, innerException);
 						return;
 					}
@@ -181,7 +178,7 @@ public class AsynServiceExecutor<Req, Rsp> {
 				final List<ServiceInterceptor> receiveInterceptors,
 				final int size, Throwable e) {
 			client.getClientInterceptorService().postProcess(context,
-					receiveInterceptors, size,e);
+					receiveInterceptors, size, e);
 			client.getClientInterceptorService()
 					.setFuture(context, finalResult);
 			return;
@@ -196,7 +193,7 @@ public class AsynServiceExecutor<Req, Rsp> {
 			ClusterServiceFactory csf = AbstractClient.clusterExtension
 					.findExtension(clusterName);
 			if (csf == null) {
-				throw new RuntimeException("no service cluster found ");
+				throw new RuntimeException("no service cluster found,name is "+clusterName);
 			}
 			// 每个请求创建集群实例对象
 			return csf.createService(client, loadbalancer, context);
@@ -215,8 +212,8 @@ public class AsynServiceExecutor<Req, Rsp> {
 			// 3选择有配置的实例
 			for (ServiceProviderDescriptor sd : allServiceDescriptors) {
 				// 匹配相同参数
-				if (compareParam(ServiceContextUtils.getRequestParams(context),
-						sd)
+
+				if (compareParam(context, sd)
 						&& Utils.isVersionComp(ServiceContextUtils
 								.getReferenceVersion(context), sd.getVersion())
 						&& Utils.isGroupMatch(
@@ -228,7 +225,7 @@ public class AsynServiceExecutor<Req, Rsp> {
 				}
 			}
 			if (allSd.size() == 0) {
-				throw new ServiceNotFoundException(
+				throw new NoServiceMatchException(
 						ServiceContextUtils.getServiceName(context));
 			}
 			// 4 route 从实例中选择符合要求的实例
@@ -243,15 +240,22 @@ public class AsynServiceExecutor<Req, Rsp> {
 			}
 			// 选出可以提供服务的集群实例
 			List<ServiceProviderDescriptor> sds = router.choose(allSd, context);
+			if (sds == null || sds.size() == 0)
+				throw new NoServiceAvailable(
+						ServiceContextUtils.getServiceName(context));
 			return sds;
 		}
 
-		private boolean compareParam(Object[] params,
+		private boolean compareParam(ServiceContext context,
 				ServiceProviderDescriptor sd) {
-			// TODO return type 是否要check
-			// if (!StringUtils.equals(config.getReturnType().getName(),
-			// sd.getReturnType()))
-			// return false;
+			EndpointConfig config = ServiceContextUtils
+					.getReferenceConfig(context);
+			String returnType = config.get(ConfigConstans.REFERENCE_RETURN);
+
+			if (!StringUtils.equals(returnType, sd.getReturnType()))
+				return false;
+
+			Object[] params = ServiceContextUtils.getRequestParams(context);
 			int leftLength = params == null ? 0 : params.length;
 			int rightlength = sd.getParamTypes() == null ? 0 : sd
 					.getParamTypes().length;
@@ -264,7 +268,6 @@ public class AsynServiceExecutor<Req, Rsp> {
 				if (params[i] == null
 						|| (!StringUtils.equals(params[i].getClass().getName(),
 								sd.getParamTypes()[i]))) {
-					// TODO 测试下
 					try {
 						params[i] = Class.forName(sd.getParamTypes()[i]).cast(
 								params[i]);
@@ -283,7 +286,7 @@ public class AsynServiceExecutor<Req, Rsp> {
 			ServiceLoadBalancer lb = AbstractClient.loadBalanceExtension
 					.findExtension(lbName);
 			if (lb == null) {
-				throw new RuntimeException("no loadbalancer found");
+				throw new RuntimeException("no loadbalancer found,name is "+lbName);
 			}
 			return lb;
 		}

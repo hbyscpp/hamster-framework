@@ -5,7 +5,7 @@ package com.seaky.hamster.core.rpc.client;
 public class ClientConfig {
 
   // 和服务端连接超时s
-  private int connectTimeout = 3;
+  private int connectTimeout = 1;
 
 
   private int readTimeout = 3;

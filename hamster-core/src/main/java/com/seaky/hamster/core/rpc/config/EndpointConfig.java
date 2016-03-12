@@ -17,6 +17,7 @@ import com.seaky.hamster.core.rpc.common.Constants;
  */
 public class EndpointConfig {
 
+	//TODO 控制读写
   private ConcurrentHashMap<String, ConfigItem> configs =
       new ConcurrentHashMap<String, ConfigItem>();
 

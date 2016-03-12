@@ -81,7 +81,6 @@ public abstract class AbstractClusterService<Req, Rsp> implements ClusterService
 
   protected SettableFuture<Object> invokeService(ServiceProviderDescriptor sd,
       final Executor executor) {
-    final SettableFuture<Object> result = SettableFuture.create();
     try {
       // 创建context
       final ServiceContext sc = createServiceContext(sd);
@@ -96,13 +95,14 @@ public abstract class AbstractClusterService<Req, Rsp> implements ClusterService
 
     } catch (Exception e) {
       // 这是未处理的异常
+      final SettableFuture<Object> result = SettableFuture.create();
       logger.error("error access remote server", e);
       ErrorAccessRemoteServerException e1 = new ErrorAccessRemoteServerException(sd.getName(),
           Utils.generateKey(sd.getHost(), String.valueOf(sd.getPort())), e);
       result.setException(e1);
+      return result;
     }
 
-    return result;
 
   }
 

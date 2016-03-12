@@ -1,14 +1,13 @@
 package com.seaky.hamster.core.rpc.interceptor;
 
 import com.seaky.hamster.core.rpc.common.ServiceContext;
-import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 
 
 public abstract class DefaultServiceInterceptor implements ServiceInterceptor {
 
   @Override
   public void preProcess(ServiceContext context) {
-    if (ServiceContextUtils.getSerivePhase(context) == ProcessPhase.SERVER_CALL_SERVICE)
+    if (context.processPhase() == ProcessPhase.SERVER_CALL_SERVICE)
        preServerProcess(context);
     else
        preClientProcess(context);
@@ -24,7 +23,7 @@ public abstract class DefaultServiceInterceptor implements ServiceInterceptor {
 
   @Override
   public void postProcess(ServiceContext context) {
-    if (ServiceContextUtils.getSerivePhase(context) == ProcessPhase.SERVER_CALL_SERVICE)
+    if (context.processPhase() == ProcessPhase.SERVER_CALL_SERVICE)
       postServerProcess(context);
     else
       postClientProcess(context);

@@ -13,168 +13,207 @@ import com.seaky.hamster.core.rpc.config.EndpointConfig;
 // 服务的引用描述
 public class ServiceReferenceDescriptor {
 
-  // 具体的配置
-  private EndpointConfig config;
+	// 具体的配置
+	private EndpointConfig config;
 
-  // 机器地址对
-  private ConcurrentHashMap<String, String> addressPairs = new ConcurrentHashMap<String, String>();
+	// 机器地址对
+	private ConcurrentHashMap<String, String> addressPairs = new ConcurrentHashMap<String, String>();
 
-  /**
-   * @return the serviceName
-   */
-  public String getServiceName() {
-    return config.get(ConfigConstans.REFERENCE_NAME);
-  }
+	/**
+	 * @return the serviceName
+	 */
+	public String getServiceName() {
+		return config.get(ConfigConstans.REFERENCE_NAME);
+	}
 
-  /**
-   * @param serviceName the serviceName to set
-   */
-  public void setServiceName(String serviceName) {
+	/**
+	 * @param serviceName
+	 *            the serviceName to set
+	 */
+	public void setServiceName(String serviceName) {
 
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_NAME, serviceName, true));
-  }
+		config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_NAME,
+				serviceName, true));
+	}
 
-  /**
-   * @return the protocol
-   */
-  public String getProtocol() {
-    return config.get(ConfigConstans.REFERENCE_PROTOCOL);
-  }
+	/**
+	 * @return the protocol
+	 */
+	public String getProtocol() {
+		return config.get(ConfigConstans.REFERENCE_PROTOCOL);
+	}
 
-  /**
-   * @param protocol the protocol to set
-   */
-  public void setProtocol(String protocol) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PROTOCOL, protocol, true));
-  }
+	/**
+	 * @param protocol
+	 *            the protocol to set
+	 */
+	public void setProtocol(String protocol) {
+		config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PROTOCOL,
+				protocol, true));
+	}
 
-  /**
-   * @return the referApp
-   */
-  public String getReferApp() {
-    return config.get(ConfigConstans.REFERENCE_APP);
-  }
+	/**
+	 * @return the referApp
+	 */
+	public String getReferApp() {
+		return config.get(ConfigConstans.REFERENCE_APP);
+	}
 
-  /**
-   * @param referApp the referApp to set
-   */
-  public void setReferApp(String referApp) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, referApp, true));
-  }
+	/**
+	 * @param referApp
+	 *            the referApp to set
+	 */
+	public void setReferApp(String referApp) {
+		config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP,
+				referApp, true));
+	}
 
-  /**
-   * @return the registTime
-   */
-  public long getRegistTime() {
+	/**
+	 * @return the registTime
+	 */
+	public long getRegistTime() {
 
-    return config.getValueAsLong(ConfigConstans.REFERENCE_REG_TIME, 0L);
-  }
+		return config.getValueAsLong(ConfigConstans.REFERENCE_REG_TIME, 0L);
+	}
 
-  /**
-   * @param registTime the registTime to set
-   */
-  public void setRegistTime(long registTime) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_REG_TIME, String
-        .valueOf(registTime), true));
-  }
+	/**
+	 * @param registTime
+	 *            the registTime to set
+	 */
+	public void setRegistTime(long registTime) {
+		config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_REG_TIME,
+				String.valueOf(registTime), true));
+	}
 
-  /**
-   * @return the referVersion
-   */
-  public String getReferVersion() {
-    return config.get(ConfigConstans.REFERENCE_VERSION);
-  }
+	/**
+	 * @return the referVersion
+	 */
+	public String getReferVersion() {
+		return config.get(ConfigConstans.REFERENCE_VERSION);
+	}
 
-  /**
-   * @param referVersion the referVersion to set
-   */
-  public void setReferVersion(String referVersion) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, referVersion, true));
-  }
+	/**
+	 * @param referVersion
+	 *            the referVersion to set
+	 */
+	public void setReferVersion(String referVersion) {
+		config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION,
+				referVersion, true));
+	}
 
-  public EndpointConfig getConfig() {
-    return config;
-  }
+	public EndpointConfig getConfig() {
+		return config;
+	}
 
-  public void setConfig(EndpointConfig config) {
-    this.config = config;
-  }
+	public void setConfig(EndpointConfig config) {
+		this.config = config;
+	}
 
-  public String getPid() {
-    return config.get(ConfigConstans.REFERENCE_PID);
-  }
+	public String getPid() {
+		return config.get(ConfigConstans.REFERENCE_PID);
+	}
 
-  public void setPid(String pid) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PID, pid, true));
-  }
+	public void setPid(String pid) {
+		config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PID, pid,
+				true));
+	}
 
-  public String getReferGroup() {
-    return config.get(ConfigConstans.REFERENCE_GROUP);
-  }
+	public String getReferGroup() {
+		return config.get(ConfigConstans.REFERENCE_GROUP);
+	}
 
-  public void setReferGroup(String referGroup) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, referGroup, true));
-  }
+	public void setReferGroup(String referGroup) {
+		config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP,
+				referGroup, true));
+	}
 
-  public Set<String> getAddressPairs() {
-    return addressPairs.keySet();
-  }
+	public Set<String> getAddressPairs() {
+		return addressPairs.keySet();
+	}
 
-  public boolean containPair(String pair) {
-    return addressPairs.containsKey(pair);
-  }
+	public boolean containPair(String pair) {
+		return addressPairs.containsKey(pair);
+	}
 
-  public void addAddressPair(String addressPair) {
-    addressPairs.put(addressPair, "");
-  }
+	public void addAddressPair(String addressPair) {
+		addressPairs.put(addressPair, "");
+	}
 
-  public String toString() {
+	public void setParamTypes(String[] params) {
+		this.config.addConfigItem(new ConfigItem(
+				ConfigConstans.REFERENCE_PARAMS, paramsToString(params), true));
+	}
 
-    StringBuilder sb = new StringBuilder();
-    sb.append(config.toString());
-    sb.append(Constants.TILDE_LINE);
-    sb.append(hostPairsString());
-    return sb.toString();
+	public String[] getParamTypes() {
+		return this.config.get(ConfigConstans.REFERENCE_PARAMS, "").split(
+				Constants.COMMA);
+	}
 
-  }
+	private String paramsToString(String[] paramTypes) {
+		StringBuilder sb = new StringBuilder();
+		if (paramTypes != null && paramTypes.length > 0) {
+			for (String p : paramTypes) {
+				sb.append(p).append(Constants.COMMA);
+			}
+		}
+		return sb.toString();
+	}
 
-  private String hostPairsString() {
+	public void setReturnType(String returnType) {
+		this.config.addConfigItem(new ConfigItem(
+				ConfigConstans.REFERENCE_RETURN, returnType, true));
+	}
 
-    StringBuilder sb = new StringBuilder();
-    for (String pair : addressPairs.keySet()) {
-      sb.append(pair).append(Constants.COMMA);
-    }
-    return sb.toString();
-  }
+	public String getReturnType() {
+		return this.config.get(ConfigConstans.REFERENCE_RETURN);
+	}
 
-  public static ServiceReferenceDescriptor parseStr(String str) {
-    if (StringUtils.isBlank(str))
-      throw new RuntimeException("error sd format " + str);
+	public String toString() {
 
-    String[] params = str.split(Constants.TILDE_LINE, -1);
-    if (params == null || params.length != 3)
-      throw new RuntimeException("error sd format " + str);
+		StringBuilder sb = new StringBuilder();
+		sb.append(config.toString());
+		sb.append(Constants.TILDE_LINE);
+		sb.append(hostPairsString());
+		return sb.toString();
 
+	}
 
-    ServiceReferenceDescriptor rd = new ServiceReferenceDescriptor();
-    setAddressPair(params[2], rd);
-    EndpointConfig ec = EndpointConfig.parseStr(params[0], params[1]);
-    rd.setConfig(ec);
-    return rd;
-  }
+	private String hostPairsString() {
 
-  private static void setAddressPair(String addressPairs, ServiceReferenceDescriptor rd) {
-    if (StringUtils.isBlank(addressPairs))
-      return;
+		StringBuilder sb = new StringBuilder();
+		for (String pair : addressPairs.keySet()) {
+			sb.append(pair).append(Constants.COMMA);
+		}
+		return sb.toString();
+	}
 
-    String[] pairs = addressPairs.split(Constants.COMMA);
+	public static ServiceReferenceDescriptor parseStr(String str) {
+		if (StringUtils.isBlank(str))
+			throw new RuntimeException("error sd format " + str);
 
-    if (pairs != null) {
-      for (String pair : pairs) {
-        rd.addressPairs.put(pair, "");
-      }
-    }
-  }
+		String[] params = str.split(Constants.TILDE_LINE, -1);
+		if (params == null || params.length != 3)
+			throw new RuntimeException("error sd format " + str);
 
+		ServiceReferenceDescriptor rd = new ServiceReferenceDescriptor();
+		setAddressPair(params[2], rd);
+		EndpointConfig ec = EndpointConfig.parseStr(params[0], params[1]);
+		rd.setConfig(ec);
+		return rd;
+	}
+
+	private static void setAddressPair(String addressPairs,
+			ServiceReferenceDescriptor rd) {
+		if (StringUtils.isBlank(addressPairs))
+			return;
+
+		String[] pairs = addressPairs.split(Constants.COMMA);
+
+		if (pairs != null) {
+			for (String pair : pairs) {
+				rd.addressPairs.put(pair, "");
+			}
+		}
+	}
 
 }

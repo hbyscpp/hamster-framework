@@ -113,21 +113,8 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
     sd.setHost(config.getHost());
     sd.setPort(config.getPort());
     sd.setProtocol(protocolExtensionFactory.protocolName());
-    if (service.returnType() == null) {
-      sd.setReturnType(Void.class.getName());
-    } else {
-      sd.setReturnType(service.returnType().getName());
-    }
     sd.setRegistTime(System.currentTimeMillis());
     sd.setPid(Utils.getCurrentVmPid());
-    Class<?>[] params = service.paramTypes();
-    if (params != null) {
-      String[] paramNames = new String[params.length];
-      for (int i = 0; i < params.length; ++i) {
-        paramNames[i] = params[i].getName();
-      }
-      sd.setParamTypes(paramNames);
-    }
     try {
       registerationService.registService(sd);
     } catch (Exception e) {
