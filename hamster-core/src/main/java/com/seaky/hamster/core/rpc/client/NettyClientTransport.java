@@ -20,10 +20,8 @@ import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
-import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.exception.ClientDeserResultException;
 import com.seaky.hamster.core.rpc.exception.RpcTimeoutException;
-import com.seaky.hamster.core.rpc.protocol.Attachments;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.protocol.Response;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
@@ -137,7 +135,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
     if (cf.isSuccess()) {
       InetSocketAddress caddr = (InetSocketAddress) cf.channel().localAddress();
       ServiceContextUtils.setClientHost(sc, caddr.getAddress().getHostAddress());
-	  ServiceContextUtils.setClientPort(sc, caddr.getPort());
+      ServiceContextUtils.setClientPort(sc, caddr.getPort());
       // 连接成功之后更新RD TODO 避免更新继续优化
       client.updateReferenceDescriptor(sc);
       resultFuture.set(null);
@@ -149,7 +147,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
     final SettableFuture<Void> resultFuture = SettableFuture.create();
     State s = status.get();
     if (s == State.CLOSED || s == State.CLOSING) {
-    	//调用的瞬间 刚好连接被关闭，TODO 加入重连机制
+      // 调用的瞬间 刚好连接被关闭，TODO 加入重连机制
       resultFuture.setException(new ClosedChannelException());
       return resultFuture;
     }
@@ -266,8 +264,8 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
   private void setFutureListener(final ServiceContext sc, Req req,
       final SettableFuture<Rsp> resultFuture) {
 
-    final String seqNum = sc.getAttribute(ServiceContext.REQUEST_ATTACHMENTS, Attachments.class)
-        .getAttachment(Constants.SEQ_NUM_KEY);
+    final String seqNum =
+        ServiceContextUtils.getRequestAttachments(sc).getAttachment(Constants.SEQ_NUM_KEY);
     // 发送之前更新下
     ChannelFuture writeFuture = ch.writeAndFlush(req);
     writeFuture.addListener(new ChannelFutureListener() {
@@ -285,20 +283,16 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
         }
         if (future.isSuccess()) {
           // 发送成功，设置异步超时
-          int seconds = ServiceContextUtils.getReferenceConfig(sc)
-              .getValueAsInt(ConfigConstans.REFERENCE_READ_TIMEOUT,
-                  ConfigConstans.REFERENCE_READ_TIMEOUT_DEFAULT);
+          int seconds = ServiceContextUtils.getReferenceConfig(sc).getValueAsInt(
+              ConfigConstans.REFERENCE_READ_TIMEOUT, ConfigConstans.REFERENCE_READ_TIMEOUT_DEFAULT);
 
           ClientResourceManager.getHashedWheelTimer().newTimeout(new TimerTask() {
             @Override
             public void run(Timeout timeout) throws Exception {
-              resultFuture
-                  .setException(
-                      new RpcTimeoutException(
-                          Utils.generateKey(
-                              ServiceContextUtils.getServerHost(sc),
-                             String.valueOf(ServiceContextUtils.getServerPort(sc))),
-                             ServiceContextUtils.getServiceName(sc)));
+              resultFuture.setException(new RpcTimeoutException(
+                  Utils.generateKey(ServiceContextUtils.getServerHost(sc),
+                      String.valueOf(ServiceContextUtils.getServerPort(sc))),
+                  ServiceContextUtils.getServiceName(sc)));
             }
           }, seconds, TimeUnit.MILLISECONDS);
 
@@ -345,14 +339,14 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
       Throwable e = response.getException();
       if (e instanceof ClientDeserResultException) {
         logger.error("call remote {}:{} service: {},return exception {}",
-            sc.getAttribute(ServiceContext.SERVER_HOST, String.class),
-            String.valueOf(sc.getAttribute(ServiceContext.SERVER_PORT, int.class)),
-            sc.getAttribute(ServiceContext.SERVICENAME, String.class), e);
+            ServiceContextUtils.getServerHost(sc),
+            String.valueOf(ServiceContextUtils.getServerPort(sc)),
+            ServiceContextUtils.getServiceName(sc), e);
       } else {
         logger.debug("call remote {}:{} service: {},return exception {}",
-            sc.getAttribute(ServiceContext.SERVER_HOST, String.class),
-            String.valueOf(sc.getAttribute(ServiceContext.SERVER_PORT, int.class)),
-            sc.getAttribute(ServiceContext.SERVICENAME, String.class), response.getException());
+            ServiceContextUtils.getServerHost(sc),
+            String.valueOf(ServiceContextUtils.getServerPort(sc)),
+            ServiceContextUtils.getServiceName(sc), response.getException());
       }
       rspFutrue.setException(response.getException());
     } else {

@@ -14,13 +14,11 @@ import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.common.DefaultServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
-import com.seaky.hamster.core.rpc.exception.ErrorAccessRemoteServerException;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.Attachments;
 import com.seaky.hamster.core.rpc.protocol.Response;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
-import com.seaky.hamster.core.rpc.utils.Utils;
 
 public abstract class AbstractClusterService<Req, Rsp> implements ClusterService<Req, Rsp> {
 
@@ -81,28 +79,16 @@ public abstract class AbstractClusterService<Req, Rsp> implements ClusterService
 
   protected SettableFuture<Object> invokeService(ServiceProviderDescriptor sd,
       final Executor executor) {
-    try {
-      // 创建context
-      final ServiceContext sc = createServiceContext(sd);
-      // 获取transport
-      final ClientTransport<Req, Rsp> transport = client.getTransport(sd);
-      List<ServiceInterceptor> interceptors =
-          client.getServiceInterceptors(ServiceContextUtils.getServiceName(sc),
-              ServiceContextUtils.getReferenceApp(sc), ServiceContextUtils.getReferenceVersion(sc),
-              ServiceContextUtils.getReferenceGroup(sc), ProcessPhase.CLIENT_CALL_SERVICE_INSTANCE);
-      // 链接
-      return client.getClientInterceptorService().process(sc, transport, executor, interceptors);
-
-    } catch (Exception e) {
-      // 这是未处理的异常
-      final SettableFuture<Object> result = SettableFuture.create();
-      logger.error("error access remote server", e);
-      ErrorAccessRemoteServerException e1 = new ErrorAccessRemoteServerException(sd.getName(),
-          Utils.generateKey(sd.getHost(), String.valueOf(sd.getPort())), e);
-      result.setException(e1);
-      return result;
-    }
-
+    // 创建context
+    final ServiceContext sc = createServiceContext(sd);
+    // 获取transport
+    final ClientTransport<Req, Rsp> transport = client.getTransport(sd);
+    List<ServiceInterceptor> interceptors =
+        client.getServiceInterceptors(ServiceContextUtils.getServiceName(sc),
+            ServiceContextUtils.getReferenceApp(sc), ServiceContextUtils.getReferenceVersion(sc),
+            ServiceContextUtils.getReferenceGroup(sc), ProcessPhase.CLIENT_CALL_SERVICE_INSTANCE);
+    // 链接
+    return client.getClientInterceptorService().process(sc, transport, executor, interceptors);
 
   }
 

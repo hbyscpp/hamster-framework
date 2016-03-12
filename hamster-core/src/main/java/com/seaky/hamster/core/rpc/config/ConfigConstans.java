@@ -54,15 +54,15 @@ public interface ConfigConstans {
   public static final int REFERENCE_MAX_CONCURRENT_DEFAULT = 100;
 
   public static final String REFERENCE_INTERCEPTORS = "sr.interceptors";
-  
-  //引用时是否check
-  public static final String REFERENCE_CHECK_SERVICE="sr.check.service";
-  
-  public static final boolean REFERENCE_CHECK_SERVICE_DEFAULT=false;
-  
-  public static final String REFERENCE_PARAMS="sr.params";
-  
-  public static final String REFERENCE_RETURN="sr.return";
+
+  // 引用时是否check
+  public static final String REFERENCE_CHECK_SERVICE = "sr.check.service";
+
+  public static final boolean REFERENCE_CHECK_SERVICE_DEFAULT = false;
+
+  public static final String REFERENCE_PARAMS = "sr.params";
+
+  public static final String REFERENCE_RETURN = "sr.return";
 
 
   // 服务提供方和引用方都可以配置

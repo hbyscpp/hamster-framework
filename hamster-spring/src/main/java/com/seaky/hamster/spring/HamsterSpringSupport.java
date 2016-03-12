@@ -50,21 +50,27 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
 
     if (allServers.get(id) != null)
       throw new RuntimeException("server " + id + " exists");
-    Server<?, ?> server =
-        ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
-            .findExtension(protocolName).createServer();
+    Server<?, ?> server = ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
+        .findExtension(protocolName).createServer();
 
     server.start(service, config);
     allServers.putIfAbsent(id, server);
     return server;
   }
 
+  public Server<?, ?> createServer(String protocolName, ServerConfig config) {
+    return createServer("default", protocolName, config);
+  }
+
+  public Client<?, ?> createClient(String protocolName, ClientConfig config) {
+    return createClient("default", protocolName, config);
+  }
+
   public Client<?, ?> createClient(String id, String name, ClientConfig config) {
     if (allClients.get(id) != null)
       throw new RuntimeException("client " + id + " exists");
-    Client<?, ?> cc =
-        ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class).findExtension(name)
-            .createClient();
+    Client<?, ?> cc = ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
+        .findExtension(name).createClient();
     ClientConfig conf = new ClientConfig();
     cc.connect(service, conf);
     allClients.putIfAbsent(id, cc);
@@ -91,8 +97,8 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
     ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, config.getApp(), true));
     ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, config.getGroup(), true));
     ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, config.getVersion(), true));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_MAX_CONCURRENT, String.valueOf(config
-        .getMaxConcurrent()), false));
+    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_MAX_CONCURRENT,
+        String.valueOf(config.getMaxConcurrent()), false));
 
     return ec;
   }
@@ -103,10 +109,10 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
     ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, config.getApp(), true));
     ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, config.getGroup(), true));
     ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, config.getVersion(), true));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_MAX_CONCURRENT, String.valueOf(config
-        .getMaxConcurrent()), false));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_READ_TIMEOUT, String.valueOf(config
-        .getReadtimeout()), false));
+    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_MAX_CONCURRENT,
+        String.valueOf(config.getMaxConcurrent()), false));
+    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_READ_TIMEOUT,
+        String.valueOf(config.getReadtimeout()), false));
 
 
     return ec;
@@ -117,7 +123,8 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
         createEndPonintConfig(config), null);
   }
 
-  public <T, V> V referenceAsynService(Class<T> cls, Class<V> asynClass, ClassReferenceConfig config) {
+  public <T, V> V referenceAsynService(Class<T> cls, Class<V> asynClass,
+      ClassReferenceConfig config) {
     return ClientHelper.referAsynInterface(allClients.get(config.getClientId()), cls, asynClass,
         createEndPonintConfig(config), null);
   }
@@ -147,7 +154,6 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
     initRegisterationService();
     initServer();
     initClient();
-    exportService();
   }
 
   @PreDestroy
@@ -170,8 +176,6 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
   public abstract void initRegisterationService();
 
   public abstract void initServer();
-
-  public abstract void exportService();
 
   public abstract void initClient();
 

@@ -6,7 +6,7 @@ import java.util.Map;
 public class ClassReferenceConfig extends ReferenceConfig {
 
 
-  private String clientId;
+  private String clientId = "default";
 
 
   private Map<String, ReferenceConfig> configs = new HashMap<String, ReferenceConfig>();

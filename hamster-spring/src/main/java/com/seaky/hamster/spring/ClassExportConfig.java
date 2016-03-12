@@ -6,7 +6,7 @@ import java.util.Map;
 public class ClassExportConfig extends ServiceConfig {
 
 
-  private String serverId;
+  private String serverId = "default";
 
   private String beanId;
 

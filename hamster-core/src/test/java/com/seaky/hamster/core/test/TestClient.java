@@ -2,9 +2,6 @@ package com.seaky.hamster.core.test;
 
 import java.util.concurrent.ExecutionException;
 
-import rx.Observable;
-import rx.functions.Action1;
-
 import com.seaky.hamster.core.ClientHelper;
 import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.client.Client;
@@ -14,6 +11,9 @@ import com.seaky.hamster.core.rpc.config.ConfigItem;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.registeration.EtcdRegisterationService;
+
+import rx.Observable;
+import rx.functions.Action1;
 
 public class TestClient {
 
@@ -27,9 +27,8 @@ public class TestClient {
     // 注册中心和配置中心
     EtcdRegisterationService lrs = new EtcdRegisterationService("hamster", "http://localhost:2379");
     // 连接客户端
-    Client<?, ?> cc =
-        ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
-            .findExtension("hamster").createClient();
+    Client<?, ?> cc = ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
+        .findExtension("hamster").createClient();
     ClientConfig conf = new ClientConfig();
     cc.connect(lrs, conf);
     // 引用客户端
@@ -40,9 +39,9 @@ public class TestClient {
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0", true));
 
 
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 100; ++i) {
       final MathReactive hello =
-          ClientHelper.referReactiveInterface(cc, Math.class, MathReactive.class, sc,null);
+          ClientHelper.referReactiveInterface(cc, Math.class, MathReactive.class, sc, null);
       // 关闭
       Observable<String> result = hello.hello(String.valueOf(i));
       result.subscribe(new Action1<String>() {
@@ -60,7 +59,7 @@ public class TestClient {
           System.out.println(t1);
         }
       });
-      Thread.sleep(2000);
+      // Thread.sleep(2000);
     }
 
     /**

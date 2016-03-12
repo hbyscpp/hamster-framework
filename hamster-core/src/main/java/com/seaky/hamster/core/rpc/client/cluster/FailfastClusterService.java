@@ -8,9 +8,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.seaky.hamster.core.rpc.client.AbstractClient;
 import com.seaky.hamster.core.rpc.client.loadbalancer.ServiceLoadBalancer;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
-import com.seaky.hamster.core.rpc.exception.CancelConnectToRemoteServerException;
-import com.seaky.hamster.core.rpc.exception.ErrorConnectRemoteServerException;
-import com.seaky.hamster.core.rpc.exception.ErrorSendToRemoteServerException;
+import com.seaky.hamster.core.rpc.exception.AccessRemoteServerException;
 import com.seaky.hamster.core.rpc.exception.NoServiceAvailable;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 
@@ -47,13 +45,8 @@ public class FailfastClusterService<Req, Rsp> extends AbstractClusterService<Req
           return;
         } catch (ExecutionException e) {
           Throwable inner = e.getCause();
-          if (inner instanceof ErrorConnectRemoteServerException) {
+          if (inner instanceof AccessRemoteServerException) {
             // 访问远程错误,未发送请求
-            process(sds, executor, result);
-          } else if (inner instanceof ErrorSendToRemoteServerException) {
-            // 访问远程错误,未发送请求
-            process(sds, executor, result);
-          } else if (inner instanceof CancelConnectToRemoteServerException) {
             process(sds, executor, result);
           } else {
             result.setException(inner);

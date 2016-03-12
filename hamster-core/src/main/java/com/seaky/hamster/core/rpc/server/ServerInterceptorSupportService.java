@@ -18,17 +18,17 @@ public class ServerInterceptorSupportService<Req, Rsp> extends InterceptorSuppor
 
   public void process(ServiceContext context, JavaService service,
       List<ServiceInterceptor> interceptors) {
-    boolean isSuccess = preProcess(context, interceptors);
-    if (!isSuccess) {
+    boolean isDone = preProcess(context, interceptors);
+    if (isDone) {
       return;
     }
     try {
       Object result = service.process(ServiceContextUtils.getRequestParams(context));
       ServiceContextUtils.getResponse(context).setResult(result);
-      postProcess(context, interceptors,null);
     } catch (Exception e) {
-    	postProcess(context, interceptors, e);
-      return;
+      ServiceContextUtils.getResponse(context).setResult(e);;
+    } finally {
+      postProcess(context, interceptors);
     }
   }
 

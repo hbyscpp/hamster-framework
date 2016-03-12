@@ -3,7 +3,7 @@ package com.seaky.hamster.core.rpc.common;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.protocol.Attachments;
 import com.seaky.hamster.core.rpc.protocol.Response;
-import com.seaky.hamster.core.rpc.trace.InterceptorChainExceptionTrace;
+import com.seaky.hamster.core.rpc.trace.ClientCallExceptionTrace;
 
 public class ServiceContextUtils {
 
@@ -92,8 +92,8 @@ public class ServiceContextUtils {
 
 	
 	
-	public static InterceptorChainExceptionTrace getInterceptorExceptionTrace(ServiceContext sc) {
-		return sc.getAttribute(ServiceContext.EXCEPTION_TRACE, InterceptorChainExceptionTrace.class);
+	public static ClientCallExceptionTrace getInterceptorExceptionTrace(ServiceContext sc) {
+		return sc.getAttribute(ServiceContext.EXCEPTION_TRACE, ClientCallExceptionTrace.class);
 	}
 	
 	
@@ -184,7 +184,7 @@ public class ServiceContextUtils {
 	}
 
 	public static void setInterceptorExceptionTrace(ServiceContext sc,
-			InterceptorChainExceptionTrace trace) {
+			ClientCallExceptionTrace trace) {
 		sc.setAttribute(ServiceContext.EXCEPTION_TRACE, trace);
 	}
 

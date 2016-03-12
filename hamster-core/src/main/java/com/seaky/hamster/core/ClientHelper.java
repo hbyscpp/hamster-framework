@@ -189,14 +189,16 @@ public final class ClientHelper {
       sc.mergeServiceConfig(commonConfig);
       String serviceName = cls.getName() + "_" + method.getName();
       sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_NAME, serviceName, true));
-      sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_RETURN, method.getReturnType().getName(), true));
+      sc.addConfigItem(
+          new ConfigItem(ConfigConstans.REFERENCE_RETURN, method.getReturnType().getName(), true));
       Class<?>[] params = method.getParameterTypes();
       if (params != null) {
         String[] paramNames = new String[params.length];
         for (int i = 0; i < params.length; ++i) {
           paramNames[i] = params[i].getName();
         }
-        sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PARAMS, Utils.paramsToString(paramNames), true));
+        sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PARAMS,
+            Utils.paramsToString(paramNames), true));
       }
       JavaReferenceService service = client.reference(sc);
       methodServices.put(method.getName(), service);
