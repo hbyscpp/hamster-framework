@@ -1,11 +1,11 @@
 package com.seaky.hamster.core.rpc.server;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gs.collections.impl.list.mutable.FastList;
 import com.seaky.hamster.core.rpc.exception.MismatchProtocolException;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -23,7 +23,7 @@ public class NettyServerHandler<Req, Rsp> extends ChannelInboundHandlerAdapter {
 
 	private int maxlength = 256;
 
-	private List<Req> allMsgs = FastList.newList(256);
+	private List<Req> allMsgs = new ArrayList<Req>(256);
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -49,7 +49,7 @@ public class NettyServerHandler<Req, Rsp> extends ChannelInboundHandlerAdapter {
 		transport.getServer().getRequestDispatcher()
 				.dispatchMessages(allMsgs, transport);
 		if (maxlength > 0)
-			allMsgs = FastList.newList(maxlength);
+			allMsgs = new ArrayList<Req>(maxlength);
 		ctx.fireChannelReadComplete();
 	}
 

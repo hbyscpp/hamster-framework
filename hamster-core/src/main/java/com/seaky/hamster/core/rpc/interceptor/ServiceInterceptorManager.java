@@ -1,10 +1,10 @@
 package com.seaky.hamster.core.rpc.interceptor;
 
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.reflections.Reflections;
 
-import com.gs.collections.impl.map.mutable.ConcurrentHashMap;
 import com.seaky.hamster.core.objectfactory.ObjectCreatorFactory;
 import com.seaky.hamster.core.rpc.annotation.ServiceInterceptorAnnotation;
 import com.seaky.hamster.core.rpc.common.Constants;

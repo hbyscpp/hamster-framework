@@ -1,6 +1,7 @@
 package com.seaky.hamster.core.rpc.common;
 
-import com.gs.collections.impl.map.mutable.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 
 /**
@@ -35,7 +36,7 @@ public class DefaultServiceContext implements ServiceContext {
 
   @Override
   public void removeAttribute(String key) {
-    attributes.removeKey(key);
+    attributes.remove(key);
   }
 
   @SuppressWarnings("unchecked")

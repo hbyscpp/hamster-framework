@@ -3,9 +3,9 @@ package com.seaky.hamster.core.rpc.client;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.gs.collections.impl.list.mutable.FastList;
 import com.seaky.hamster.core.rpc.exception.MismatchProtocolException;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 
@@ -21,7 +21,7 @@ public class Netty4ClientHandler<Req, Rsp> extends ChannelInboundHandlerAdapter 
 		this.protocolExtensionFactory = protocolExtensionFactory;
 	}
 
-	private List<Rsp> allMsgs = FastList.newList(256);
+	private List<Rsp> allMsgs = new ArrayList<Rsp>(256);
 
 	private int maxlength = 0;
 
@@ -44,7 +44,7 @@ public class Netty4ClientHandler<Req, Rsp> extends ChannelInboundHandlerAdapter 
 		maxlength = maxlength > allMsgs.size() ? maxlength : allMsgs.size();
 		transport.setResponse(allMsgs);
 		if (allMsgs.size() > 0)
-			allMsgs = FastList.newList(maxlength);
+			allMsgs =new ArrayList<Rsp>(256);
 		ctx.fireChannelReadComplete();
 	}
 

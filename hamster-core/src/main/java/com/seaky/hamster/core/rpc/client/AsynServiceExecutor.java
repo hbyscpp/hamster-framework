@@ -1,5 +1,6 @@
 package com.seaky.hamster.core.rpc.client;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -8,7 +9,6 @@ import java.util.concurrent.Executor;
 import org.apache.commons.lang.StringUtils;
 
 import com.google.common.util.concurrent.SettableFuture;
-import com.gs.collections.impl.list.mutable.FastList;
 import com.seaky.hamster.core.rpc.client.cluster.ClusterService;
 import com.seaky.hamster.core.rpc.client.cluster.ClusterServiceFactory;
 import com.seaky.hamster.core.rpc.client.loadbalancer.ServiceLoadBalancer;
@@ -203,7 +203,7 @@ public class AsynServiceExecutor<Req, Rsp> {
       if (allServiceDescriptors == null || allServiceDescriptors.size() == 0) {
         throw new ServiceNotFoundException(ServiceContextUtils.getServiceName(context));
       }
-      List<ServiceProviderDescriptor> allSd = FastList.newList();
+      List<ServiceProviderDescriptor> allSd = new ArrayList<ServiceProviderDescriptor>();
       // 3选择有配置的实例
       for (ServiceProviderDescriptor sd : allServiceDescriptors) {
         // 匹配相同参数
