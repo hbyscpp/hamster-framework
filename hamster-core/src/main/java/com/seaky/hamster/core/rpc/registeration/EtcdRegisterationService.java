@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -143,7 +144,6 @@ public class EtcdRegisterationService implements RegisterationService {
   public void registService(ServiceProviderDescriptor sd) {
     localRegistCache.put(serviceKey(sd), sd);
     registService(sd, false);
-    findServices(sd.getName());
   }
 
   public void registService(ServiceProviderDescriptor sd, boolean isAsyn) {
@@ -266,7 +266,7 @@ public class EtcdRegisterationService implements RegisterationService {
     return findServices(name, false);
   }
 
-  public Collection<ServiceProviderDescriptor> findServices(String name, boolean isForce) {
+  private Collection<ServiceProviderDescriptor> findServices(String name, boolean isForce) {
 
 
     Boolean isWatch = watchCacheBoolean.putIfAbsent(name, true);
@@ -294,7 +294,7 @@ public class EtcdRegisterationService implements RegisterationService {
 
     ConcurrentHashMap<String, ServiceProviderDescriptor> allSd = serviceDescriptors.get(name);
     if (allSd != null)
-      return allSd.values();
+      return Collections.unmodifiableCollection(allSd.values());
     return null;
   }
 
@@ -308,8 +308,6 @@ public class EtcdRegisterationService implements RegisterationService {
       return;
     }
 
-    boolean initProvider = false;
-    boolean initConsumer = false;
     for (EtcdNode node : subNodes) {
 
       if (node.key.endsWith(PROVIDERS)) {
@@ -317,21 +315,12 @@ public class EtcdRegisterationService implements RegisterationService {
         // 服务提供者
         List<EtcdNode> providerNodes = node.nodes;
         genInitServiceCache(name, providerNodes);
-        initProvider = true;
 
       } else if (node.key.endsWith(CONSUMERS)) {
         // 服务消费者
         List<EtcdNode> consumerNodes = node.nodes;
         genInitConsumerCache(name, consumerNodes);
-        initConsumer = true;
       }
-    }
-
-    if (!initProvider) {
-      serviceDescriptors.remove(name);
-    }
-    if (!initConsumer) {
-      referDescriptors.remove(name);
     }
   }
 
@@ -382,8 +371,9 @@ public class EtcdRegisterationService implements RegisterationService {
     ConcurrentHashMap<String, ServiceProviderDescriptor> allds = serviceDescriptors.get(name);
 
     if (allds == null) {
+    	allds=new ConcurrentHashMap<String, ServiceProviderDescriptor>();
       ConcurrentHashMap<String, ServiceProviderDescriptor> oldds =
-          serviceDescriptors.putIfAbsent(name, new ConcurrentHashMap<String, ServiceProviderDescriptor>());
+          serviceDescriptors.putIfAbsent(name, allds);
       if (oldds != null) {
         allds = oldds;
       }
@@ -437,8 +427,15 @@ public class EtcdRegisterationService implements RegisterationService {
   private void updateConsumer(String name, String value) {
     ServiceReferenceDescriptor rd = ServiceReferenceDescriptor.parseStr(value);
     ConcurrentHashMap<String, ServiceReferenceDescriptor> allds =
-        new ConcurrentHashMap<String, ServiceReferenceDescriptor>();
-
+    		referDescriptors.get(name);
+    if (allds == null) {
+    	allds=new ConcurrentHashMap<String, ServiceReferenceDescriptor>();
+      ConcurrentHashMap<String, ServiceReferenceDescriptor> oldds =
+    		  referDescriptors.putIfAbsent(name, allds);
+      if (oldds != null) {
+        allds = oldds;
+      }
+    }
     if (rd.getAddressPairs().size() != 0) {
 
       for (String pair : rd.getAddressPairs()) {
@@ -539,13 +536,8 @@ public class EtcdRegisterationService implements RegisterationService {
     ConcurrentHashMap<String, ServiceReferenceDescriptor> sds = referDescriptors.get(name);
     if (sds == null)
       return null;
-    StringBuilder sb = new StringBuilder();
-    sb.append(referHost).append(Constants.COLON);
-    sb.append(referPort);
-    sb.append(Constants.COMMA);
-    sb.append(host).append(Constants.COLON);
-    sb.append(port);
-    String key = Utils.generateKey(name, referApp, group, version, protocol, sb.toString());
+    String pair=Utils.createServerAndClientAddress(referHost, referPort, host, port);
+    String key = Utils.generateKey(name, referApp, group, version, protocol,pair);
     return sds.get(key);
   }
 

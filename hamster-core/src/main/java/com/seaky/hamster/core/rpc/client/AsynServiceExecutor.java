@@ -241,24 +241,8 @@ public class AsynServiceExecutor<Req, Rsp> {
         return false;
 
       Object[] params = ServiceContextUtils.getRequestParams(context);
-      int leftLength = params == null ? 0 : params.length;
-      int rightlength = sd.getParamTypes() == null ? 0 : sd.getParamTypes().length;
-      if (leftLength != rightlength)
-        return false;
-      if (leftLength == 0)
-        return true;
-
-      for (int i = 0; i < leftLength; ++i) {
-        if (params[i] == null
-            || (!StringUtils.equals(params[i].getClass().getName(), sd.getParamTypes()[i]))) {
-          try {
-            params[i] = Class.forName(sd.getParamTypes()[i]).cast(params[i]);
-          } catch (ClassNotFoundException | ClassCastException e) {
-            return false;
-          }
-        }
-      }
-      return true;
+      return Utils.isMatch(sd.getParamTypes(), params);
+     
     }
 
     private ServiceLoadBalancer getLoadBalancer() {
