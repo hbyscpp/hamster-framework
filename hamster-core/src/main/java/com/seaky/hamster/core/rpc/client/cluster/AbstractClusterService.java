@@ -47,6 +47,8 @@ public abstract class AbstractClusterService<Req, Rsp> implements ClusterService
     ServiceContextUtils.setReferenceGroup(sc, ServiceContextUtils.getReferenceGroup(context));
     ServiceContextUtils.setReferenceConfig(sc, ServiceContextUtils.getReferenceConfig(context));
     ServiceContextUtils.setResponse(sc, new Response());
+    ServiceContextUtils.setInterceptorExceptionTrace(sc,
+        ServiceContextUtils.getInterceptorExceptionTrace(context));
     // TODO attachments 传递
     Attachments attachments = new Attachments();
 

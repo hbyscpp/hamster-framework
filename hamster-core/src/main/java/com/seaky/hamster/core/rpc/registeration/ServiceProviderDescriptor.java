@@ -18,171 +18,160 @@ import com.seaky.hamster.core.rpc.config.EndpointConfig;
  */
 public class ServiceProviderDescriptor {
 
-	// 服务的配置
-	private EndpointConfig config = new EndpointConfig();
+  // 服务的配置
+  private EndpointConfig config = new EndpointConfig();
 
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return config.get(ConfigConstans.PROVIDER_NAME);
-	}
+  /**
+   * @return the name
+   */
+  public String getName() {
+    return config.get(ConfigConstans.PROVIDER_NAME);
+  }
 
-	/**
-	 * @param name
-	 *            the name to set
-	 */
-	public void setName(String name) {
-		this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_NAME,
-				name, true));
-	}
+  /**
+   * @param name the name to set
+   */
+  public void setName(String name) {
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_NAME, name, true));
+  }
 
-	/**
-	 * @return the protocol
-	 */
-	public String getProtocol() {
-		return config.get(ConfigConstans.PROVIDER_PROTOCOL);
-	}
+  /**
+   * @return the protocol
+   */
+  public String getProtocol() {
+    return config.get(ConfigConstans.PROVIDER_PROTOCOL);
+  }
 
-	/**
-	 * @param protocol
-	 *            the protocol to set
-	 */
-	public void setProtocol(String protocol) {
-		this.config.addConfigItem(new ConfigItem(
-				ConfigConstans.PROVIDER_PROTOCOL, protocol, true));
-	}
+  /**
+   * @param protocol the protocol to set
+   */
+  public void setProtocol(String protocol) {
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PROTOCOL, protocol, true));
+  }
 
-	/**
-	 * @return the app
-	 */
-	public String getApp() {
-		return this.config.get(ConfigConstans.PROVIDER_APP);
-	}
+  /**
+   * @return the app
+   */
+  public String getApp() {
+    return this.config.get(ConfigConstans.PROVIDER_APP);
+  }
 
-	public void setApp(String app) {
-		this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP,
-				app, true));
-	}
+  public void setApp(String app) {
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, app, true));
+  }
 
-	public String getPid() {
-		return this.config.get(ConfigConstans.PROVIDER_PID);
-	}
+  public String getPid() {
+    return this.config.get(ConfigConstans.PROVIDER_PID);
+  }
 
-	public void setPid(String pid) {
-		this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PID,
-				pid, true));
-	}
+  public void setPid(String pid) {
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PID, pid, true));
+  }
 
-	public String toString() {
-		return config.toString();
-	}
+  public String toString() {
+    return config.toString();
+  }
 
-	/**
-	 * @return the host
-	 */
-	public String getHost() {
-		return this.config.get(ConfigConstans.PROVIDER_HOST);
-	}
+  /**
+   * @return the host
+   */
+  public String getHost() {
+    return this.config.get(ConfigConstans.PROVIDER_HOST);
+  }
 
-	/**
-	 * @param host
-	 *            the host to set
-	 */
-	public void setHost(String host) {
-		this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_HOST,
-				host, true));
-	}
+  /**
+   * @param host the host to set
+   */
+  public void setHost(String host) {
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_HOST, host, true));
+  }
 
-	/**
-	 * @param port
-	 *            the port to set
-	 */
-	public void setPort(int port) {
-		this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PORT,
-				String.valueOf(port), true));
-	}
+  /**
+   * @param port the port to set
+   */
+  public void setPort(int port) {
+    this.config
+        .addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PORT, String.valueOf(port), true));
+  }
 
-	/**
-	 * @param version
-	 *            the version to set
-	 */
-	public String getVersion() {
-		return this.config.get(ConfigConstans.PROVIDER_VERSION);
-	}
+  /**
+   * @param version the version to set
+   */
+  public String getVersion() {
+    return this.config.get(ConfigConstans.PROVIDER_VERSION);
+  }
 
-	public void setVersion(String version) {
-		this.config.addConfigItem(new ConfigItem(
-				ConfigConstans.PROVIDER_VERSION, version, true));
-	}
+  public void setVersion(String version) {
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, version, true));
+  }
 
-	public String getGroup() {
-		return this.config.get(ConfigConstans.PROVIDER_GROUP);
-	}
+  public String getGroup() {
+    return this.config.get(ConfigConstans.PROVIDER_GROUP);
+  }
 
-	public void setGroup(String group) {
-		this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP,
-				group, true));
-	}
+  public void setGroup(String group) {
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, group, true));
+  }
 
 
-	public int getPort() {
-		return this.config.getValueAsInt(ConfigConstans.PROVIDER_PORT, -1);
-	}
+  public int getPort() {
+    return this.config.getValueAsInt(ConfigConstans.PROVIDER_PORT, -1);
+  }
 
-	public void setParamTypes(String[] params) {
-		this.config.addConfigItem(new ConfigItem(
-				ConfigConstans.PROVIDER_PARAMS, paramsToString(params), true));
-	}
+  public void setParamTypes(String[] params) {
+    this.config.addConfigItem(
+        new ConfigItem(ConfigConstans.PROVIDER_PARAMS, paramsToString(params), true));
+  }
 
-	public String[] getParamTypes() {
-		return this.config.get(ConfigConstans.PROVIDER_PARAMS, "").split(
-				Constants.COMMA);
-	}
+  public String[] getParamTypes() {
 
-	private String paramsToString(String[] paramTypes) {
-		StringBuilder sb = new StringBuilder();
-		if (paramTypes != null && paramTypes.length > 0) {
-			for (String p : paramTypes) {
-				sb.append(p).append(Constants.COMMA);
-			}
-		}
-		return sb.toString();
-	}
+    String parms = this.config.get(ConfigConstans.PROVIDER_PARAMS, "");
+    if (StringUtils.isBlank(parms))
+      return null;
+    return parms.split(Constants.COMMA);
+  }
 
-	public void setReturnType(String returnType) {
-		this.config.addConfigItem(new ConfigItem(
-				ConfigConstans.PROVIDER_RETURN, returnType, true));
-	}
+  private String paramsToString(String[] paramTypes) {
+    StringBuilder sb = new StringBuilder();
+    if (paramTypes != null && paramTypes.length > 0) {
+      for (String p : paramTypes) {
+        sb.append(p).append(Constants.COMMA);
+      }
+    }
+    return sb.toString();
+  }
 
-	public String getReturnType() {
-		return this.config.get(ConfigConstans.PROVIDER_RETURN);
-	}
+  public void setReturnType(String returnType) {
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_RETURN, returnType, true));
+  }
 
-	public static ServiceProviderDescriptor parseStr(String str) {
-		if (StringUtils.isBlank(str))
-			throw new RuntimeException("error sd format " + str);
-		ServiceProviderDescriptor sd = new ServiceProviderDescriptor();
-		EndpointConfig ec = EndpointConfig.parseStr(str);
-		sd.setConfig(ec);
-		return sd;
-	}
+  public String getReturnType() {
+    return this.config.get(ConfigConstans.PROVIDER_RETURN);
+  }
 
-	public EndpointConfig getConfig() {
-		return config;
-	}
+  public static ServiceProviderDescriptor parseStr(String str) {
+    if (StringUtils.isBlank(str))
+      throw new RuntimeException("error sd format " + str);
+    ServiceProviderDescriptor sd = new ServiceProviderDescriptor();
+    EndpointConfig ec = EndpointConfig.parseStr(str);
+    sd.setConfig(ec);
+    return sd;
+  }
 
-	public void setConfig(EndpointConfig config) {
-		this.config = config;
-	}
+  public EndpointConfig getConfig() {
+    return config;
+  }
 
-	public long getRegistTime() {
-		return this.config.getValueAsLong(ConfigConstans.PROVIDER_REG_TIME, 0L);
-	}
+  public void setConfig(EndpointConfig config) {
+    this.config = config;
+  }
 
-	public void setRegistTime(long registTime) {
-		this.config.addConfigItem(new ConfigItem(
-				ConfigConstans.PROVIDER_REG_TIME, String.valueOf(registTime),
-				true));
-	}
+  public long getRegistTime() {
+    return this.config.getValueAsLong(ConfigConstans.PROVIDER_REG_TIME, 0L);
+  }
+
+  public void setRegistTime(long registTime) {
+    this.config.addConfigItem(
+        new ConfigItem(ConfigConstans.PROVIDER_REG_TIME, String.valueOf(registTime), true));
+  }
 }

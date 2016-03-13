@@ -12,9 +12,9 @@ import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
     ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE, ProcessPhase.CLIENT_CALL_SERVICE_INSTANCE})
 public class AccessLogInterceptor extends DefaultServiceInterceptor {
 
-  private static Logger serverlogger = LoggerFactory.getLogger("hamster_client_accesslog");
+  private static Logger serverlogger = LoggerFactory.getLogger("hamster_server_accesslog");
 
-  private static Logger clientlogger = LoggerFactory.getLogger("hamster_server_accesslog");
+  private static Logger clientlogger = LoggerFactory.getLogger("hamster_client_accesslog");
 
 
   @Override

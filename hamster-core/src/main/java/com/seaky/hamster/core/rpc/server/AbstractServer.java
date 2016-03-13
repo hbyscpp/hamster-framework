@@ -278,6 +278,12 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
         protocolExtensionFactory.protocolName(), config.getHost(), config.getPort()).getConfig();
   }
 
+  ServiceProviderDescriptor getServiceDescriptor(String app, String serviceName, String version,
+      String group) {
+    return registerationService.findService(app, serviceName, version, group,
+        protocolExtensionFactory.protocolName(), config.getHost(), config.getPort());
+  }
+
   public List<ServiceInterceptor> getServiceInterceptor(String serviceName, String app,
       String version, String group) {
     String key = Utils.generateKey(serviceName, app, version, group);
