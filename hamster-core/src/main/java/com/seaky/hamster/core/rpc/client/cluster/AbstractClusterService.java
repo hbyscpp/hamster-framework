@@ -31,7 +31,7 @@ public abstract class AbstractClusterService<Req, Rsp> implements ClusterService
   private static Logger logger = LoggerFactory.getLogger(AbstractClusterService.class);
 
   protected ServiceContext createServiceContext(final ServiceProviderDescriptor sd) {
-    ServiceContext sc = new DefaultServiceContext(ProcessPhase.SERVER_CALL_SERVICE);
+    ServiceContext sc = new DefaultServiceContext(ProcessPhase.CLIENT_CALL_SERVICE_INSTANCE);
     ServiceContextUtils.setServiceName(sc, sd.getName());
     ServiceContextUtils.setApp(sc, sd.getApp());
     ServiceContextUtils.setVersion(sc, sd.getVersion());

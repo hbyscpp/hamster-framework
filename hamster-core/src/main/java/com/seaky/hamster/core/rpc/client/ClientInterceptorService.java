@@ -21,159 +21,152 @@ import com.seaky.hamster.core.rpc.protocol.Response;
 import com.seaky.hamster.core.rpc.trace.ClientCallExceptionTrace;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
-public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportService<Req, Rsp> {
+public class ClientInterceptorService<Req, Rsp> extends
+		InterceptorSupportService<Req, Rsp> {
 
-  public ClientInterceptorService(ProtocolExtensionFactory<Req, Rsp> protocolExtensionFactory) {
-    super(protocolExtensionFactory);
-  }
+	public ClientInterceptorService(
+			ProtocolExtensionFactory<Req, Rsp> protocolExtensionFactory) {
+		super(protocolExtensionFactory);
+	}
 
-  // 真正调用远程服务
-  public SettableFuture<Object> process(final ServiceContext sc,
-      final ClientTransport<Req, Rsp> transport, final Executor executor,
-      final List<ServiceInterceptor> interceptors) {
-    final SettableFuture<Object> result = SettableFuture.create();
-    if (interceptors != null && interceptors.size() > 0) {
-      if (preProcess(sc, interceptors)) {
-        setFuture(sc, result);
-        return result;
-      }
-    }
-    try {
-      final SettableFuture<Void> connectFuture = transport.connect(sc);
-      if (connectFuture.isDone()) {
-        connectHandler(result, connectFuture, transport, executor, sc, interceptors);
-      } else {
-        connectFuture.addListener(new Runnable() {
+	// 真正调用远程服务
+	public SettableFuture<Object> process(final ServiceContext sc,
+			final ClientTransport<Req, Rsp> transport, final Executor executor,
+			final List<ServiceInterceptor> interceptors) {
+		final SettableFuture<Object> result = SettableFuture.create();
+		if (interceptors != null && interceptors.size() > 0) {
+			if (preProcess(sc, interceptors)) {
+				setFuture(sc, result);
+				return result;
+			}
+		}
+		try {
+			final SettableFuture<Void> connectFuture = transport.connect(sc);
+			if (connectFuture.isDone()) {
+				connectHandler(result, connectFuture, transport, executor, sc,
+						interceptors);
+			} else {
+				connectFuture.addListener(new Runnable() {
 
-          @Override
-          public void run() {
-            connectHandler(result, connectFuture, transport, executor, sc, interceptors);
-          }
-        }, executor);
-      }
+					@Override
+					public void run() {
+						connectHandler(result, connectFuture, transport,
+								executor, sc, interceptors);
+					}
+				}, executor);
+			}
 
-      return result;
-    } catch (Exception e) {
-      addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE,
-          ServiceContextUtils.getServerHost(sc) + ":" + ServiceContextUtils.getServerPort(sc), e);
-      Response rsp = ServiceContextUtils.getResponse(sc);
-      rsp.setResult(e);
-      postProcess(sc, interceptors);
-      setFuture(sc, result);
-      return result;
-    }
+			return result;
+		} catch (Exception e) {
+			addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE,
+					ServiceContextUtils.getServerHost(sc) + ":"
+							+ ServiceContextUtils.getServerPort(sc), e);
+			Response rsp = ServiceContextUtils.getResponse(sc);
+			rsp.setResult(e);
+			postProcess(sc, interceptors);
+			setFuture(sc, result);
+			return result;
+		}
 
-  }
+	}
 
-  private void connectHandler(final SettableFuture<Object> result,
-      final SettableFuture<Void> connectFuture, final ClientTransport<Req, Rsp> transport,
-      final Executor executor, final ServiceContext sc,
-      final List<ServiceInterceptor> interceptors) {
-    try {
-      connectFuture.get();
-    } catch (InterruptedException e) {
-      // 连接请求被中断，需要用户自行处理，非业务异常
-      CancelConnectToRemoteServerException proex =
-          new CancelConnectToRemoteServerException(ServiceContextUtils.getServiceName(sc),
-              Utils.socketAddrToString(transport.getRemoteAddress()), e);
-      addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE,
-          Utils.socketAddrToString(transport.getRemoteAddress()), e);
-      ServiceContextUtils.getResponse(sc).setResult(proex);
-      setFuture(sc, result);
-      Thread.currentThread().interrupt();
-      return;
-    } catch (CancellationException e) {
-      // 连接请求被中断，需要用户自行处理，非业务异常
-      CancelConnectToRemoteServerException proex =
-          new CancelConnectToRemoteServerException(ServiceContextUtils.getServiceName(sc),
-              Utils.socketAddrToString(transport.getRemoteAddress()), e);
-      addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE,
-          Utils.socketAddrToString(transport.getRemoteAddress()), e);
-      ServiceContextUtils.getResponse(sc).setResult(proex);
-      setFuture(sc, result);
-      return;
-    } catch (ExecutionException e) {
-      // 连接请求被中断，需要用户自行处理，非业务异常
-      ErrorConnectRemoteServerException proex =
-          new ErrorConnectRemoteServerException(ServiceContextUtils.getServiceName(sc),
-              Utils.socketAddrToString(transport.getRemoteAddress()), e.getCause());
-      addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE,
-          Utils.socketAddrToString(transport.getRemoteAddress()), e.getCause());
-      ServiceContextUtils.getResponse(sc).setResult(proex);
-      setFuture(sc, result);
-      return;
-    }
-    // 连接成功了,写网络
-    try {
-      RequestExtractor<Req> reqWriter = protocolExtensionFactory.getRequestExtractor();
-      Req req = reqWriter.extractFrom(sc);
-      final SettableFuture<Rsp> r = transport.send(req, sc);
+	private void connectHandler(final SettableFuture<Object> result,
+			final SettableFuture<Void> connectFuture,
+			final ClientTransport<Req, Rsp> transport, final Executor executor,
+			final ServiceContext sc, final List<ServiceInterceptor> interceptors) {
+		try {
+			connectFuture.get();
+		} catch (InterruptedException | CancellationException e) {
+			// 连接请求被中断，需要用户自行处理，非业务异常
+			String addr = Utils
+					.socketAddrToString(transport.getRemoteAddress());
+			CancelConnectToRemoteServerException proex = new CancelConnectToRemoteServerException(
+					ServiceContextUtils.getServiceName(sc), addr, e);
+			addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE,
+					addr, e);
+			ServiceContextUtils.getResponse(sc).setResult(proex);
+			setFuture(sc, result);
+			if (e instanceof InterruptedException)
+				Thread.currentThread().interrupt();
+			return;
+		} catch (ExecutionException e) {
+			// 连接请求被中断，需要用户自行处理，非业务异常
+			String addr = Utils
+					.socketAddrToString(transport.getRemoteAddress());
+			ErrorConnectRemoteServerException proex = new ErrorConnectRemoteServerException(
+					ServiceContextUtils.getServiceName(sc), addr, e.getCause());
+			addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE,
+					addr, e.getCause());
+			ServiceContextUtils.getResponse(sc).setResult(proex);
+			setFuture(sc, result);
+			return;
+		}
+		// 连接成功了,写网络
+		try {
+			RequestExtractor<Req> reqWriter = protocolExtensionFactory
+					.getRequestExtractor();
+			Req req = reqWriter.extractFrom(sc);
+			final SettableFuture<Rsp> r = transport.send(req, sc);
 
-      r.addListener(new Runnable() {
-        @Override
-        public void run() {
-          sendHandler(sc, interceptors, result, r);
-        }
-      }, executor);
-    } catch (Exception e) {
-      addException(sc, ClientCallExceptionTrace.SEND_SERVICE_INSTANCE,
-          Utils.socketAddrToString(transport.getRemoteAddress()), e.getCause());
-      ServiceContextUtils.getResponse(sc).setResult(e);
-      postProcess(sc, interceptors);
-      setFuture(sc, result);
-    }
+			r.addListener(new Runnable() {
+				@Override
+				public void run() {
+					sendHandler(sc, interceptors, result, r);
+				}
+			}, executor);
+		} catch (Exception e) {
+			addException(sc, ClientCallExceptionTrace.SEND_SERVICE_INSTANCE,
+					Utils.socketAddrToString(transport.getRemoteAddress()),
+					e.getCause());
+			ServiceContextUtils.getResponse(sc).setResult(e);
+			postProcess(sc, interceptors);
+			setFuture(sc, result);
+		}
 
-  }
+	}
 
-  private void sendHandler(final ServiceContext sc, final List<ServiceInterceptor> interceptors,
-      final SettableFuture<Object> result, final SettableFuture<Rsp> r) {
-    // 查看是否存在网络异常,或者超时
-    try {
-      r.get();
-    } catch (CancellationException e) {
-      CancelSendToRemoteServer e1 =
-          new CancelSendToRemoteServer(ServiceContextUtils.getServiceName(sc),
-              Utils.generateKey(ServiceContextUtils.getServerHost(sc),
-                  String.valueOf(ServiceContextUtils.getServerPort(sc))),
-              e);
-      addException(sc, ClientCallExceptionTrace.SEND_SERVICE_INSTANCE,
-          Utils.generateKey(ServiceContextUtils.getServerHost(sc),
-              String.valueOf(ServiceContextUtils.getServerPort(sc))),
-          e);
-      ServiceContextUtils.getResponse(sc).setResult(e1);
-    } catch (InterruptedException e2) {
-      CancelSendToRemoteServer e1 =
-          new CancelSendToRemoteServer(ServiceContextUtils.getServiceName(sc),
-              Utils.generateKey(ServiceContextUtils.getServerHost(sc),
-                  String.valueOf(ServiceContextUtils.getServerPort(sc))),
-              e2);
-      addException(sc, ClientCallExceptionTrace.SEND_SERVICE_INSTANCE,
-          Utils.generateKey(ServiceContextUtils.getServerHost(sc),
-              String.valueOf(ServiceContextUtils.getServerPort(sc))),
-          e2);
-      ServiceContextUtils.getResponse(sc).setResult(e1);
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException e2) {
-      Throwable innere = e2.getCause();
-      addException(sc, ClientCallExceptionTrace.SEND_SERVICE_INSTANCE,
-          Utils.generateKey(ServiceContextUtils.getServerHost(sc),
-              String.valueOf(ServiceContextUtils.getServerPort(sc))),
-          innere);
-      if (innere instanceof RpcException) {
-        ServiceContextUtils.getResponse(sc).setResult(innere);
-      } else {
-        ErrorSendToRemoteServerException e1 =
-            new ErrorSendToRemoteServerException(ServiceContextUtils.getServiceName(sc),
-                Utils.generateKey(ServiceContextUtils.getServerHost(sc),
-                    String.valueOf(ServiceContextUtils.getServerPort(sc))),
-                innere);
-        ServiceContextUtils.getResponse(sc).setResult(e1);
-      }
-    } finally {
-      postProcess(sc, interceptors);
-      setFuture(sc, result);
-    }
+	private void sendHandler(final ServiceContext sc,
+			final List<ServiceInterceptor> interceptors,
+			final SettableFuture<Object> result, final SettableFuture<Rsp> r) {
+		// 查看是否存在网络异常,或者超时
+		try {
+			r.get();
+		} catch (CancellationException | InterruptedException e) {
+			CancelSendToRemoteServer e1 = new CancelSendToRemoteServer(
+					ServiceContextUtils.getServiceName(sc), Utils.generateKey(
+							ServiceContextUtils.getServerHost(sc), String
+									.valueOf(ServiceContextUtils
+											.getServerPort(sc))), e);
+			addException(sc, ClientCallExceptionTrace.SEND_SERVICE_INSTANCE,
+					Utils.generateKey(ServiceContextUtils.getServerHost(sc),
+							String.valueOf(ServiceContextUtils
+									.getServerPort(sc))), e);
+			ServiceContextUtils.getResponse(sc).setResult(e1);
+			if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+			}
+		} catch (ExecutionException e2) {
+			Throwable innere = e2.getCause();
+			addException(sc, ClientCallExceptionTrace.SEND_SERVICE_INSTANCE,
+					Utils.generateKey(ServiceContextUtils.getServerHost(sc),
+							String.valueOf(ServiceContextUtils
+									.getServerPort(sc))), innere);
+			if (innere instanceof RpcException) {
+				ServiceContextUtils.getResponse(sc).setResult(innere);
+			} else {
+				ErrorSendToRemoteServerException e1 = new ErrorSendToRemoteServerException(
+						ServiceContextUtils.getServiceName(sc),
+						Utils.generateKey(
+								ServiceContextUtils.getServerHost(sc), String
+										.valueOf(ServiceContextUtils
+												.getServerPort(sc))), innere);
+				ServiceContextUtils.getResponse(sc).setResult(e1);
+			}
+		} finally {
+			postProcess(sc, interceptors);
+			setFuture(sc, result);
+		}
 
-  }
+	}
 
 }

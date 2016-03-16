@@ -246,7 +246,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
             resultFuture.setException(future.cause());
             return;
           }
-          if (ch == null || ch.isActive()) {
+          if (ch == null || !ch.isActive()) {
             resultFuture.setException(new ClosedChannelException());
             return;
           }
@@ -377,7 +377,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
       logger.error("close client transport interrupt");
       Thread.currentThread().interrupt();
     } catch (Exception e) {
-      logger.error("close client transport error {}", e);
+      logger.error("close client transport error.", e);
     } finally {
       lock.unlock();
     }
