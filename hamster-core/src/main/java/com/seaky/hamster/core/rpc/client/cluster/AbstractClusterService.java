@@ -2,10 +2,6 @@ package com.seaky.hamster.core.rpc.client.cluster;
 
 import java.util.List;
 import java.util.concurrent.Executor;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.util.concurrent.SettableFuture;
 import com.seaky.hamster.core.rpc.client.AbstractClient;
 import com.seaky.hamster.core.rpc.client.ClientTransport;
@@ -14,6 +10,7 @@ import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.common.DefaultServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
+import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.Attachments;
@@ -28,15 +25,13 @@ public abstract class AbstractClusterService<Req, Rsp> implements ClusterService
 
   private final ServiceContext context;
 
-  private static Logger logger = LoggerFactory.getLogger(AbstractClusterService.class);
-
   protected ServiceContext createServiceContext(final ServiceProviderDescriptor sd) {
     ServiceContext sc = new DefaultServiceContext(ProcessPhase.CLIENT_CALL_SERVICE_INSTANCE);
     ServiceContextUtils.setServiceName(sc, sd.getName());
     ServiceContextUtils.setApp(sc, sd.getApp());
     ServiceContextUtils.setVersion(sc, sd.getVersion());
     ServiceContextUtils.setGroup(sc, sd.getGroup());
-    ServiceContextUtils.setProviderConfig(sc, sd.getConfig());
+    ServiceContextUtils.setProviderConfig(sc, new ReadOnlyEndpointConfig(sd.getConfig()));
     ServiceContextUtils.setRequestParams(sc, ServiceContextUtils.getRequestParams(context));
     ServiceContextUtils.setServerHost(sc, sd.getHost());
     ServiceContextUtils.setServerPort(sc, sd.getPort());

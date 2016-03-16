@@ -57,9 +57,6 @@ public class EtcdRegisterationService implements RegisterationService {
   private ConcurrentHashMap<String, ServiceReferenceDescriptor> localReferCache =
       new ConcurrentHashMap<String, ServiceReferenceDescriptor>();
 
-  private ConcurrentHashMap<String, EtcdResponsePromise<EtcdKeysResponse>> watchCache =
-      new ConcurrentHashMap<String, EtcdResponsePromise<EtcdKeysResponse>>();
-
   private ConcurrentHashMap<String, Boolean> watchCacheBoolean =
       new ConcurrentHashMap<String, Boolean>();
   protected EtcdClient client;
@@ -189,7 +186,6 @@ public class EtcdRegisterationService implements RegisterationService {
             EtcdKeysResponse rsp = response.get();
             // 处理
             processChange(serviceName, rsp);
-            watchCache.remove(serviceName);
             if (!isClose)
               registServiceChangeListenser(serviceName, rsp.node.modifiedIndex + 1);
           } catch (Exception e) {
@@ -200,7 +196,6 @@ public class EtcdRegisterationService implements RegisterationService {
         }
       });
 
-      watchCache.put(serviceName, rspFutrue);
 
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -217,26 +212,33 @@ public class EtcdRegisterationService implements RegisterationService {
 
     String consumerPath = baseServiceConsumerPath(name);
 
-    if (rsp.node.key.startsWith(providerPath)) {
+    if (rsp.node.key.startsWith(providerPath,1)) {
       // 提供者
 
       // 更新操作
-      if ("set".equals(rsp.action) || "update".equals(rsp.action)) {
+      if ("set".equals(rsp.action.name()) || "update".equals(rsp.action.name())) {
 
         if (!StringUtils.equals(rsp.node.value, rsp.prevNode.value)) {
           updateService(name, rsp.node.value);
+          logger.info("update service {}",rsp.node.value);
         }
-      } else if ("delete".equals(rsp.action) || "expire".equals(rsp.action)) {
+      } else if ("delete".equals(rsp.action.name()) || "expire".equals(rsp.action.name())) {
         deleteService(name, rsp.prevNode.value);
+        logger.info("delete service {}",rsp.prevNode.value);
+
       }
 
-    } else if (rsp.node.key.startsWith(consumerPath)) {
-      if ("set".equals(rsp.action) || "update".equals(rsp.action)) {
+    } else if (rsp.node.key.startsWith(consumerPath,1)) {
+      if ("set".equals(rsp.action.name()) || "update".equals(rsp.action.name())) {
         if (!StringUtils.equals(rsp.node.value, rsp.prevNode.value)) {
           updateConsumer(name, rsp.node.value);
+          logger.info("update reference {}",rsp.node.value);
+
         }
-      } else if ("delete".equals(rsp.action) || "expire".equals(rsp.action)) {
+      } else if ("delete".equals(rsp.action.name()) || "expire".equals(rsp.action.name())) {
         deleteConsumer(name, rsp.prevNode.value);
+        logger.info("delete reference {}",rsp.node.value);
+
       }
     }
   }
@@ -517,7 +519,9 @@ public class EtcdRegisterationService implements RegisterationService {
       }
       shutdownTimerTask();
       client.close();
+      isClose=true;
       closeTimer();
+      
     } catch (IOException e) {
       logger.error("close etcd registation service error ", e);
     } finally {
@@ -525,7 +529,6 @@ public class EtcdRegisterationService implements RegisterationService {
       referDescriptors.clear();
       localRegistCache.clear();
       localReferCache.clear();
-      watchCache.clear();
     }
 
   }

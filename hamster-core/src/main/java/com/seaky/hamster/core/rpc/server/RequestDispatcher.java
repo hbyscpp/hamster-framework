@@ -14,6 +14,7 @@ import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
+import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
 import com.seaky.hamster.core.rpc.exception.LossReqParamException;
 import com.seaky.hamster.core.rpc.exception.NotSetResultException;
 import com.seaky.hamster.core.rpc.exception.ServerResourceIsFullException;
@@ -225,7 +226,6 @@ public class RequestDispatcher<Req, Rsp> {
 
     try {
       server.getProtocolExtensionFactory().getRequestExtractor().extractTo(request, context);
-
       // 验证所需的参数
       validateRequestInfo(context);
       // 用自身的配置
@@ -238,7 +238,7 @@ public class RequestDispatcher<Req, Rsp> {
             ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
             ServiceContextUtils.getGroup(context));
       }
-      ServiceContextUtils.setProviderConfig(context, config);
+      ServiceContextUtils.setProviderConfig(context, new ReadOnlyEndpointConfig(config));
     } catch (Exception e) {
       ServiceContextUtils.getResponse(context).setResult(e);
     }

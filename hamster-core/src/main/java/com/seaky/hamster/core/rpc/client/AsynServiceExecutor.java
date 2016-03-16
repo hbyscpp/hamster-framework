@@ -18,6 +18,7 @@ import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
+import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
 import com.seaky.hamster.core.rpc.exception.NoServiceAvailable;
 import com.seaky.hamster.core.rpc.exception.NoServiceMatchException;
 import com.seaky.hamster.core.rpc.exception.ServiceNotFoundException;
@@ -50,7 +51,7 @@ public class AsynServiceExecutor<Req, Rsp> {
     ServiceContextUtils.setReferenceGroup(sc, request.getReferenceGroup());
     ServiceContextUtils.setRequestParams(sc, request.getParams());
     ServiceContextUtils.setRequestAttachments(sc, new Attachments());
-    ServiceContextUtils.setReferenceConfig(sc, config);
+    ServiceContextUtils.setReferenceConfig(sc, new ReadOnlyEndpointConfig(config));
     ServiceContextUtils.setResponse(sc, new Response());
     ServiceContextUtils.setInterceptorExceptionTrace(sc,
         new ClientCallExceptionTrace(client.getAndIncrementTraceId()));
