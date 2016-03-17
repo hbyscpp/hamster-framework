@@ -212,33 +212,45 @@ public class EtcdRegisterationService implements RegisterationService {
 
     String consumerPath = baseServiceConsumerPath(name);
 
-    if (rsp.node.key.startsWith(providerPath,1)) {
+    if (rsp.node.key.startsWith(providerPath, 1)) {
       // 提供者
 
       // 更新操作
       if ("set".equals(rsp.action.name()) || "update".equals(rsp.action.name())) {
 
-        if (!StringUtils.equals(rsp.node.value, rsp.prevNode.value)) {
-          updateService(name, rsp.node.value);
-          logger.info("update service {}",rsp.node.value);
+        String curVal = rsp.node == null ? null : rsp.node.value;
+        String preVal = rsp.prevNode == null ? null : rsp.prevNode.value;
+        if (curVal != null && !StringUtils.equals(curVal, preVal)) {
+          updateService(name, curVal);
+          logger.info("update service {}", curVal);
         }
       } else if ("delete".equals(rsp.action.name()) || "expire".equals(rsp.action.name())) {
-        deleteService(name, rsp.prevNode.value);
-        logger.info("delete service {}",rsp.prevNode.value);
-
+        String preVal = rsp.prevNode == null ? null : rsp.prevNode.value;
+        if (preVal != null) {
+          deleteService(name, preVal);
+          logger.info("delete service {}", preVal);
+        }
       }
 
-    } else if (rsp.node.key.startsWith(consumerPath,1)) {
+    } else if (rsp.node.key.startsWith(consumerPath, 1)) {
       if ("set".equals(rsp.action.name()) || "update".equals(rsp.action.name())) {
         if (!StringUtils.equals(rsp.node.value, rsp.prevNode.value)) {
-          updateConsumer(name, rsp.node.value);
-          logger.info("update reference {}",rsp.node.value);
+
+          String curVal = rsp.node == null ? null : rsp.node.value;
+          String preVal = rsp.prevNode == null ? null : rsp.prevNode.value;
+          if (curVal != null && !StringUtils.equals(curVal, preVal)) {
+            updateConsumer(name, curVal);
+            logger.info("update reference {}", curVal);
+
+          }
 
         }
       } else if ("delete".equals(rsp.action.name()) || "expire".equals(rsp.action.name())) {
-        deleteConsumer(name, rsp.prevNode.value);
-        logger.info("delete reference {}",rsp.node.value);
-
+        String preVal = rsp.prevNode == null ? null : rsp.prevNode.value;
+        if (preVal != null) {
+          deleteConsumer(name, preVal);
+          logger.info("delete reference {}", preVal);
+        }
       }
     }
   }
@@ -519,9 +531,9 @@ public class EtcdRegisterationService implements RegisterationService {
       }
       shutdownTimerTask();
       client.close();
-      isClose=true;
+      isClose = true;
       closeTimer();
-      
+
     } catch (IOException e) {
       logger.error("close etcd registation service error ", e);
     } finally {
