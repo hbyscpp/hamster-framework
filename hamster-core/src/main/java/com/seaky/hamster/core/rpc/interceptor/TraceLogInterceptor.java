@@ -11,19 +11,10 @@ import com.seaky.hamster.core.rpc.trace.ClientCallExceptionTrace;
 public class TraceLogInterceptor extends DefaultServiceInterceptor {
 
 
-
   @Override
-  protected void postServerProcess(ServiceContext context) {
-	 ClientCallExceptionTrace trace= ServiceContextUtils.getInterceptorExceptionTrace(context);
-	 trace.show();
+  protected void postClientClusterProcess(ServiceContext context) {
+	  ClientCallExceptionTrace trace= ServiceContextUtils.getInterceptorExceptionTrace(context);
+		 trace.show();
   }
-
-
- 
-
-
-
-  @Override
-  protected void postClientClusterProcess(ServiceContext context) {}
 
 }

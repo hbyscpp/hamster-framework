@@ -60,7 +60,7 @@ public class ClientCallExceptionTrace {
     if (traces == null || traces.size() == 0)
       return;
     StringBuilder sb = new StringBuilder();
-    sb.append("traceId:").append(traceId).append("\n");
+    sb.append("\ntraceId:").append(traceId).append("\n");
     for (ExceptionTrace trace : traces) {
       sb.append("phase:").append(trace.phase).append("\n");
       sb.append("msg:").append(trace.msg).append("\n");
