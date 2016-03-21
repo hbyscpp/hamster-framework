@@ -18,8 +18,8 @@ import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
 import com.seaky.hamster.core.rpc.exception.LossReqParamException;
 import com.seaky.hamster.core.rpc.exception.NotSetResultException;
 import com.seaky.hamster.core.rpc.exception.ServerResourceIsFullException;
-import com.seaky.hamster.core.rpc.exception.ServiceConfigNotFoundException;
-import com.seaky.hamster.core.rpc.exception.ServiceNotFoundException;
+import com.seaky.hamster.core.rpc.exception.ServiceProviderConfigNotFoundException;
+import com.seaky.hamster.core.rpc.exception.ServiceProviderNotFoundException;
 import com.seaky.hamster.core.rpc.exception.ServiceSigMismatchException;
 import com.seaky.hamster.core.rpc.executor.ServiceThreadpool;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
@@ -153,7 +153,7 @@ public class RequestDispatcher<Req, Rsp> {
       List<ServiceInterceptor> interceptors =
           dispatcher.server.getServiceInterceptor(serviceName, app, serviceVersion, group);
       if (service == null) {
-        dispatcher.setException(context, new ServiceNotFoundException(serviceName));
+        dispatcher.setException(context, new ServiceProviderNotFoundException(serviceName));
         dispatcher.writeResponse(context, transport);
         return;
       }
@@ -234,7 +234,7 @@ public class RequestDispatcher<Req, Rsp> {
           ServiceContextUtils.getGroup(context));
 
       if (config == null) {
-        throw new ServiceConfigNotFoundException(ServiceContextUtils.getApp(context),
+        throw new ServiceProviderConfigNotFoundException(ServiceContextUtils.getApp(context),
             ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
             ServiceContextUtils.getGroup(context));
       }

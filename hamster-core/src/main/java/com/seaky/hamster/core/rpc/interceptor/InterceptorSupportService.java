@@ -100,16 +100,6 @@ public abstract class InterceptorSupportService<Req, Rsp> {
     return sb.toString();
   }
 
-
-
-  public void setException(Throwable e, Response info) {
-    if (e instanceof InvocationTargetException) {
-      info.setResult(((InvocationTargetException) e).getTargetException());
-    } else {
-      info.setResult(e);
-    }
-  }
-
   // 优先设置异常信息
   public void setFuture(ServiceContext sc, SettableFuture<Object> result) {
     Response responseInfo = ServiceContextUtils.getResponse(sc);

@@ -19,9 +19,10 @@ import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
-import com.seaky.hamster.core.rpc.exception.NoServiceAvailable;
-import com.seaky.hamster.core.rpc.exception.NoServiceMatchException;
-import com.seaky.hamster.core.rpc.exception.ServiceNotFoundException;
+import com.seaky.hamster.core.rpc.exception.NoRouteServiceProviderException;
+import com.seaky.hamster.core.rpc.exception.NoServiceProviderAvailable;
+import com.seaky.hamster.core.rpc.exception.NoServiceProviderMatchException;
+import com.seaky.hamster.core.rpc.exception.ServiceProviderNotFoundException;
 import com.seaky.hamster.core.rpc.executor.ServiceThreadpool;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
@@ -202,7 +203,7 @@ public class AsynServiceExecutor<Req, Rsp> {
       Collection<ServiceProviderDescriptor> allServiceDescriptors =
           client.getAllServices(ServiceContextUtils.getServiceName(context));
       if (allServiceDescriptors == null || allServiceDescriptors.size() == 0) {
-        throw new ServiceNotFoundException(ServiceContextUtils.getServiceName(context));
+        throw new ServiceProviderNotFoundException(ServiceContextUtils.getServiceName(context));
       }
       List<ServiceProviderDescriptor> allSd = new ArrayList<ServiceProviderDescriptor>();
       // 3选择有配置的实例
@@ -218,7 +219,7 @@ public class AsynServiceExecutor<Req, Rsp> {
         }
       }
       if (allSd.size() == 0) {
-        throw new NoServiceMatchException(ServiceContextUtils.getServiceName(context));
+        throw new NoServiceProviderMatchException(ServiceContextUtils.getServiceName(context));
       }
       // 4 route 从实例中选择符合要求的实例
       String routerName = ServiceContextUtils.getReferenceConfig(context)
@@ -230,7 +231,7 @@ public class AsynServiceExecutor<Req, Rsp> {
       // 选出可以提供服务的集群实例
       List<ServiceProviderDescriptor> sds = router.choose(allSd, context);
       if (sds == null || sds.size() == 0)
-        throw new NoServiceAvailable(ServiceContextUtils.getServiceName(context));
+        throw new NoRouteServiceProviderException(ServiceContextUtils.getServiceName(context));
       return sds;
     }
 

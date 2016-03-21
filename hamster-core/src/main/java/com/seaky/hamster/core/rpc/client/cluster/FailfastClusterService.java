@@ -9,7 +9,7 @@ import com.seaky.hamster.core.rpc.client.AbstractClient;
 import com.seaky.hamster.core.rpc.client.loadbalancer.ServiceLoadBalancer;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.exception.AccessRemoteServerException;
-import com.seaky.hamster.core.rpc.exception.NoServiceAvailable;
+import com.seaky.hamster.core.rpc.exception.NoServiceProviderAvailable;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 
 import io.netty.util.concurrent.ImmediateEventExecutor;
@@ -27,7 +27,7 @@ public class FailfastClusterService<Req, Rsp> extends AbstractClusterService<Req
 
     ServiceProviderDescriptor sd = choose(sds);
     if (sd == null) {
-      result.setException(new NoServiceAvailable(super.getServiceName()));
+      result.setException(new NoServiceProviderAvailable(super.getServiceName()));
       return;
     }
     final SettableFuture<Object> resultFuture = invokeService(sd, executor);

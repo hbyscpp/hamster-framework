@@ -9,7 +9,7 @@ import com.seaky.hamster.core.rpc.client.AbstractClient;
 import com.seaky.hamster.core.rpc.client.loadbalancer.ServiceLoadBalancer;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.exception.AccessRemoteServerException;
-import com.seaky.hamster.core.rpc.exception.NoServiceAvailable;
+import com.seaky.hamster.core.rpc.exception.NoServiceProviderAvailable;
 import com.seaky.hamster.core.rpc.exception.RpcTimeoutException;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 
@@ -28,7 +28,7 @@ public class FailoverClusterService<Req, Rsp> extends AbstractClusterService<Req
     ServiceProviderDescriptor sd = choose(sds);
     if (sd == null) {
       // 没找到合适的实例，直接设置
-      result.setException(new NoServiceAvailable(super.getServiceName()));
+      result.setException(new NoServiceProviderAvailable(super.getServiceName()));
       return;
     }
     // 调用远程服务

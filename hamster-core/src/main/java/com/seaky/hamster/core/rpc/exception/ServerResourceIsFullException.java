@@ -4,7 +4,7 @@ package com.seaky.hamster.core.rpc.exception;
 public class ServerResourceIsFullException extends RpcException {
 
 	public ServerResourceIsFullException(String resource) {
-		super(RES_ISFULL, resource +" is exhausting");
+		super(SERVER_RES_ISFULL, resource +" is exhausting");
 	}
 
 
