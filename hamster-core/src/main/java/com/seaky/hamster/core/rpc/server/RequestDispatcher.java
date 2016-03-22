@@ -17,10 +17,12 @@ import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
 import com.seaky.hamster.core.rpc.exception.LossReqParamException;
 import com.seaky.hamster.core.rpc.exception.NotSetResultException;
+import com.seaky.hamster.core.rpc.exception.RpcException;
 import com.seaky.hamster.core.rpc.exception.ServerResourceIsFullException;
 import com.seaky.hamster.core.rpc.exception.ServiceProviderConfigNotFoundException;
 import com.seaky.hamster.core.rpc.exception.ServiceProviderNotFoundException;
 import com.seaky.hamster.core.rpc.exception.ServiceSigMismatchException;
+import com.seaky.hamster.core.rpc.exception.UnknownException;
 import com.seaky.hamster.core.rpc.executor.ServiceThreadpool;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
@@ -278,6 +280,14 @@ public class RequestDispatcher<Req, Rsp> {
       }
       if (!response.isDone())
         setException(sc, new NotSetResultException());
+      if (response.isException()) {
+        Throwable e = response.getException();
+
+        if (!(e instanceof RpcException)) {
+          setException(sc, new UnknownException(e.getMessage()));
+
+        }
+      }
       ResponseConvertor<Rsp> attrWriter =
           server.getProtocolExtensionFactory().getResponseConvertor();
       Rsp rsp = attrWriter.convertTo(ServiceContextUtils.getResponse(sc));
