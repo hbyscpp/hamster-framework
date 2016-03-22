@@ -18,9 +18,10 @@ import org.slf4j.LoggerFactory;
 public class ClientCallExceptionTrace {
 
 
-  // 获取远程服务实例集群之前
+  // 获取远程服务实例集群之前的pre process中发生的异常
   public static String CALL_CLUSTER_SERVICE_PREPROCESS = "CALL_CLUSTER_SERVICE_PREPROCESS";
 
+  //获取远程服务实例集群之后的post process中发生的异常
   public static String CALL_CLUSTER_SERVICE_POSTPROCESS = "CALL_CLUSTER_SERVICE_POSTPROCESS";
 
   // 选择集群服务中

@@ -8,11 +8,13 @@ import java.util.concurrent.Executor;
 import com.google.common.util.concurrent.SettableFuture;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
+import com.seaky.hamster.core.rpc.exception.BusinessException;
 import com.seaky.hamster.core.rpc.exception.CancelConnectToRemoteServerException;
 import com.seaky.hamster.core.rpc.exception.CancelSendToRemoteServer;
 import com.seaky.hamster.core.rpc.exception.ErrorConnectRemoteServerException;
 import com.seaky.hamster.core.rpc.exception.ErrorSendToRemoteServerException;
 import com.seaky.hamster.core.rpc.exception.RpcException;
+import com.seaky.hamster.core.rpc.exception.UnknownException;
 import com.seaky.hamster.core.rpc.interceptor.InterceptorSupportService;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
@@ -143,7 +145,7 @@ public class ClientInterceptorService<Req, Rsp> extends
 									.getServerPort(sc))), e);
 			ServiceContextUtils.getResponse(sc).setResult(e1);
 			if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
+				Thread.currentThread().interrupt();
 			}
 		} catch (ExecutionException e2) {
 			Throwable innere = e2.getCause();
@@ -152,7 +154,12 @@ public class ClientInterceptorService<Req, Rsp> extends
 							String.valueOf(ServiceContextUtils
 									.getServerPort(sc))), innere);
 			if (innere instanceof RpcException) {
-				ServiceContextUtils.getResponse(sc).setResult(innere);
+				if (innere.getCause() != null) {
+					ServiceContextUtils.getResponse(sc).setResult(
+							innere.getCause());
+				} else {
+					ServiceContextUtils.getResponse(sc).setResult(innere);
+				}
 			} else {
 				ErrorSendToRemoteServerException e1 = new ErrorSendToRemoteServerException(
 						ServiceContextUtils.getServiceName(sc),

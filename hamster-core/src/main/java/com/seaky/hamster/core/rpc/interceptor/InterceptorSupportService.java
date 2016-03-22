@@ -1,6 +1,5 @@
 package com.seaky.hamster.core.rpc.interceptor;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import com.google.common.util.concurrent.SettableFuture;

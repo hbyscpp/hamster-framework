@@ -64,6 +64,7 @@ public interface ConfigConstans {
 
   public static final String REFERENCE_RETURN = "sr.return";
 
+  public static final String REFERENCE_EXCEPTION_CONVERTOR = "sr.exception.convertor";
 
   // 服务提供方和引用方都可以配置
   public static final String SERVICE_MAXCONCURRENT = "s.maxconcurrent";
@@ -117,6 +118,9 @@ public interface ConfigConstans {
   public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = 100;
 
   public static final String PROVIDER_INTERCEPTORS = "sp.interceptors";
+  
+  public static final String PROVIDER_EXCEPTION_CONVERTOR = "sp.exception.convertor";
+
 
 
 
