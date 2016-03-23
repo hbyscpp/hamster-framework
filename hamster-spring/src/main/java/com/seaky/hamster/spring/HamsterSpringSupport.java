@@ -99,6 +99,8 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
     ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, config.getVersion(), true));
     ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_MAX_CONCURRENT,
         String.valueOf(config.getMaxConcurrent()), false));
+    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR,
+        config.getExceptionConvertor(), false));
 
     return ec;
   }
@@ -113,6 +115,8 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
         String.valueOf(config.getMaxConcurrent()), false));
     ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_READ_TIMEOUT,
         String.valueOf(config.getReadtimeout()), false));
+    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR,
+        config.getExceptionConvertor(), false));
 
 
     return ec;

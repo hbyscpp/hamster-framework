@@ -12,6 +12,8 @@ public class ReferenceConfig {
 
   private int readtimeout = 1000;
 
+  private String exceptionConvertor = "default";
+
   public String getVersion() {
     return version;
   }
@@ -50,6 +52,14 @@ public class ReferenceConfig {
 
   public void setReadtimeout(int readtimeout) {
     this.readtimeout = readtimeout;
+  }
+
+  public String getExceptionConvertor() {
+    return exceptionConvertor;
+  }
+
+  public void setExceptionConvertor(String exceptionConvertor) {
+    this.exceptionConvertor = exceptionConvertor;
   }
 
 

@@ -1,13 +1,16 @@
 package com.seaky.hamster.core.rpc.utils;
 
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.Nestable;
 
 import com.seaky.hamster.core.rpc.annotation.ServiceInterceptorAnnotation;
 import com.seaky.hamster.core.rpc.common.Constants;
@@ -384,4 +387,27 @@ public class Utils {
     return sb.toString();
   }
 
+  // 从wrapper异常中获取真正的异常,递归获取
+  public static Throwable getActualException(Throwable throwable) {
+    if (throwable == null)
+      return null;
+    if (throwable instanceof Nestable) {
+      Throwable inner = ((Nestable) throwable).getCause();
+      if (inner == null)
+        return throwable;
+      return getActualException(inner);
+    } else if (throwable instanceof SQLException) {
+      Throwable inner = ((SQLException) throwable).getNextException();
+      if (inner == null)
+        return throwable;
+      return getActualException(inner);
+    } else if (throwable instanceof InvocationTargetException) {
+      Throwable inner = ((InvocationTargetException) throwable).getTargetException();
+      if (inner == null)
+        return throwable;
+      return getActualException(inner);
+    } else {
+      return throwable;
+    }
+  }
 }

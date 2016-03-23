@@ -10,6 +10,8 @@ public class ServiceConfig {
 
   private int maxConcurrent = -1;
 
+  private String exceptionConvertor = "default";
+
   public String getVersion() {
     return version;
   }
@@ -40,6 +42,14 @@ public class ServiceConfig {
 
   public void setApp(String app) {
     this.app = app;
+  }
+
+  public String getExceptionConvertor() {
+    return exceptionConvertor;
+  }
+
+  public void setExceptionConvertor(String exceptionConvertor) {
+    this.exceptionConvertor = exceptionConvertor;
   }
 
 

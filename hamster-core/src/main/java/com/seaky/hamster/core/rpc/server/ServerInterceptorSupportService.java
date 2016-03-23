@@ -8,6 +8,7 @@ import com.seaky.hamster.core.rpc.exception.BusinessException;
 import com.seaky.hamster.core.rpc.interceptor.InterceptorSupportService;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
+import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaService;
 
 public class ServerInterceptorSupportService<Req, Rsp> extends InterceptorSupportService<Req, Rsp> {
@@ -27,7 +28,7 @@ public class ServerInterceptorSupportService<Req, Rsp> extends InterceptorSuppor
       Object result = service.process(ServiceContextUtils.getRequestParams(context));
       ServiceContextUtils.getResponse(context).setResult(result);
     } catch (Exception e) {
-      BusinessException be=new BusinessException(e);
+      BusinessException be = new BusinessException(Utils.getActualException(e));
       ServiceContextUtils.getResponse(context).setResult(be);
     } finally {
       postProcess(context, interceptors);
