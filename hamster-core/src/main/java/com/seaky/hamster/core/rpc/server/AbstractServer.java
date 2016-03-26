@@ -40,6 +40,8 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
   private ConcurrentHashMap<String, JavaService> allservices =
       new ConcurrentHashMap<String, JavaService>();
 
+  private ConcurrentHashMap<String, Long> serviceRegistTimes = new ConcurrentHashMap<>();
+
   private ConcurrentHashMap<String, List<ServiceInterceptor>> allservicesInterceptors =
       new ConcurrentHashMap<String, List<ServiceInterceptor>>();
 
@@ -113,10 +115,12 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
     sd.setHost(config.getHost());
     sd.setPort(config.getPort());
     sd.setProtocol(protocolExtensionFactory.protocolName());
-    sd.setRegistTime(System.currentTimeMillis());
+    long curtime = System.currentTimeMillis();
+    sd.setRegistTime(curtime);
     sd.setPid(Utils.getCurrentVmPid());
+    serviceRegistTimes.put(serviceKey, curtime);
     try {
-      registerationService.registService(sd);
+      registerationService.registServiceProvider(sd);
     } catch (Exception e) {
       allservices.remove(serviceKey);
       throw new RuntimeException(e);
@@ -226,9 +230,10 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
       sd.setProtocol(protocolExtensionFactory.protocolName());
       sd.setPid(Utils.getCurrentVmPid());
       try {
-        sd = registerationService.findService(sd.getApp(), sd.getName(), sd.getVersion(),
-            sd.getGroup(), sd.getProtocol(), sd.getHost(), sd.getPort());
-        registerationService.unregistService(sd);
+        sd = registerationService.findServiceProvider(sd.getApp(), sd.getName(), sd.getVersion(),
+            sd.getGroup(), sd.getProtocol(), sd.getHost(), sd.getPort(), Utils.getCurrentVmPid(),
+            serviceRegistTimes.get(name));
+        registerationService.unregistServiceProvider(sd);
         logger.info("unbound service {}:{}:{}:{},on {}:{} ", attrs[0], attrs[1], attrs[2], attrs[3],
             config.getHost(), config.getPort());
       } catch (Exception e) {
@@ -273,15 +278,18 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
 
   public EndpointConfig getServiceConfig(String app, String serviceName, String version,
       String group) {
-
-    return registerationService.findService(app, serviceName, version, group,
-        protocolExtensionFactory.protocolName(), config.getHost(), config.getPort()).getConfig();
+    String serviceKey = Utils.generateKey(serviceName, app, version, group);
+    return registerationService.findServiceProvider(app, serviceName, version, group,
+        protocolExtensionFactory.protocolName(), config.getHost(), config.getPort(),
+        Utils.getCurrentVmPid(), serviceRegistTimes.get(serviceKey)).getConfig();
   }
 
   ServiceProviderDescriptor getServiceDescriptor(String app, String serviceName, String version,
       String group) {
-    return registerationService.findService(app, serviceName, version, group,
-        protocolExtensionFactory.protocolName(), config.getHost(), config.getPort());
+    String serviceKey = Utils.generateKey(serviceName, app, version, group);
+    return registerationService.findServiceProvider(app, serviceName, version, group,
+        protocolExtensionFactory.protocolName(), config.getHost(), config.getPort(),
+        Utils.getCurrentVmPid(), serviceRegistTimes.get(serviceKey));
   }
 
   public List<ServiceInterceptor> getServiceInterceptor(String serviceName, String app,

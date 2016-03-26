@@ -57,7 +57,7 @@ public interface Constants {
 
   // 序列华类型
 
-  public static int KRYO_SERIAL = 1;
+  public static String KRYO_SERIAL = "kryo";
 
 
 

@@ -55,6 +55,9 @@ public interface ConfigConstans {
 
   public static final String REFERENCE_INTERCEPTORS = "sr.interceptors";
 
+  public static final String REFERENCE_HOST = "sr.host";
+
+
   // 引用时是否check
   public static final String REFERENCE_CHECK_SERVICE = "sr.check.service";
 
@@ -118,9 +121,8 @@ public interface ConfigConstans {
   public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = 100;
 
   public static final String PROVIDER_INTERCEPTORS = "sp.interceptors";
-  
-  public static final String PROVIDER_EXCEPTION_CONVERTOR = "sp.exception.convertor";
 
+  public static final String PROVIDER_EXCEPTION_CONVERTOR = "sp.exception.convertor";
 
 
 

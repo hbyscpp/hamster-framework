@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.SettableFuture;
-import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
@@ -29,6 +28,7 @@ import com.seaky.hamster.core.rpc.protocol.ExceptionResult;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.protocol.Response;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
+import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.NetUtils;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
@@ -79,8 +79,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
   private AbstractClient<Req, Rsp> client;
 
   private volatile ChannelFuture cf;
-  static ExtensionLoader<ExceptionConvertor> exceptionConvertorExt =
-      ExtensionLoader.getExtensionLoaders(ExceptionConvertor.class);
+
 
   public InetSocketAddress getLocalAddress() {
     return localAddr;
@@ -143,7 +142,6 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
       ServiceContextUtils.setClientHost(sc, caddr.getAddress().getHostAddress());
       ServiceContextUtils.setClientPort(sc, caddr.getPort());
       // 连接成功之后更新RD TODO 避免更新继续优化
-      client.updateReferenceDescriptor(sc);
       resultFuture.set(null);
     }
   }
@@ -378,7 +376,8 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
     if (response.getResult() instanceof ExceptionResult) {
       String expCon = ServiceContextUtils.getReferenceConfig(sc)
           .get(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR, "default");
-      ExceptionConvertor convert = exceptionConvertorExt.findExtension(expCon);
+      ExceptionConvertor convert =
+          ExtensionLoaderConstants.EXCEPTION_CONVERTOR_EXTENSION.findExtension(expCon);
       RpcException e = convert.convertFrom(((ExceptionResult) response.getResult()));
       response.setResult(e);
     }

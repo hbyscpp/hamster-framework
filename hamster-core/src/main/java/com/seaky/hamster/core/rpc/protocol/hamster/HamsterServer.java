@@ -1,20 +1,16 @@
 package com.seaky.hamster.core.rpc.protocol.hamster;
 
-import com.seaky.hamster.core.extension.ExtensionLoader;
-import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.server.Netty4Server;
+import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 
-public class HamsterServer extends
-		Netty4Server<HamsterRequest, HamsterResponse> {
-	@SuppressWarnings("rawtypes")
-	private static ExtensionLoader<ProtocolExtensionFactory> ext = ExtensionLoader
-			.getExtensionLoaders(ProtocolExtensionFactory.class);
-	private static HamsterChannelPipelineConfigurator hamsterChannelPipelineConfigurator = new HamsterChannelPipelineConfigurator();
+public class HamsterServer extends Netty4Server<HamsterRequest, HamsterResponse> {
+  private static HamsterChannelPipelineConfigurator hamsterChannelPipelineConfigurator =
+      new HamsterChannelPipelineConfigurator();
 
-	@SuppressWarnings("unchecked")
-	public HamsterServer() {
-		super(hamsterChannelPipelineConfigurator,
-				ext.findExtension("hamster"));
-	}
+  @SuppressWarnings("unchecked")
+  public HamsterServer() {
+    super(hamsterChannelPipelineConfigurator,
+        ExtensionLoaderConstants.PROTOCOLFACTORY_EXTENSION.findExtension("hamster"));
+  }
 
 }

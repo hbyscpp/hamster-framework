@@ -20,7 +20,6 @@ import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
 import com.seaky.hamster.core.rpc.exception.NoRouteServiceProviderException;
-import com.seaky.hamster.core.rpc.exception.NoServiceProviderAvailable;
 import com.seaky.hamster.core.rpc.exception.NoServiceProviderMatchException;
 import com.seaky.hamster.core.rpc.exception.ServiceProviderNotFoundException;
 import com.seaky.hamster.core.rpc.executor.ServiceThreadpool;
@@ -30,6 +29,7 @@ import com.seaky.hamster.core.rpc.protocol.Attachments;
 import com.seaky.hamster.core.rpc.protocol.Response;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 import com.seaky.hamster.core.rpc.trace.ClientCallExceptionTrace;
+import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
 import io.netty.util.concurrent.ImmediateEventExecutor;
@@ -190,7 +190,8 @@ public class AsynServiceExecutor<Req, Rsp> {
     private ClusterService<Req, Rsp> getClusterService(ServiceLoadBalancer loadbalancer) {
       String clusterName = ServiceContextUtils.getReferenceConfig(context)
           .get(ConfigConstans.REFERENCE_CLUSTER, ConfigConstans.REFERENCE_CLUSTER_DEFAULT);
-      ClusterServiceFactory csf = AbstractClient.clusterExtension.findExtension(clusterName);
+      ClusterServiceFactory csf =
+          ExtensionLoaderConstants.CLUSTER_EXTENSION.findExtension(clusterName);
       if (csf == null) {
         throw new RuntimeException("no service cluster found,name is " + clusterName);
       }
@@ -224,7 +225,7 @@ public class AsynServiceExecutor<Req, Rsp> {
       // 4 route 从实例中选择符合要求的实例
       String routerName = ServiceContextUtils.getReferenceConfig(context)
           .get(ConfigConstans.REFERENCE_ROUTER, ConfigConstans.REFERENCE_ROUTER_DEFAULT);
-      ServiceRouter router = AbstractClient.routerExtension.findExtension(routerName);
+      ServiceRouter router = ExtensionLoaderConstants.ROUTER_EXTENSION.findExtension(routerName);
       if (router == null) {
         throw new RuntimeException("no service router found,router name " + routerName);
       }
@@ -244,13 +245,13 @@ public class AsynServiceExecutor<Req, Rsp> {
 
       Object[] params = ServiceContextUtils.getRequestParams(context);
       return Utils.isMatch(sd.getParamTypes(), params);
-     
+
     }
 
     private ServiceLoadBalancer getLoadBalancer() {
       String lbName = ServiceContextUtils.getReferenceConfig(context).get(
           ConfigConstans.REFERENCE_LOADBALANCER, ConfigConstans.REFERENCE_LOADBALANCER_DEFAULT);
-      ServiceLoadBalancer lb = AbstractClient.loadBalanceExtension.findExtension(lbName);
+      ServiceLoadBalancer lb = ExtensionLoaderConstants.LOADBALANCE_EXTENSION.findExtension(lbName);
       if (lb == null) {
         throw new RuntimeException("no loadbalancer found,name is " + lbName);
       }

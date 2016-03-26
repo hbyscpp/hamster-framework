@@ -9,7 +9,7 @@ import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.protocol.Attachments;
 import com.seaky.hamster.core.rpc.protocol.RequestExtractor;
 import com.seaky.hamster.core.rpc.serialization.Serializer;
-import com.seaky.hamster.core.rpc.serialization.SerializerFactory;
+import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 
 public class HamsterRequestExtractor implements RequestExtractor<HamsterRequest> {
 
@@ -32,7 +32,8 @@ public class HamsterRequestExtractor implements RequestExtractor<HamsterRequest>
       }
     }
     ServiceContextUtils.setRequestAttachments(context, attach);
-    Serializer ser = SerializerFactory.getSerializer(Constants.KRYO_SERIAL);
+    Serializer ser =
+        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
     Object[] params = ser.deSerialize(req.getParams(), Object[].class);
     ServiceContextUtils.setRequestParams(context, params);
   }
@@ -47,7 +48,8 @@ public class HamsterRequestExtractor implements RequestExtractor<HamsterRequest>
     req.setServiceName(ServiceContextUtils.getServiceName(context));
     req.setGroup(ServiceContextUtils.getGroup(context));
     req.setReferGroup(ServiceContextUtils.getReferenceGroup(context));
-    Serializer ser = SerializerFactory.getSerializer(Constants.KRYO_SERIAL);
+    Serializer ser =
+        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
     req.setParams(ser.serialize(ServiceContextUtils.getRequestParams(context)));
     Map<String, String> attachment =
         ServiceContextUtils.getRequestAttachments(context).getAllAttachments();

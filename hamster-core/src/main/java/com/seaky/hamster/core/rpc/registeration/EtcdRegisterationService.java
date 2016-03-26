@@ -12,7 +12,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +20,6 @@ import com.seaky.hamster.core.rpc.executor.NamedThreadFactory;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
 import io.netty.util.HashedWheelTimer;
-import mousio.client.promises.ResponsePromise;
-import mousio.client.promises.ResponsePromise.IsSimplePromiseResponseHandler;
 import mousio.client.retry.RetryPolicy;
 import mousio.etcd4j.EtcdClient;
 import mousio.etcd4j.promises.EtcdResponsePromise;
@@ -31,9 +28,9 @@ import mousio.etcd4j.responses.EtcdException;
 import mousio.etcd4j.responses.EtcdKeysResponse;
 import mousio.etcd4j.responses.EtcdKeysResponse.EtcdNode;
 
+// 定时pull模型,etcd的watch性能不够好，TTL设置20s，每隔15s客户端更新一次
 public class EtcdRegisterationService implements RegisterationService {
-  private static Logger logger = LoggerFactory.getLogger(EtcdRegisterationService.class);
-
+  private static Logger logger = LoggerFactory.getLogger("hamster_registeration_service_log");
   static {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -44,10 +41,10 @@ public class EtcdRegisterationService implements RegisterationService {
     });
   }
   // 全局的服务实例缓存
-  private volatile ConcurrentHashMap<String, ConcurrentHashMap<String, ServiceProviderDescriptor>> serviceDescriptors =
+  private ConcurrentHashMap<String, ConcurrentHashMap<String, ServiceProviderDescriptor>> serviceDescriptors =
       new ConcurrentHashMap<String, ConcurrentHashMap<String, ServiceProviderDescriptor>>();
 
-  private volatile ConcurrentHashMap<String, ConcurrentHashMap<String, ServiceReferenceDescriptor>> referDescriptors =
+  private ConcurrentHashMap<String, ConcurrentHashMap<String, ServiceReferenceDescriptor>> referDescriptors =
       new ConcurrentHashMap<String, ConcurrentHashMap<String, ServiceReferenceDescriptor>>();
 
   // 本地的注册缓存
@@ -57,7 +54,10 @@ public class EtcdRegisterationService implements RegisterationService {
   private ConcurrentHashMap<String, ServiceReferenceDescriptor> localReferCache =
       new ConcurrentHashMap<String, ServiceReferenceDescriptor>();
 
-  private ConcurrentHashMap<String, Boolean> watchCacheBoolean =
+  private ConcurrentHashMap<String, Boolean> watchProviderCache =
+      new ConcurrentHashMap<String, Boolean>();
+
+  private ConcurrentHashMap<String, Boolean> watchReferecnceCache =
       new ConcurrentHashMap<String, Boolean>();
   protected EtcdClient client;
 
@@ -67,12 +67,12 @@ public class EtcdRegisterationService implements RegisterationService {
 
   private static String CONSUMERS = "/consumers";
 
-  private static int DEFAULT_TTL = 15;
+  private static int DEFAULT_TTL = 20;
 
-  private ScheduledExecutorService ses = Executors
-      .newSingleThreadScheduledExecutor(new NamedThreadFactory("RegisterationService Schedule"));
+  private static int DEFAULT_PULL_TIME = 15;
 
-  private volatile boolean isClose = false;
+  private ScheduledExecutorService ses =
+      Executors.newScheduledThreadPool(1, new NamedThreadFactory("RegisterationService Schedule"));
 
   public EtcdRegisterationService(String basePath, String urls) {
 
@@ -94,8 +94,58 @@ public class EtcdRegisterationService implements RegisterationService {
       client = new EtcdClient();
     }
     this.basePath = basePath;
-    ses.scheduleAtFixedRate(new RegistRunnable(this), (DEFAULT_TTL * 2) / 3, (DEFAULT_TTL * 2) / 3,
+    ses.scheduleAtFixedRate(new RegistRunnable(this), DEFAULT_PULL_TIME, DEFAULT_PULL_TIME,
         TimeUnit.SECONDS);
+
+  }
+
+  public static class RegistPullRunnable implements Runnable {
+
+
+    private EtcdRegisterationService registService;
+
+    @Override
+    public void run() {
+
+      if (Thread.interrupted()) {
+        logger.info("register pull thread interrup");
+        return;
+
+      }
+      for (ServiceProviderDescriptor sd : registService.localRegistCache.values()) {
+
+        if (registService.watchProviderCache.containsKey(sd.getName())) {
+          continue;
+        } else {
+          registService.updateLocalCache(sd);
+        }
+
+      }
+      for (ServiceReferenceDescriptor rd : registService.localReferCache.values()) {
+        if (registService.watchReferecnceCache.containsKey(rd.getServiceName())) {
+          continue;
+        } else {
+          registService.updateLocalCache(rd);
+        }
+
+      }
+      for (String name : registService.watchProviderCache.keySet()) {
+        try {
+          registService.findServices(name, true);
+        } catch (Exception e) {
+          logger.error("heartbeat regist service error", e);
+        }
+      }
+
+      for (String name : registService.watchReferecnceCache.keySet()) {
+        try {
+          registService.findReferences(name, true);
+        } catch (Exception e) {
+          logger.error("heartbeat regist service error", e);
+        }
+      }
+    }
+
   }
 
   // 定时注册的线程
@@ -109,22 +159,65 @@ public class EtcdRegisterationService implements RegisterationService {
 
     @Override
     public void run() {
-      if (Thread.interrupted())
+
+      // 注册
+      if (Thread.interrupted()) {
+        logger.info("register pull thread interrup");
         return;
+
+      }
+      for (ServiceProviderDescriptor sd : registService.localRegistCache.values()) {
+
+        if (registService.watchProviderCache.containsKey(sd.getName())) {
+          continue;
+        } else {
+          registService.updateLocalCache(sd);
+        }
+
+      }
+      for (ServiceReferenceDescriptor rd : registService.localReferCache.values()) {
+        if (registService.watchReferecnceCache.containsKey(rd.getServiceName())) {
+          continue;
+        } else {
+          registService.updateLocalCache(rd);
+        }
+
+      }
+      for (String name : registService.watchProviderCache.keySet()) {
+        try {
+          registService.findServices(name, true);
+        } catch (Exception e) {
+          logger.error("heartbeat regist service error", e);
+        }
+      }
+
+      for (String name : registService.watchReferecnceCache.keySet()) {
+        try {
+          registService.findReferences(name, true);
+        } catch (Exception e) {
+          logger.error("heartbeat regist service error", e);
+        }
+      }
+
+      // 更新
       for (ServiceProviderDescriptor sd : registService.localRegistCache.values()) {
         try {
-          if (Thread.interrupted())
+          if (Thread.interrupted()) {
+            logger.info("register thread interrup");
             return;
+          }
           registService.registService(sd, true);
         } catch (Exception e) {
           logger.error("heartbeat regist service error", e);
         }
       }
-      for (ServiceReferenceDescriptor sd : registService.localReferCache.values()) {
+      for (ServiceReferenceDescriptor rd : registService.localReferCache.values()) {
         try {
-          if (Thread.interrupted())
+          if (Thread.interrupted()) {
+            logger.info("register thread interrup");
             return;
-          registService.registReference(sd, true);
+          }
+          registService.registReference(rd, true);
         } catch (Exception e) {
           logger.error("heartbeat regist refer error", e);
         }
@@ -133,29 +226,29 @@ public class EtcdRegisterationService implements RegisterationService {
   }
 
   @Override
-  public void registService(ServiceProviderDescriptor sd) {
+  public void registServiceProvider(ServiceProviderDescriptor sd) {
     localRegistCache.put(serviceKey(sd), sd);
     registService(sd, false);
   }
 
-  public void registService(ServiceProviderDescriptor sd, boolean isAsyn) {
+  private void registService(ServiceProviderDescriptor sd, boolean isAsyn) {
 
     try {
-      EtcdResponsePromise<EtcdKeysResponse> rsp =
-          client.put(genProviderPath(sd), sd.toString()).ttl(DEFAULT_TTL).send();
+      EtcdResponsePromise<EtcdKeysResponse> rsp = client.put(genProviderPath(sd), sd.toString())
+          .timeout(5, TimeUnit.SECONDS).ttl(DEFAULT_TTL).send();
       if (!isAsyn) {
         rsp.get();
       }
     } catch (Exception e) {
-      Utils.throwException(e);
+      if (!isAsyn)
+        Utils.throwException(e);
+      else {
+        logger.error("regist service asyn  error ", e);
+      }
     }
 
   }
 
-  private String serviceKey(ServiceProviderDescriptor sd) {
-    return Utils.generateKey(sd.getName(), sd.getApp(), sd.getVersion(), sd.getGroup(),
-        sd.getHost(), String.valueOf(sd.getPort()));
-  }
 
   private String genProviderPath(ServiceProviderDescriptor sd) {
     return baseServiceProviderPath(sd.getName())
@@ -166,97 +259,7 @@ public class EtcdRegisterationService implements RegisterationService {
   private String genConsumerPath(ServiceReferenceDescriptor rd) {
     return baseServiceConsumerPath(rd.getServiceName())
         + Utils.generateKey(rd.getReferApp(), rd.getReferVersion(), rd.getReferGroup(),
-            rd.getProtocol(), rd.getPid(), String.valueOf(rd.getRegistTime()));
-  }
-
-  private void registServiceChangeListenser(final String serviceName, long raft) {
-
-    if (isClose)
-      return;
-    try {
-
-      EtcdResponsePromise<EtcdKeysResponse> rspFutrue =
-          client.getDir(baseServicePath(serviceName)).waitForChange(raft).recursive().send();
-
-      rspFutrue.addListener(new IsSimplePromiseResponseHandler<EtcdKeysResponse>() {
-
-        @Override
-        public void onResponse(ResponsePromise<EtcdKeysResponse> response) {
-          try {
-            EtcdKeysResponse rsp = response.get();
-            // 处理
-            processChange(serviceName, rsp);
-            if (!isClose)
-              registServiceChangeListenser(serviceName, rsp.node.modifiedIndex + 1);
-          } catch (Exception e) {
-            // 重新forceload，并监听
-            if (!isClose)
-              findServices(serviceName, true);
-          }
-        }
-      });
-
-
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-  }
-
-  private void processChange(String name, EtcdKeysResponse rsp) {
-    // 目录不处理
-    if (rsp.node.dir)
-      return;
-
-    String providerPath = baseServiceProviderPath(name);
-
-    String consumerPath = baseServiceConsumerPath(name);
-
-    if (rsp.node.key.startsWith(providerPath, 1)) {
-      // 提供者
-
-      // 更新操作
-      if ("set".equals(rsp.action.name()) || "update".equals(rsp.action.name())) {
-
-        String curVal = rsp.node == null ? null : rsp.node.value;
-        String preVal = rsp.prevNode == null ? null : rsp.prevNode.value;
-        if (curVal != null && !StringUtils.equals(curVal, preVal)) {
-          updateService(name, curVal);
-          logger.info("update service {}", curVal);
-        }
-      } else if ("delete".equals(rsp.action.name()) || "expire".equals(rsp.action.name())) {
-        String preVal = rsp.prevNode == null ? null : rsp.prevNode.value;
-        if (preVal != null) {
-          deleteService(name, preVal);
-          logger.info("delete service {}", preVal);
-        }
-      }
-
-    } else if (rsp.node.key.startsWith(consumerPath, 1)) {
-      if ("set".equals(rsp.action.name()) || "update".equals(rsp.action.name())) {
-        if (!StringUtils.equals(rsp.node.value, rsp.prevNode.value)) {
-
-          String curVal = rsp.node == null ? null : rsp.node.value;
-          String preVal = rsp.prevNode == null ? null : rsp.prevNode.value;
-          if (curVal != null && !StringUtils.equals(curVal, preVal)) {
-            updateConsumer(name, curVal);
-            logger.info("update reference {}", curVal);
-
-          }
-
-        }
-      } else if ("delete".equals(rsp.action.name()) || "expire".equals(rsp.action.name())) {
-        String preVal = rsp.prevNode == null ? null : rsp.prevNode.value;
-        if (preVal != null) {
-          deleteConsumer(name, preVal);
-          logger.info("delete reference {}", preVal);
-        }
-      }
-    }
-  }
-
-  private String baseServicePath(String name) {
-    return basePath + "/" + name;
+            rd.getProtocol(), rd.getHost(), rd.getPid(), String.valueOf(rd.getRegistTime()));
   }
 
   private String baseServiceProviderPath(String name) {
@@ -268,180 +271,142 @@ public class EtcdRegisterationService implements RegisterationService {
   }
 
   @Override
-  public Collection<ServiceProviderDescriptor> findServices(String name) {
-
+  public Collection<ServiceProviderDescriptor> findServiceProviders(String name) {
     return findServices(name, false);
   }
 
+  private void updateLocalCache(ServiceProviderDescriptor sd) {
+    try {
+      EtcdResponsePromise<EtcdKeysResponse> rsp =
+          client.get(genProviderPath(sd)).timeout(5, TimeUnit.SECONDS).send();
+      EtcdNode node = rsp.get().node;
+
+      ServiceProviderDescriptor newsd = ServiceProviderDescriptor.parseStr(node.value);
+      localRegistCache.put(serviceKey(newsd), newsd);
+
+    } catch (Exception e) {
+      logger.error("", e);
+    }
+  }
+
+  private void updateLocalCache(ServiceReferenceDescriptor rd) {
+    try {
+      EtcdResponsePromise<EtcdKeysResponse> rsp =
+          client.get(genConsumerPath(rd)).timeout(5, TimeUnit.SECONDS).send();
+      EtcdNode node = rsp.get().node;
+
+      ServiceReferenceDescriptor newsd = ServiceReferenceDescriptor.parseStr(node.value);
+      localReferCache.put(referKey(newsd), newsd);
+
+    } catch (Exception e) {
+      logger.error("", e);
+    }
+  }
+
   private Collection<ServiceProviderDescriptor> findServices(String name, boolean isForce) {
+    Boolean isWatch = null;
+    if (isForce == false)
+      isWatch = watchProviderCache.putIfAbsent(name, true);
 
-    Boolean isWatch = watchCacheBoolean.putIfAbsent(name, true);
-
-    if (isWatch == null || isForce == true) {
+    if (isWatch == null) {
 
       // 第一次watch
       try {
         EtcdResponsePromise<EtcdKeysResponse> future =
-            client.getDir(baseServicePath(name)).recursive().timeout(5, TimeUnit.SECONDS).send();
+            client.getDir(baseServiceProviderPath(name)).timeout(5, TimeUnit.SECONDS).send();
         EtcdKeysResponse rsp = future.get();
         // 初始化
-        initServiceCache(name, rsp.node);
+        initServiceCache(name, rsp.node, true);
         // 注册监听
-        registServiceChangeListenser(name, rsp.etcdIndex + 1);
       } catch (Exception e) {
-        watchCacheBoolean.remove(name);
         if (e instanceof EtcdException) {
           if (((EtcdException) e).errorCode == 100)
             return null;
         }
-        // 继续使用缓存
         logger.error("", e);
       }
     }
-
+    // 继续使用缓存
     ConcurrentHashMap<String, ServiceProviderDescriptor> allSd = serviceDescriptors.get(name);
     if (allSd != null)
       return Collections.unmodifiableCollection(allSd.values());
     return null;
   }
 
-  private void initServiceCache(String name, EtcdNode pnode) {
-    List<EtcdNode> subNodes = pnode.nodes;
+  private void initServiceCache(String name, EtcdNode pnode, boolean isProvider) {
+    List<EtcdNode> nodes = pnode.nodes;
 
-    if (subNodes == null || subNodes.size() == 0) {
+    if (nodes == null || nodes.size() == 0) {
       // 不存在
-      serviceDescriptors.remove(name);
-      referDescriptors.remove(name);
+      if (isProvider)
+        serviceDescriptors.remove(name);
+      else
+        referDescriptors.remove(name);
       return;
     }
-
-    for (EtcdNode node : subNodes) {
-
-      if (node.key.endsWith(PROVIDERS)) {
-
-        // 服务提供者
-        List<EtcdNode> providerNodes = node.nodes;
-        genInitServiceCache(name, providerNodes);
-
-      } else if (node.key.endsWith(CONSUMERS)) {
-        // 服务消费者
-        List<EtcdNode> consumerNodes = node.nodes;
-        genInitConsumerCache(name, consumerNodes);
-      }
-    }
+    // 服务提供者
+    if (isProvider)
+      updateProvider(name, nodes);
+    else
+      updateReference(name, nodes);
   }
 
-  private void genInitServiceCache(String name, List<EtcdNode> nodes) {
+  private void updateProvider(String name, List<EtcdNode> providerNodes) {
+    ConcurrentHashMap<String, ServiceProviderDescriptor> allds = new ConcurrentHashMap<>();
+    for (EtcdNode n : providerNodes) {
+      try {
+        ServiceProviderDescriptor sd = ServiceProviderDescriptor.parseStr(n.value);
+        String subkey = serviceKey(sd);
+        allds.put(subkey, sd);
 
-    if (nodes != null) {
-      for (EtcdNode n : nodes) {
-        updateService(name, n.value);
+        // 更新本地缓存
+        if (localRegistCache.containsKey(subkey)) {
+          localRegistCache.put(subkey, sd);
+        }
+
+      } catch (Exception e) {
+        logger.error("init provdier cache {}", n.value, e);
       }
     }
+    serviceDescriptors.put(name, allds);
   }
 
-  private void genInitConsumerCache(String name, List<EtcdNode> nodes) {
-    if (nodes != null) {
-      for (EtcdNode n : nodes) {
-        updateConsumer(name, n.value);
+  private void updateReference(String name, List<EtcdNode> providerNodes) {
+    ConcurrentHashMap<String, ServiceReferenceDescriptor> allds = new ConcurrentHashMap<>();
+    for (EtcdNode n : providerNodes) {
+      try {
+        ServiceReferenceDescriptor sd = ServiceReferenceDescriptor.parseStr(n.value);
+
+        String subkey = referKey(sd);
+
+        allds.put(subkey, sd);
+
+        // 更新本地缓存
+        if (localReferCache.containsKey(subkey)) {
+          localReferCache.put(subkey, sd);
+        }
+
+      } catch (Exception e) {
+        logger.error("init provdier cache {}", n.value, e);
       }
     }
+    referDescriptors.put(name, allds);
   }
 
-  private void updateService(String name, String value) {
-
-    ServiceProviderDescriptor sd = ServiceProviderDescriptor.parseStr(value);
-
-    ConcurrentHashMap<String, ServiceProviderDescriptor> allds = serviceDescriptors.get(name);
-
-    if (allds == null) {
-      allds = new ConcurrentHashMap<String, ServiceProviderDescriptor>();
-      ConcurrentHashMap<String, ServiceProviderDescriptor> oldds =
-          serviceDescriptors.putIfAbsent(name, allds);
-      if (oldds != null) {
-        allds = oldds;
-      }
-    }
-
-    String subkey = serviceKey(sd);
-
-    allds.put(subkey, sd);
-
-    // 更新本地缓存
-    if (localRegistCache.containsKey(subkey)) {
-      localRegistCache.put(subkey, sd);
-    }
-
-  }
-
-  private void deleteConsumer(String name, String value) {
-
-    ServiceReferenceDescriptor rd = ServiceReferenceDescriptor.parseStr(value);
-
-    ConcurrentHashMap<String, ServiceReferenceDescriptor> allds = referDescriptors.get(name);
-
-    if (allds == null) {
-      return;
-    }
-    if (rd.getAddressPairs().size() != 0) {
-
-      for (String pair : rd.getAddressPairs()) {
-        String key = Utils.generateKey(rd.getServiceName(), rd.getReferApp(), rd.getReferGroup(),
-            rd.getReferVersion(), rd.getProtocol(), pair);
-        allds.remove(key, rd);
-      }
-    }
-  }
-
-  private void deleteService(String name, String value) {
-
-    ServiceProviderDescriptor sd = ServiceProviderDescriptor.parseStr(value);
-
-    ConcurrentHashMap<String, ServiceProviderDescriptor> allds = serviceDescriptors.get(name);
-
-    if (allds == null) {
-      return;
-    }
-    String subkey = serviceKey(sd);
-    allds.remove(subkey);
-  }
-
-  private void updateConsumer(String name, String value) {
-    ServiceReferenceDescriptor rd = ServiceReferenceDescriptor.parseStr(value);
-    ConcurrentHashMap<String, ServiceReferenceDescriptor> allds = referDescriptors.get(name);
-    if (allds == null) {
-      allds = new ConcurrentHashMap<String, ServiceReferenceDescriptor>();
-      ConcurrentHashMap<String, ServiceReferenceDescriptor> oldds =
-          referDescriptors.putIfAbsent(name, allds);
-      if (oldds != null) {
-        allds = oldds;
-      }
-    }
-    if (rd.getAddressPairs().size() != 0) {
-
-      for (String pair : rd.getAddressPairs()) {
-        String key = Utils.generateKey(rd.getServiceName(), rd.getReferApp(), rd.getReferGroup(),
-            rd.getReferVersion(), rd.getProtocol(), pair);
-        allds.put(key, rd);
-      }
-    }
-    String subkey = referKey(rd);
-
-    // 更新本地缓存
-    if (localReferCache.containsKey(subkey)) {
-      localReferCache.put(subkey, rd);
-    }
-
+  private String serviceKey(ServiceProviderDescriptor sd) {
+    return Utils.generateKey(sd.getName(), sd.getApp(), sd.getVersion(), sd.getGroup(),
+        sd.getHost(), String.valueOf(sd.getPort()));
   }
 
   @Override
-  public ServiceProviderDescriptor findService(String app, String name, String version,
-      String group, String protocol, String host, int port) {
+  public ServiceProviderDescriptor findServiceProvider(String app, String name, String version,
+      String group, String protocol, String host, int port, String pid, long registTime) {
 
     String key = Utils.generateKey(name, app, version, group, host, String.valueOf(port));
     ServiceProviderDescriptor sd = localRegistCache.get(key);
     if (sd != null)
       return sd;
+    findServiceProviders(name);
     ConcurrentHashMap<String, ServiceProviderDescriptor> sds = serviceDescriptors.get(name);
     if (sds == null)
       return null;
@@ -449,10 +414,10 @@ public class EtcdRegisterationService implements RegisterationService {
   }
 
   @Override
-  public void unregistService(ServiceProviderDescriptor sd) {
+  public void unregistServiceProvider(ServiceProviderDescriptor sd) {
     localRegistCache.remove(serviceKey(sd));
     try {
-      client.delete(genProviderPath(sd)).send();
+      client.delete(genProviderPath(sd)).timeout(5, TimeUnit.SECONDS).send();
     } catch (IOException e) {
       logger.error("delete service  error {}", sd.toString(), e);
     }
@@ -460,7 +425,7 @@ public class EtcdRegisterationService implements RegisterationService {
   }
 
   @Override
-  public void registReference(ServiceReferenceDescriptor rd) {
+  public void registServiceReference(ServiceReferenceDescriptor rd) {
     localReferCache.put(referKey(rd), rd);
     registReference(rd, false);
   }
@@ -481,57 +446,48 @@ public class EtcdRegisterationService implements RegisterationService {
 
   public void registReference(ServiceReferenceDescriptor rd, boolean isAsyn) {
     try {
-
-      EtcdResponsePromise<EtcdKeysResponse> rsp =
-          client.put(genConsumerPath(rd), rd.toString()).ttl(DEFAULT_TTL).send();
+      EtcdResponsePromise<EtcdKeysResponse> rsp = client.put(genConsumerPath(rd), rd.toString())
+          .timeout(5, TimeUnit.SECONDS).ttl(DEFAULT_TTL).send();
       if (!isAsyn)
         rsp.get();
     } catch (IOException | EtcdException | EtcdAuthenticationException | TimeoutException e) {
-      Utils.throwException(e);
+      if (!isAsyn)
+        Utils.throwException(e);
+      else
+        logger.error("regist reference ", e);
     }
   }
 
   private String referKey(ServiceReferenceDescriptor rd) {
     return Utils.generateKey(rd.getServiceName(), rd.getReferApp(), rd.getReferGroup(),
-        rd.getReferVersion(), rd.getProtocol(), rd.getPid(), String.valueOf(rd.getRegistTime()));
+        rd.getReferVersion(), rd.getProtocol(), rd.getHost(), rd.getPid(),
+        String.valueOf(rd.getRegistTime()));
   }
 
   @Override
-  public void unregistReference(ServiceReferenceDescriptor rd) {
+  public void unregistServiceReference(ServiceReferenceDescriptor rd) {
     localReferCache.remove(referKey(rd));
     try {
-      client.delete(genConsumerPath(rd)).send();
+      client.delete(genConsumerPath(rd)).timeout(5, TimeUnit.SECONDS).send();
     } catch (IOException e) {
       logger.error("delete service reference error {}", rd.toString(), e);
     }
   }
 
-  @Override
-  public ServiceReferenceDescriptor findReferenceDescriptor(String referApp, String name,
-      String version, String group, String protocol, String referHost, int referPort, String host,
-      int port) {
-    ConcurrentHashMap<String, ServiceReferenceDescriptor> sds = referDescriptors.get(name);
-    if (sds == null)
-      return null;
-    String pair = Utils.createServerAndClientAddress(referHost, referPort, host, port);
-    String key = Utils.generateKey(name, referApp, group, version, protocol, pair);
-    return sds.get(key);
-  }
+
 
   @Override
   public synchronized void close() {
 
     try {
-
       for (ServiceProviderDescriptor sd : localRegistCache.values()) {
-        unregistService(sd);
+        unregistServiceProvider(sd);
       }
       for (ServiceReferenceDescriptor rd : localReferCache.values()) {
-        unregistReference(rd);
+        unregistServiceReference(rd);
       }
       shutdownTimerTask();
       client.close();
-      isClose = true;
       closeTimer();
 
     } catch (IOException e) {
@@ -550,11 +506,56 @@ public class EtcdRegisterationService implements RegisterationService {
   }
 
   @Override
-  public ServiceReferenceDescriptor findReferenceDescriptor(String referApp, String name,
-      String version, String group, String protocol, String pid, long registTime) {
-    String key = Utils.generateKey(name, referApp, group, version, protocol, pid,
-        String.valueOf(registTime));
+  public Collection<ServiceReferenceDescriptor> findServiceReferences(String name) {
+    return findReferences(name, false);
+  }
+
+  private Collection<ServiceReferenceDescriptor> findReferences(String name, boolean isForce) {
+    Boolean isWatch = null;
+    if (isForce == false)
+      isWatch = watchReferecnceCache.putIfAbsent(name, true);
+
+    if (isWatch == null) {
+
+      // 第一次watch
+      try {
+        EtcdResponsePromise<EtcdKeysResponse> future =
+            client.getDir(baseServiceProviderPath(name)).timeout(5, TimeUnit.SECONDS).send();
+        EtcdKeysResponse rsp = future.get();
+        // 初始化
+        initServiceCache(name, rsp.node, false);
+        // 注册监听
+      } catch (Exception e) {
+        if (e instanceof EtcdException) {
+          if (((EtcdException) e).errorCode == 100)
+            return null;
+        }
+        logger.error("", e);
+      }
+    }
+    // 继续使用缓存
+    ConcurrentHashMap<String, ServiceReferenceDescriptor> allSd = referDescriptors.get(name);
+    if (allSd != null)
+      return Collections.unmodifiableCollection(allSd.values());
     return null;
   }
+
+  @Override
+  public ServiceReferenceDescriptor findServiceReference(String referApp, String name,
+      String version, String group, String protocol, String host, String pid, long registTime) {
+    String key = Utils.generateKey(name, referApp, group, version, protocol, host, pid,
+        String.valueOf(registTime));
+    ServiceReferenceDescriptor rd = localReferCache.get(key);
+    if (rd != null)
+      return rd;
+    findServiceReferences(name);
+    ConcurrentHashMap<String, ServiceReferenceDescriptor> serviceReferences =
+        referDescriptors.get(name);
+    if (serviceReferences == null)
+      return null;
+    return serviceReferences.get(key);
+  }
+
+
 
 }

@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.ConfigItem;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
@@ -14,6 +13,7 @@ import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.registeration.RegisterationService;
 import com.seaky.hamster.core.rpc.server.Server;
 import com.seaky.hamster.core.rpc.server.ServerConfig;
+import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaMethodServiceImpl;
 import com.seaky.hamster.core.service.JavaService;
@@ -27,7 +27,7 @@ public final class ServerHelper {
   public static Server<?, ?> createServer(String name, RegisterationService registerationService,
       ServerConfig config) {
     ProtocolExtensionFactory<?, ?> factory =
-        ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class).findExtension(name);
+        ExtensionLoaderConstants.PROTOCOLFACTORY_EXTENSION.findExtension(name);
     if (factory == null)
       throw new RuntimeException("cannot find ProtocolExtensionFactory " + name);
     Server<?, ?> server = factory.createServer();
@@ -94,16 +94,18 @@ public final class ServerHelper {
       }
       sc.mergeServiceConfig(commonConfig);
       sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_NAME, serviceName, true));
-      sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_RETURN, m.getReturnType().getName(), true));
+      sc.addConfigItem(
+          new ConfigItem(ConfigConstans.PROVIDER_RETURN, m.getReturnType().getName(), true));
       Class<?>[] params = m.getParameterTypes();
       if (params != null) {
         String[] paramNames = new String[params.length];
         for (int i = 0; i < params.length; ++i) {
           paramNames[i] = params[i].getName();
         }
-        sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PARAMS, Utils.paramsToString(paramNames), true));
+        sc.addConfigItem(
+            new ConfigItem(ConfigConstans.PROVIDER_PARAMS, Utils.paramsToString(paramNames), true));
       }
-      
+
       server.export(cs, sc);
     }
   }

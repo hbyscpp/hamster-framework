@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.client.Client;
 import com.seaky.hamster.core.rpc.client.ClientConfig;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
@@ -17,6 +16,7 @@ import com.seaky.hamster.core.rpc.config.ConfigItem;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.registeration.RegisterationService;
+import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaReferenceService;
 
@@ -31,7 +31,7 @@ public final class ClientHelper {
   public static Client<?, ?> createServer(String name, RegisterationService registerationService,
       ClientConfig config) {
     ProtocolExtensionFactory<?, ?> factory =
-        ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class).findExtension(name);
+        ExtensionLoaderConstants.PROTOCOLFACTORY_EXTENSION.findExtension(name);
     if (factory == null)
       throw new RuntimeException("cannot find ProtocolExtensionFactory " + name);
     Client<?, ?> client = factory.createClient();

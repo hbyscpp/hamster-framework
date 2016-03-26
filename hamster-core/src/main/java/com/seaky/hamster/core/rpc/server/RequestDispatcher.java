@@ -9,7 +9,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.common.DefaultServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
@@ -32,13 +31,11 @@ import com.seaky.hamster.core.rpc.protocol.ExceptionConvertor;
 import com.seaky.hamster.core.rpc.protocol.ExceptionResult;
 import com.seaky.hamster.core.rpc.protocol.Response;
 import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
+import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaService;
 
 public class RequestDispatcher<Req, Rsp> {
-
-  static ExtensionLoader<ExceptionConvertor> exceptionConvertorExt =
-      ExtensionLoader.getExtensionLoaders(ExceptionConvertor.class);
 
   private AbstractServer<Req, Rsp> server;
 
@@ -300,7 +297,8 @@ public class RequestDispatcher<Req, Rsp> {
       if (r.isException()) {
         String expCon = ServiceContextUtils.getProviderConfig(sc)
             .get(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR, "default");
-        ExceptionConvertor convert = exceptionConvertorExt.findExtension(expCon);
+        ExceptionConvertor convert =
+            ExtensionLoaderConstants.EXCEPTION_CONVERTOR_EXTENSION.findExtension(expCon);
         ExceptionResult er = convert.convertTo((RpcException) r.getException());
         ServiceContextUtils.getResponse(sc).setResult(er);
       }

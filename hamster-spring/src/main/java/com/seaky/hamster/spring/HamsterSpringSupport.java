@@ -11,19 +11,18 @@ import org.springframework.context.ApplicationContextAware;
 
 import com.seaky.hamster.core.ClientHelper;
 import com.seaky.hamster.core.ServerHelper;
-import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.client.Client;
 import com.seaky.hamster.core.rpc.client.ClientConfig;
 import com.seaky.hamster.core.rpc.client.ClientResourceManager;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.ConfigItem;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
-import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.registeration.EtcdRegisterationService;
 import com.seaky.hamster.core.rpc.registeration.RegisterationService;
 import com.seaky.hamster.core.rpc.server.Server;
 import com.seaky.hamster.core.rpc.server.ServerConfig;
 import com.seaky.hamster.core.rpc.server.ServerResourceManager;
+import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 
 public abstract class HamsterSpringSupport implements ApplicationContextAware {
 
@@ -50,7 +49,7 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
 
     if (allServers.get(id) != null)
       throw new RuntimeException("server " + id + " exists");
-    Server<?, ?> server = ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
+    Server<?, ?> server = ExtensionLoaderConstants.PROTOCOLFACTORY_EXTENSION
         .findExtension(protocolName).createServer();
 
     server.start(service, config);
@@ -69,8 +68,8 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
   public Client<?, ?> createClient(String id, String name, ClientConfig config) {
     if (allClients.get(id) != null)
       throw new RuntimeException("client " + id + " exists");
-    Client<?, ?> cc = ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
-        .findExtension(name).createClient();
+    Client<?, ?> cc =
+        ExtensionLoaderConstants.PROTOCOLFACTORY_EXTENSION.findExtension(name).createClient();
     ClientConfig conf = new ClientConfig();
     cc.connect(service, conf);
     allClients.putIfAbsent(id, cc);

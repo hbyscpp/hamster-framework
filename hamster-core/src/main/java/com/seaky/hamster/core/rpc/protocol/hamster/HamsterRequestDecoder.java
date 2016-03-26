@@ -1,33 +1,31 @@
 package com.seaky.hamster.core.rpc.protocol.hamster;
 
-import io.netty.buffer.ByteBuf;
-
 import java.nio.ByteOrder;
 
 import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.netty4.ByteBufToObjectDecoder;
 import com.seaky.hamster.core.rpc.serialization.Serializer;
-import com.seaky.hamster.core.rpc.serialization.SerializerFactory;
+import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 
-public class HamsterRequestDecoder extends
-		ByteBufToObjectDecoder<HamsterRequest> {
+import io.netty.buffer.ByteBuf;
 
-	public HamsterRequestDecoder() {
-		super(ByteOrder.BIG_ENDIAN, 1024 * 1024 * 10, 0, 4, 0, 4, true);
-	}
+public class HamsterRequestDecoder extends ByteBufToObjectDecoder<HamsterRequest> {
 
-	// TODO 避免创建byte[]
-	@Override
-	protected HamsterRequest decode(ByteBuf bytebuf) {
+  public HamsterRequestDecoder() {
+    super(ByteOrder.BIG_ENDIAN, 1024 * 1024 * 10, 0, 4, 0, 4, true);
+  }
 
-			int allBytelength = bytebuf.readableBytes();
-			byte[] allBytes = new byte[allBytelength];
-			bytebuf.readBytes(allBytes);
-			Serializer ser = SerializerFactory
-					.getSerializer(Constants.KRYO_SERIAL);
-			HamsterRequest request = ser.deSerialize(allBytes,
-					HamsterRequest.class);
-			return request;
-		}
+  // TODO 避免创建byte[]
+  @Override
+  protected HamsterRequest decode(ByteBuf bytebuf) {
+
+    int allBytelength = bytebuf.readableBytes();
+    byte[] allBytes = new byte[allBytelength];
+    bytebuf.readBytes(allBytes);
+    Serializer ser =
+        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
+    HamsterRequest request = ser.deSerialize(allBytes, HamsterRequest.class);
+    return request;
+  }
 
 }

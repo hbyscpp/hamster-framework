@@ -9,17 +9,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.SettableFuture;
-import com.seaky.hamster.core.extension.ExtensionLoader;
-import com.seaky.hamster.core.rpc.client.cluster.ClusterServiceFactory;
-import com.seaky.hamster.core.rpc.client.loadbalancer.ServiceLoadBalancer;
-import com.seaky.hamster.core.rpc.client.router.ServiceRouter;
 import com.seaky.hamster.core.rpc.common.Constants;
-import com.seaky.hamster.core.rpc.common.ServiceContext;
-import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.exception.NotSetResultException;
@@ -29,6 +24,7 @@ import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.registeration.RegisterationService;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 import com.seaky.hamster.core.rpc.registeration.ServiceReferenceDescriptor;
+import com.seaky.hamster.core.rpc.utils.NetUtils;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaReferenceService;
 
@@ -42,14 +38,6 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   private RegisterationService registerationService;
 
-  static ExtensionLoader<ServiceRouter> routerExtension =
-      ExtensionLoader.getExtensionLoaders(ServiceRouter.class);
-
-  static ExtensionLoader<ClusterServiceFactory> clusterExtension =
-      ExtensionLoader.getExtensionLoaders(ClusterServiceFactory.class);
-
-  static ExtensionLoader<ServiceLoadBalancer> loadBalanceExtension =
-      ExtensionLoader.getExtensionLoaders(ServiceLoadBalancer.class);
   protected ProtocolExtensionFactory<Req, Rsp> protocolExtensionFactory;
 
   private ClientConfig config;
@@ -64,8 +52,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
       new ConcurrentHashMap<String, ClientTransport<Req, Rsp>>();
 
   // key 服务端－客户端
-  private ConcurrentHashMap<String, ServiceReferenceDescriptor> referenceCache =
-      new ConcurrentHashMap<String, ServiceReferenceDescriptor>();
+  private ConcurrentHashMap<String, Long> referenceCache = new ConcurrentHashMap<String, Long>();
 
   private ConcurrentHashMap<ProcessPhase, ConcurrentHashMap<String, List<ServiceInterceptor>>> allservicesInterceptorsBeforeCluster =
       new ConcurrentHashMap<ProcessPhase, ConcurrentHashMap<String, List<ServiceInterceptor>>>();
@@ -125,34 +112,12 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     return lock;
   }
 
-  // 更新
-  public void updateReferenceDescriptor(ServiceContext sc) {
-    String referKey = Utils.generateKey(ServiceContextUtils.getServiceName(sc),
-        ServiceContextUtils.getReferenceApp(sc), ServiceContextUtils.getReferenceVersion(sc),
-        ServiceContextUtils.getReferenceGroup(sc));
-    // TODO 从注册中心获取
-    ServiceReferenceDescriptor rd = referenceCache.get(referKey);
-    if (rd == null)
-      throw new RuntimeException("can not found reference descriptor " + referKey);
-    String pair = Utils.createServerAndClientAddress(ServiceContextUtils.getClientHost(sc),
-        ServiceContextUtils.getClientPort(sc), ServiceContextUtils.getServerHost(sc),
-        ServiceContextUtils.getServerPort(sc));
-
-    if (!rd.containPair(pair)) {
-      // TODO
-      rd.addAddressPair(pair);
-      registerationService.registReference(rd);
-    }
-  }
 
   public void removeReference(InetSocketAddress serverAddress, InetSocketAddress clientAddress) {
     String serverAddr = Utils.generateKey(serverAddress.getAddress().getHostAddress(),
         String.valueOf(serverAddress.getPort()));
     String clientAddr = Utils.generateKey(clientAddress.getAddress().getHostAddress(),
         String.valueOf(clientAddress.getPort()));
-    String sb = Utils.createServerAndClientAddress(clientAddress.getAddress().getHostAddress(),
-        clientAddress.getPort(), serverAddress.getAddress().getHostAddress(),
-        serverAddress.getPort());
     // 清理期间不能连接远程服务
     Lock lock = findLock(serverAddr);
     try {
@@ -166,13 +131,8 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
         // 客户端和服务端相同，并且保持连接,transport关闭后，恰好使用同一个端口和同一个服务端去连接,不做处理
         if (clientAddr.equals(clientkey))
           return;
-
-        removeReferByAddr(sb.toString());
-
-        return;
       } else {
         // 删除
-        removeReferByAddr(sb.toString());
         clientCache.remove(serverAddr);
       }
     } finally {
@@ -181,15 +141,6 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   }
 
-  private void removeReferByAddr(String addrpairs) {
-    for (ServiceReferenceDescriptor rd : referenceCache.values()) {
-      if (rd.getAddressPairs().contains(rd)) {
-        rd.getAddressPairs().remove(rd);
-        // 主动更新
-        registerationService.registReference(rd);
-      }
-    }
-  }
 
   public long getAndIncrementSeqNum() {
     return seqNum.getAndIncrement();
@@ -238,6 +189,10 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
       throw new RuntimeException("client is starting");
     this.registerationService = registerationService;
     this.config = config;
+
+    if (StringUtils.isBlank(config.getHost())) {
+      this.config.setHost(NetUtils.getLogHost());
+    }
     this.asynServiceExecutor = new AsynServiceExecutor<Req, Rsp>(this);
     ClientResourceManager.start();
     this.isRunning = true;
@@ -248,8 +203,25 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   public synchronized void close() {
     if (isRunning) {
 
-      for (ServiceReferenceDescriptor rd : referenceCache.values()) {
-        registerationService.unregistReference(rd);
+      for (String name : serviceCache.keySet()) {
+        String[] attrs = name.split(Constants.TILDE_LINE);
+        ServiceReferenceDescriptor sd = new ServiceReferenceDescriptor();
+        sd.setHost(config.getHost());
+        sd.setServiceName(attrs[0]);
+        sd.setReferApp(attrs[1]);
+        sd.setReferVersion(attrs[2]);
+        sd.setReferGroup(attrs[3]);
+        sd.setProtocol(protocolExtensionFactory.protocolName());
+        sd.setPid(Utils.getCurrentVmPid());
+        try {
+          sd = getServiceReferenceDescriptor(sd.getServiceName(), sd.getReferApp(),
+              sd.getReferVersion(), sd.getReferGroup());
+          registerationService.unregistServiceReference(sd);
+          logger.info("unbound service reference {}:{}:{}:{},on {}:{} ", attrs[0], attrs[1],
+              attrs[2], attrs[3], config.getHost(), sd.getPid());
+        } catch (Exception e) {
+          logger.error("unregist service {}  error ", sd.toString(), e);
+        }
       }
 
       for (ClientTransport<Req, Rsp> transport : clientCache.values()) {
@@ -327,11 +299,13 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     rd.setConfig(copyOfConfig);
     rd.setPid(Utils.getCurrentVmPid());
     rd.setProtocol(protocolExtensionFactory.protocolName());
-    rd.setRegistTime(System.currentTimeMillis());
-    referenceCache.put(Utils.generateKey(serviceName, referApp, version, group), rd);
+    long time = System.currentTimeMillis();
+    rd.setRegistTime(time);
+    rd.setHost(this.config.getHost());
+    referenceCache.put(Utils.generateKey(serviceName, referApp, version, group), time);
     try {
       String interceptors = config.get(ConfigConstans.REFERENCE_INTERCEPTORS);
-      registerationService.registReference(rd);
+      registerationService.registServiceReference(rd);
       addServiceInterceptors(serviceName, referApp, version, group, interceptors,
           ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE);
       addServiceInterceptors(serviceName, referApp, version, group, interceptors,
@@ -346,7 +320,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   Collection<ServiceProviderDescriptor> getAllServices(String serviceName) {
 
-    return registerationService.findServices(serviceName);
+    return registerationService.findServiceProviders(serviceName);
 
   }
 
@@ -463,9 +437,17 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   private EndpointConfig getEndpointConfig(String serviceName, String referenceApp,
       String referenceVersion, String referenceGroup) {
-    return referenceCache
-        .get(Utils.generateKey(serviceName, referenceApp, referenceVersion, referenceGroup))
-        .getConfig();
+    return getServiceReferenceDescriptor(serviceName, referenceApp, referenceVersion,
+        referenceGroup).getConfig();
+  }
+
+  private ServiceReferenceDescriptor getServiceReferenceDescriptor(String serviceName,
+      String referenceApp, String referenceVersion, String referenceGroup) {
+    Long time = referenceCache
+        .get(Utils.generateKey(serviceName, referenceApp, referenceVersion, referenceGroup));
+    return registerationService.findServiceReference(referenceApp, serviceName, referenceVersion,
+        referenceGroup, protocolExtensionFactory.protocolName(), config.getHost(),
+        Utils.getCurrentVmPid(), time);
   }
 
 }

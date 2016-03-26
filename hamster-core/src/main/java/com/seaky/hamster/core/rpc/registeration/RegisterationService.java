@@ -21,39 +21,48 @@ public interface RegisterationService {
    * 
    * @param sd 服务的实例
    */
-  public void registService(ServiceProviderDescriptor sd);
+  public void registServiceProvider(ServiceProviderDescriptor sd);
 
   /**
-   * 获取服务实例的信息
+   * 返回注册中心，注册的服务实例集合
    * 
    * @param name 服务的名字
    * @return 服务实例的集合
    */
-  public Collection<ServiceProviderDescriptor> findServices(String name);
+  public Collection<ServiceProviderDescriptor> findServiceProviders(String name);
 
 
-  public ServiceProviderDescriptor findService(String app, String name, String version, String group,
-      String protocol, String host, int port);
+  /**
+   * 
+   * 返回本地的某个实例
+   * 
+   * @param TODO 参数含义的说明
+   * @return ServiceProviderDescriptor TODO 返回值含义的说明
+   * @throws TODO 抛出的异常，如果没有删除此行
+   */
+  public ServiceProviderDescriptor findServiceProvider(String app, String name, String version,
+      String group, String protocol, String host, int port, String pid, long registTime);
 
   /**
    * 取消注册
    * 
    * @param sd 服务的实例
    */
-  public void unregistService(ServiceProviderDescriptor sd);
-
-  public void registReference(ServiceReferenceDescriptor rd);
-
-  public void unregistReference(ServiceReferenceDescriptor rd);
+  public void unregistServiceProvider(ServiceProviderDescriptor sd);
 
 
-  public ServiceReferenceDescriptor findReferenceDescriptor(String referApp, String name, String version, String group,
-      String protocol, String referHost, int referPort, String host, int port);
-  
-  public ServiceReferenceDescriptor findReferenceDescriptor(String referApp, String name, String version, String group,
-	      String protocol, String pid,long registTime);
+  // 引用
 
-  // 获取某个服务的所有引用
+  public Collection<ServiceReferenceDescriptor> findServiceReferences(String name);
+
+  public void registServiceReference(ServiceReferenceDescriptor rd);
+
+  public void unregistServiceReference(ServiceReferenceDescriptor rd);
+
+
+  public ServiceReferenceDescriptor findServiceReference(String referApp, String name,
+      String version, String group, String protocol, String host, String pid, long registTime);
+
   /**
    * 关闭注册服务
    */

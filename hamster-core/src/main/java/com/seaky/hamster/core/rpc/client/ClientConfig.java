@@ -10,6 +10,9 @@ public class ClientConfig {
 
   private int readTimeout = 3;
 
+  // 指定ip
+  private String host;
+
   /**
    * @return the connectTimeout
    */
@@ -36,6 +39,14 @@ public class ClientConfig {
    */
   public void setReadTimeout(int readTimeout) {
     this.readTimeout = readTimeout;
+  }
+
+  public String getHost() {
+    return host;
+  }
+
+  public void setHost(String host) {
+    this.host = host;
   }
 
 

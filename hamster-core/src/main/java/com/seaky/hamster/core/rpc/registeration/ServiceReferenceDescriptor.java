@@ -1,8 +1,5 @@
 package com.seaky.hamster.core.rpc.registeration;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.lang.StringUtils;
 
 import com.seaky.hamster.core.rpc.common.Constants;
@@ -15,9 +12,6 @@ public class ServiceReferenceDescriptor {
 
   // 具体的配置
   private EndpointConfig config;
-
-  // 机器地址对
-  private ConcurrentHashMap<String, String> addressPairs = new ConcurrentHashMap<String, String>();
 
   /**
    * @return the serviceName
@@ -60,6 +54,18 @@ public class ServiceReferenceDescriptor {
    */
   public void setReferApp(String referApp) {
     config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, referApp, true));
+  }
+
+  public String getHost() {
+
+    return config.get(ConfigConstans.REFERENCE_HOST);
+  }
+
+  /**
+   * @param registTime the registTime to set
+   */
+  public void setHost(String host) {
+    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_HOST, host, true));
   }
 
   /**
@@ -116,18 +122,6 @@ public class ServiceReferenceDescriptor {
     config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, referGroup, true));
   }
 
-  public Set<String> getAddressPairs() {
-    return addressPairs.keySet();
-  }
-
-  public boolean containPair(String pair) {
-    return addressPairs.containsKey(pair);
-  }
-
-  public void addAddressPair(String addressPair) {
-    addressPairs.put(addressPair, "");
-  }
-
   public void setParamTypes(String[] params) {
     this.config.addConfigItem(
         new ConfigItem(ConfigConstans.REFERENCE_PARAMS, paramsToString(params), true));
@@ -160,49 +154,18 @@ public class ServiceReferenceDescriptor {
 
   public String toString() {
 
-    StringBuilder sb = new StringBuilder();
-    sb.append(config.toString());
-    sb.append(Constants.TILDE_LINE);
-    sb.append(hostPairsString());
-    return sb.toString();
+    return config.toString();
 
   }
 
-  private String hostPairsString() {
-
-    StringBuilder sb = new StringBuilder();
-    for (String pair : addressPairs.keySet()) {
-      sb.append(pair).append(Constants.COMMA);
-    }
-    return sb.toString();
-  }
 
   public static ServiceReferenceDescriptor parseStr(String str) {
     if (StringUtils.isBlank(str))
       throw new RuntimeException("error sd format " + str);
-
-    String[] params = str.split(Constants.TILDE_LINE, -1);
-    if (params == null || params.length != 3)
-      throw new RuntimeException("error sd format " + str);
-
     ServiceReferenceDescriptor rd = new ServiceReferenceDescriptor();
-    setAddressPair(params[2], rd);
-    EndpointConfig ec = EndpointConfig.parseStr(params[0], params[1]);
+    EndpointConfig ec = EndpointConfig.parseStr(str);
     rd.setConfig(ec);
     return rd;
-  }
-
-  private static void setAddressPair(String addressPairs, ServiceReferenceDescriptor rd) {
-    if (StringUtils.isBlank(addressPairs))
-      return;
-
-    String[] pairs = addressPairs.split(Constants.COMMA);
-
-    if (pairs != null) {
-      for (String pair : pairs) {
-        rd.addressPairs.put(pair, "");
-      }
-    }
   }
 
 }
