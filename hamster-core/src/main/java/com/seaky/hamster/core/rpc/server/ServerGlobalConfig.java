@@ -13,7 +13,7 @@ public class ServerGlobalConfig {
 
 	//业务分发的线程数目
 	private static int dispatcherThreadNum = Runtime.getRuntime()
-			.availableProcessors();
+			.availableProcessors()*2;
 
 	//默认公共的线程池线程数目
 	private static int defaultThreadpoolNum = 200;

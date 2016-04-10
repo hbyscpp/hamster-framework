@@ -28,7 +28,7 @@ public final class ClientHelper {
 
   }
 
-  public static Client<?, ?> createServer(String name, RegisterationService registerationService,
+  public static Client<?, ?> createClient(String name, RegisterationService registerationService,
       ClientConfig config) {
     ProtocolExtensionFactory<?, ?> factory =
         ExtensionLoaderConstants.PROTOCOLFACTORY_EXTENSION.findExtension(name);

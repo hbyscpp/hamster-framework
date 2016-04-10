@@ -23,7 +23,14 @@ public final class ServerHelper {
   private ServerHelper() {
 
   }
-
+/**
+ * 
+* 创建一个Server，同时启动server
+* @param name 协议的名字
+* @param registerationService 注册中心
+* @param config 服务的配置
+* @return Server<?,?>    server实例
+ */
   public static Server<?, ?> createServer(String name, RegisterationService registerationService,
       ServerConfig config) {
     ProtocolExtensionFactory<?, ?> factory =
@@ -41,7 +48,7 @@ public final class ServerHelper {
   }
 
   /**
-   * 接口中每个方法代表一个服务，接口不能有重载的方法
+   * 向server中注册服务，接口中每个方法代表一个服务，<br/>接口不能有重载的方法
    * 
    * @param server 服务
    * @param cls 服务接口
@@ -68,7 +75,7 @@ public final class ServerHelper {
     for (Method m : methods) {
       // 判断重载
       if (methodNames.contains(m.getName()))
-        throw new RuntimeException("interface contain overload method");
+        throw new RuntimeException("interface "+cls.getName() +" contain overload method "+m.getName());
       methodNames.add(m.getName());
     }
 

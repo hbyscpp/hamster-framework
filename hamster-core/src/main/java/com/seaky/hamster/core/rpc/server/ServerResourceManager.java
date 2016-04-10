@@ -1,13 +1,7 @@
 package com.seaky.hamster.core.rpc.server;
 
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.lang.reflect.Constructor;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,10 +16,11 @@ import io.netty.channel.nio.NioEventLoopGroup;
 //全局资源的管理
 public class ServerResourceManager {
 
+	//接受
 	private static EventLoopGroup bossGroup = null;
-
+    //读写线程池
 	private static EventLoopGroup workerGroup = null;
-
+    //消息分发线程池
 	private static ExecutorService dispatcherPool;
 
 	private static boolean isStart = false;

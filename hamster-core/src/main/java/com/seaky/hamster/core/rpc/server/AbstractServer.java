@@ -42,9 +42,11 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
 
   private ConcurrentHashMap<String, Long> serviceRegistTimes = new ConcurrentHashMap<>();
 
+  //服务的拦截器
   private ConcurrentHashMap<String, List<ServiceInterceptor>> allservicesInterceptors =
       new ConcurrentHashMap<String, List<ServiceInterceptor>>();
 
+  //请求分发
   private RequestDispatcher<Req, Rsp> dispatcher;
 
   private ServerInterceptorSupportService<Req, Rsp> interceptorSupportService;

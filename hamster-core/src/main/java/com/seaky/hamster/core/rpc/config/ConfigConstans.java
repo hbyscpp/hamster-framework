@@ -110,7 +110,7 @@ public interface ConfigConstans {
 
   public static final String PROVIDER_THREADPOOL_MAXQUEUE = "sp.threadpool.maxqueue";
 
-  public static final int PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT = 100;
+  public static final int PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT = 1000000;
 
   public static final String PROVIDER_THREADPOOL_MAXSIZE = "sp.threadpool.maxsize";
 

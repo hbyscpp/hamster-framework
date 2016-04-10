@@ -66,7 +66,7 @@ public abstract class BenchmarkClient {
 
 		final String serverIP = "localhost";//args[0];
 		final int serverPort = 12345;//Integer.parseInt(args[1]);
-		final int concurrents = 500;//Integer.parseInt(args[2]);
+		final int concurrents = 100;//Integer.parseInt(args[2]);
 		final int timeout = 300;//Integer.parseInt(args[3]);
 		final int codectype =1; //Integer.parseInt(args[4]);
 		final int requestSize =100;// Integer.parseInt(args[5]);

@@ -34,7 +34,14 @@ import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
 import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaService;
-
+/**
+ * server的请求分发，一个jvm中所有server 共享一个dispatcher线程池
+ *dispatcher主要用于协议的解析，ServiceContext的创建
+ * 
+ * @author seaky
+ * @since 1.0.0
+ * @Date Apr 6, 2016
+ */
 public class RequestDispatcher<Req, Rsp> {
 
   private AbstractServer<Req, Rsp> server;

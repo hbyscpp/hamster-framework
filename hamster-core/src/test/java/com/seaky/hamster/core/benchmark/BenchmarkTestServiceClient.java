@@ -25,9 +25,7 @@ public class BenchmarkTestServiceClient extends BenchmarkClient {
     ClientConfig conf = new ClientConfig();
     EtcdRegisterationService lrs = new EtcdRegisterationService("hamster", "http://localhost:2379");
     Client<?, ?> hc =
-        ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
-            .findExtension("hamster").createClient();
-    hc.connect(lrs, conf);
+        ClientHelper.createClient("hamster", lrs, conf);
 
     EndpointConfig sc = new EndpointConfig();
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, "testapp", true));

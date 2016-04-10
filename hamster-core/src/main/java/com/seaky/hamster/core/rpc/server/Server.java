@@ -6,10 +6,10 @@ import com.seaky.hamster.core.service.JavaService;
 
 /**
  * 
- * 一个server实例代表在某个网络地址上运行JavaService服务的容器,这些服务使用相同的协议进行通信。 
- * Req代表协议的请求
- * Rsp代表协议的响应
- * server中的服务都会向RegisterationService注册
+ * Server代表在某个网络地址上运行的JavaService服务的容器,这些JavaService使用相同的协议对外提供服务。 <br/>
+ * Req代表协议的请求<br/>
+ * Rsp代表协议的响应<br/>
+ * server中的服务都会向RegisterationService注册。
  * 
  * 
  * @author seaky
@@ -22,14 +22,13 @@ public interface Server<Req, Rsp> {
    * 启动一个服务
   * @param registerationService 注册中心服务
   * @param config 服务的配置
-  * @return void   
    */
   void start(RegisterationService registerationService, ServerConfig config);
 
 /**
  * server中添加一个服务
- * 服务的配置中必须包含 应用名字，服务的名字，服务的版本和服务的分组
- * 具体的配置参见ConfigConstants
+ * 服务的配置中必须包含 应用名字，服务的名字，服务的版本和服务的group，这四者定位唯一的服务<br/>
+ * 服务具体的配置项参见ConfigConstants
 * @param service  服务
 * @param serviceConfig 服务的配置
  */

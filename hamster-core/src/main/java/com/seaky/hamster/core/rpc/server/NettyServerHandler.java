@@ -56,7 +56,7 @@ public class NettyServerHandler<Req, Rsp> extends ChannelInboundHandlerAdapter {
 	@Override
 	public void exceptionCaught(final ChannelHandlerContext ctx, Throwable cause)
 			throws Exception {
-		logger.error(cause.getMessage());
+		logger.error("",cause);
 		ctx.close();
 	}
 

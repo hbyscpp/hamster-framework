@@ -8,10 +8,18 @@ public class ServiceConfig {
 
   private String group = "default";
 
+  //并发控制
   private int maxConcurrent = -1;
 
+  //异常转换扩展
   private String exceptionConvertor = "default";
+  
+  //是否使用dispatcher线程执行服务
+  private boolean useDispatcherThreadExe=false;
 
+  //线程池的名字
+  private String threadPoolName=null;
+  
   public String getVersion() {
     return version;
   }
@@ -51,6 +59,34 @@ public class ServiceConfig {
   public void setExceptionConvertor(String exceptionConvertor) {
     this.exceptionConvertor = exceptionConvertor;
   }
+
+/**
+ * @return the useDispatcherThreadExe
+ */
+public boolean isUseDispatcherThreadExe() {
+	return useDispatcherThreadExe;
+}
+
+/**
+ * @param useDispatcherThreadExe the useDispatcherThreadExe to set
+ */
+public void setUseDispatcherThreadExe(boolean useDispatcherThreadExe) {
+	this.useDispatcherThreadExe = useDispatcherThreadExe;
+}
+
+/**
+ * @return the threadPoolName
+ */
+public String getThreadPoolName() {
+	return threadPoolName;
+}
+
+/**
+ * @param threadPoolName the threadPoolName to set
+ */
+public void setThreadPoolName(String threadPoolName) {
+	this.threadPoolName = threadPoolName;
+}
 
 
 
