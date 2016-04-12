@@ -57,6 +57,8 @@ public interface ConfigConstans {
 
   public static final String REFERENCE_HOST = "sr.host";
 
+  // 引用指定的provider的地址127.0.0.1:-1;127.
+  public static final String REFERENCE_SERVICE_PROVIDER_ADDRESSES = "sr.provider.addresses";
 
   // 引用时是否check
   public static final String REFERENCE_CHECK_SERVICE = "sr.check.service";
@@ -123,6 +125,10 @@ public interface ConfigConstans {
   public static final String PROVIDER_INTERCEPTORS = "sp.interceptors";
 
   public static final String PROVIDER_EXCEPTION_CONVERTOR = "sp.exception.convertor";
+
+  public static final String PROVIDER_HIDDERN = "sp.hidden";
+
+  public static final boolean PROVIDER_HIDDERN_DEFAULT = false;
 
 
 

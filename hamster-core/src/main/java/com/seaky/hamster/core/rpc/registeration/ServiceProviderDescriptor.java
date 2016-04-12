@@ -166,6 +166,10 @@ public class ServiceProviderDescriptor {
     this.config = config;
   }
 
+  public boolean isHidden() {
+    return this.config.getValueAsBoolean(ConfigConstans.PROVIDER_HIDDERN, false);
+  }
+
   public long getRegistTime() {
     return this.config.getValueAsLong(ConfigConstans.PROVIDER_REG_TIME, 0L);
   }

@@ -2,7 +2,9 @@ package com.seaky.hamster.core.rpc.client;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
@@ -207,16 +209,29 @@ public class AsynServiceExecutor<Req, Rsp> {
         throw new ServiceProviderNotFoundException(ServiceContextUtils.getServiceName(context));
       }
       List<ServiceProviderDescriptor> allSd = new ArrayList<ServiceProviderDescriptor>();
+      String addesses = ServiceContextUtils.getReferenceConfig(context)
+          .get(ConfigConstans.REFERENCE_SERVICE_PROVIDER_ADDRESSES, null);
+      Map<String, Integer> directHostAndPorts = addressToMap(addesses);
       // 3选择有配置的实例
       for (ServiceProviderDescriptor sd : allServiceDescriptors) {
-        // 匹配相同参数
-
+        // 匹配相同参数和查看是否是直接指定连接的方式
         if (compareParam(context, sd)
             && Utils.isVersionComp(ServiceContextUtils.getReferenceVersion(context),
                 sd.getVersion())
             && Utils.isGroupMatch(ServiceContextUtils.getReferenceGroup(context), sd.getGroup())
             && client.protocolExtensionFactory.protocolName().equals(sd.getProtocol())) {
-          allSd.add(sd);
+          // provider隐藏，客户端只能采用直连的方式
+          if (directHostAndPorts != null && directHostAndPorts.size() > 0) {
+            // 直连的方式
+            if (compareHost(sd, directHostAndPorts)) {
+              allSd.add(sd);
+            }
+          } else {
+            // 非直连
+            if (!sd.isHidden()) {
+              allSd.add(sd);
+            }
+          }
         }
       }
       if (allSd.size() == 0) {
@@ -234,6 +249,39 @@ public class AsynServiceExecutor<Req, Rsp> {
       if (sds == null || sds.size() == 0)
         throw new NoRouteServiceProviderException(ServiceContextUtils.getServiceName(context));
       return sds;
+    }
+
+    private boolean compareHost(ServiceProviderDescriptor sd,
+        Map<String, Integer> directHostAndPorts) {
+      Integer port = directHostAndPorts.get(sd.getHost());
+      if (port == null)
+        return false;
+      if (port <= 0)
+        return true;
+      if (sd.getPort() == port.intValue())
+        return true;
+      return false;
+    }
+
+    private Map<String, Integer> addressToMap(String addresses) {
+      if (StringUtils.isBlank(addresses)) {
+        return null;
+      }
+      String[] addrs = addresses.split(";");
+      if (addrs == null || addrs.length == 0)
+        return null;
+
+      Map<String, Integer> addrMap = new HashMap<>();
+      for (String addr : addrs) {
+
+        String[] hostAndPort = addr.split(":");
+
+        if (hostAndPort == null || hostAndPort.length != 2) {
+          throw new RuntimeException("service provide address error: " + addresses);
+        }
+        addrMap.put(hostAndPort[0], Integer.valueOf(hostAndPort[1]));
+      }
+      return addrMap;
     }
 
     private boolean compareParam(ServiceContext context, ServiceProviderDescriptor sd) {

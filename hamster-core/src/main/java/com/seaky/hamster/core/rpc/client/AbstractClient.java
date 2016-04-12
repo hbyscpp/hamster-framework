@@ -121,7 +121,6 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     // 清理期间不能连接远程服务
     Lock lock = findLock(serverAddr);
     try {
-
       lock.lock();
       ClientTransport<Req, Rsp> transport = clientCache.get(serverAddr);
       if (transport != null && transport.isConnected()) {
