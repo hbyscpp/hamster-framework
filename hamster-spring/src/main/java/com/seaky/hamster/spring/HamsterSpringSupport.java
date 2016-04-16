@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -100,13 +101,13 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
         String.valueOf(config.getMaxConcurrent()), false));
     ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR,
         config.getExceptionConvertor(), false));
-
+    ec.addConfigItem(
+        new ConfigItem(ConfigConstans.PROVIDER_HIDDERN, String.valueOf(config.isHidden()), false));
     return ec;
   }
 
   private static EndpointConfig createEndPonintConfig(ClassReferenceConfig config) {
     EndpointConfig ec = new EndpointConfig();
-
     ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, config.getApp(), true));
     ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, config.getGroup(), true));
     ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, config.getVersion(), true));
@@ -116,8 +117,9 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
         String.valueOf(config.getReadtimeout()), false));
     ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR,
         config.getExceptionConvertor(), false));
-
-
+    if (StringUtils.isNotBlank(config.getProviderAddresses()))
+      ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_SERVICE_PROVIDER_ADDRESSES,
+          config.getProviderAddresses(), false));
     return ec;
   }
 

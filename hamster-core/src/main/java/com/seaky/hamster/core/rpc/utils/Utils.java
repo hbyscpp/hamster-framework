@@ -135,7 +135,7 @@ public class Utils {
 
   private static boolean isCompatibility(String typeName, Object obj) {
 
-    Class type = null;
+    Class<?> type = null;
     if ("int".equals(typeName)) {
       type = int.class;
 

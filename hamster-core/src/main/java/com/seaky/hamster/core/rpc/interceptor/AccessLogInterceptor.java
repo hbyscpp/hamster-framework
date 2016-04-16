@@ -29,7 +29,7 @@ public class AccessLogInterceptor extends DefaultServiceInterceptor {
     long costTime = getCostTime(context);
     Throwable e = ServiceContextUtils.getResponse(context).getException();
     if (e != null) {
-      serverlogger.info("{}:{}:{}:{} access from {}:{}:{}:{}:{},seq num {},cost {} ms,error {}",
+      serverlogger.info("{}:{}:{}:{} access from {}:{}:{}:{}:{},seq num {},cost {} ms\n",
           ServiceContextUtils.getServiceName(context), ServiceContextUtils.getApp(context),
           ServiceContextUtils.getVersion(context), ServiceContextUtils.getGroup(context),
           ServiceContextUtils.getClientHost(context), ServiceContextUtils.getClientPort(context),
@@ -72,8 +72,7 @@ public class AccessLogInterceptor extends DefaultServiceInterceptor {
     long costTime = getCostTime(context);
     Throwable e = ServiceContextUtils.getResponse(context).getException();
     if (e != null) {
-      clientlogger.info(
-          "{}:{}:{}:{} request to {}:{}:{}:{}:{},traceId {},seqNum {},cost {} ms,error {}",
+      clientlogger.info("{}:{}:{}:{} request to {}:{}:{}:{}:{},traceId {},seqNum {},cost {} ms\n",
           ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
           ServiceContextUtils.getReferenceVersion(context),
           ServiceContextUtils.getReferenceGroup(context),
@@ -105,7 +104,7 @@ public class AccessLogInterceptor extends DefaultServiceInterceptor {
     long costTime = getCostTime(context);
     Throwable e = ServiceContextUtils.getResponse(context).getException();
     if (e != null) {
-      clientlogger.info("{}:{}:{}:{} call traceid {},cost {} ms,error {}",
+      clientlogger.info("{}:{}:{}:{} call traceid {},cost {} ms\n",
           ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
           ServiceContextUtils.getReferenceVersion(context),
           ServiceContextUtils.getReferenceGroup(context),

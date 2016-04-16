@@ -51,7 +51,7 @@ public interface ConfigConstans {
 
   public static final String REFERENCE_MAX_CONCURRENT = "sr.maxcucurrent";
 
-  public static final int REFERENCE_MAX_CONCURRENT_DEFAULT = 100;
+  public static final int REFERENCE_MAX_CONCURRENT_DEFAULT = -1;
 
   public static final String REFERENCE_INTERCEPTORS = "sr.interceptors";
 
@@ -120,7 +120,7 @@ public interface ConfigConstans {
 
   public static final String PROVIDER_MAX_CONCURRENT = "sp.maxcucurrent";
 
-  public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = 100;
+  public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = -1;
 
   public static final String PROVIDER_INTERCEPTORS = "sp.interceptors";
 

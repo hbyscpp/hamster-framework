@@ -11,21 +11,21 @@ import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.exception.ServiceReachMaxConcurrent;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
-@ServiceInterceptorAnnotation(name = "current",
+@ServiceInterceptorAnnotation(name = "concurrence",
     phases = {ProcessPhase.SERVER_CALL_SERVICE, ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE})
 public class ConcurrentServiceInterceptor extends DefaultServiceInterceptor {
   private static ConcurrentHashMap<String, AtomicInteger> serviceCurrentAccessNumer =
       new ConcurrentHashMap<String, AtomicInteger>();
 
+  @Override
   protected void preServerProcess(ServiceContext context) {
 
     int max = getConcurrentNum(ServiceContextUtils.getProviderConfig(context), true);
     if (max <= 0)
       return;
-    boolean isOk = checkReachMaxConcurrent(
-        Utils.generateKey("server", ServiceContextUtils.getServiceName(context),
-            ServiceContextUtils.getApp(context), ServiceContextUtils.getVersion(context)),
-        max);
+    boolean isOk = checkReachMaxConcurrent(Utils.generateKey("server",
+        ServiceContextUtils.getServiceName(context), ServiceContextUtils.getApp(context),
+        ServiceContextUtils.getVersion(context), ServiceContextUtils.getGroup(context)), max);
     if (isOk)
       return;
     ServiceContextUtils.getResponse(context)
@@ -35,7 +35,8 @@ public class ConcurrentServiceInterceptor extends DefaultServiceInterceptor {
 
   }
 
-  protected void preClientProcess(ServiceContext context) {
+  @Override
+  protected void preClientClusterProcess(ServiceContext context) {
     int max = getConcurrentNum(ServiceContextUtils.getReferenceConfig(context), false);
     if (max <= 0)
       return;
@@ -51,13 +52,15 @@ public class ConcurrentServiceInterceptor extends DefaultServiceInterceptor {
 
   }
 
-  protected void serverCompleteProcess(ServiceContext context, Throwable e) {
+  @Override
+  protected void postServerProcess(ServiceContext context) {
 
     decrCurConcurrentNum(Utils.generateKey("server", ServiceContextUtils.getServiceName(context),
         ServiceContextUtils.getApp(context), ServiceContextUtils.getVersion(context)));
   }
 
-  protected void clientCompleteProcess(ServiceContext context, Throwable e) {
+  @Override
+  protected void postClientClusterProcess(ServiceContext context) {
     decrCurConcurrentNum(Utils.generateKey("client", ServiceContextUtils.getServiceName(context),
         ServiceContextUtils.getReferenceApp(context),
         ServiceContextUtils.getReferenceVersion(context)));

@@ -14,6 +14,8 @@ public class ReferenceConfig {
 
   private String exceptionConvertor = "default";
 
+  private String providerAddresses;
+
   public String getVersion() {
     return version;
   }
@@ -60,6 +62,14 @@ public class ReferenceConfig {
 
   public void setExceptionConvertor(String exceptionConvertor) {
     this.exceptionConvertor = exceptionConvertor;
+  }
+
+  public String getProviderAddresses() {
+    return providerAddresses;
+  }
+
+  public void setProviderAddresses(String providerAddresses) {
+    this.providerAddresses = providerAddresses;
   }
 
 

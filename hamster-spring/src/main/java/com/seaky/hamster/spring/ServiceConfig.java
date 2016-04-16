@@ -21,7 +21,7 @@ public class ServiceConfig {
   private String threadPoolName = null;
 
   // 是否隐藏，隐藏的服务只能通过直连来访问，用于测试
-  private boolean isHidden;
+  private boolean isHidden = false;
 
   public String getVersion() {
     return version;
