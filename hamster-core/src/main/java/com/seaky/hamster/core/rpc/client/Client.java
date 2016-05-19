@@ -2,7 +2,7 @@ package com.seaky.hamster.core.rpc.client;
 
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.registeration.RegisterationService;
-import com.seaky.hamster.core.service.JavaReferenceService;
+import com.seaky.hamster.core.service.JavaService;
 
 /**
  * 
@@ -33,7 +33,7 @@ public interface Client<Req, Rsp> {
    * @param config 服务的配置
    * @return
    */
-  JavaReferenceService reference(EndpointConfig config);
+  JavaService reference(EndpointConfig config);
 
   /**
    * 查询引用
@@ -43,8 +43,8 @@ public interface Client<Req, Rsp> {
    * @param version 服务的版本
    * @return 服务的引用
    */
-  JavaReferenceService findReferenceService(String serviceName, String referenceApp,
-      String referenceVersion, String referenceGroup);
+  JavaService findReferenceService(String serviceName, String referenceApp, String referenceVersion,
+      String referenceGroup);
 
   /**
    * 关闭客户端

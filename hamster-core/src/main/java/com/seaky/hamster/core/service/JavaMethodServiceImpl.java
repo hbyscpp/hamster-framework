@@ -2,6 +2,8 @@ package com.seaky.hamster.core.service;
 
 import java.lang.reflect.Method;
 
+import rx.Observable;
+
 /**
  * 
  * java方法来实现java服务
@@ -29,8 +31,8 @@ public class JavaMethodServiceImpl implements JavaService {
   }
 
   @Override
-  public Object process(Object[] request) throws Exception {
-    return method.invoke(objImpl, request);
+  public Observable<Object> process(Object[] request) throws Exception {
+    return Observable.just(method.invoke(objImpl, request));
   }
 
   /**

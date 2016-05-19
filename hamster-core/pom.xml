@@ -62,7 +62,7 @@
 		<dependency>
 			<groupId>org.mousio</groupId>
 			<artifactId>etcd4j</artifactId>
-			<version>2.10.0</version>
+			<version>2.11.0</version>
 		</dependency>
 		<dependency>
 			<groupId>io.netty</groupId>
@@ -99,7 +99,6 @@
 			<artifactId>netty-codec-http</artifactId>
 			<version>${netty.version}</version>
 		</dependency>
-		
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

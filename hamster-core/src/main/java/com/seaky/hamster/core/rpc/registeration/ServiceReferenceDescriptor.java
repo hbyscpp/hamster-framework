@@ -11,7 +11,7 @@ import com.seaky.hamster.core.rpc.config.EndpointConfig;
 public class ServiceReferenceDescriptor {
 
   // 具体的配置
-  private EndpointConfig config;
+  private EndpointConfig config = new EndpointConfig();
 
   /**
    * @return the serviceName

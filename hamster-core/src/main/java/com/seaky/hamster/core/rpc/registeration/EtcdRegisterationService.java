@@ -1,7 +1,6 @@
 package com.seaky.hamster.core.rpc.registeration;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,8 +18,6 @@ import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.executor.NamedThreadFactory;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
-import io.netty.util.HashedWheelTimer;
-import mousio.client.retry.RetryPolicy;
 import mousio.etcd4j.EtcdClient;
 import mousio.etcd4j.promises.EtcdResponsePromise;
 import mousio.etcd4j.responses.EtcdAuthenticationException;
@@ -31,15 +28,6 @@ import mousio.etcd4j.responses.EtcdKeysResponse.EtcdNode;
 // 定时pull模型,etcd的watch性能不够好，TTL设置20s，每隔15s客户端更新一次
 public class EtcdRegisterationService implements RegisterationService {
   private static Logger logger = LoggerFactory.getLogger("hamster_registeration_service_log");
-  static {
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        closeTimer();
-        super.run();
-      }
-    });
-  }
   // 全局的服务实例缓存
   private ConcurrentHashMap<String, ConcurrentHashMap<String, ServiceProviderDescriptor>> serviceDescriptors =
       new ConcurrentHashMap<String, ConcurrentHashMap<String, ServiceProviderDescriptor>>();
@@ -430,19 +418,6 @@ public class EtcdRegisterationService implements RegisterationService {
     registReference(rd, false);
   }
 
-  private static void closeTimer() {
-
-    try {
-      Thread.sleep(1000);
-      Field f = RetryPolicy.class.getDeclaredField("timer");
-      f.setAccessible(true);
-      HashedWheelTimer timer = (HashedWheelTimer) f.get(null);
-      timer.stop();
-    } catch (Exception e) {
-      logger.error("close timer error ", e);
-    }
-
-  }
 
   public void registReference(ServiceReferenceDescriptor rd, boolean isAsyn) {
     try {
@@ -488,8 +463,6 @@ public class EtcdRegisterationService implements RegisterationService {
       }
       shutdownTimerTask();
       client.close();
-      closeTimer();
-
     } catch (IOException e) {
       logger.error("close etcd registation service error ", e);
     } finally {

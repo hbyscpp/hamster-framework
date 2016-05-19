@@ -26,11 +26,9 @@ import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 import com.seaky.hamster.core.rpc.registeration.ServiceReferenceDescriptor;
 import com.seaky.hamster.core.rpc.utils.NetUtils;
 import com.seaky.hamster.core.rpc.utils.Utils;
-import com.seaky.hamster.core.service.JavaReferenceService;
+import com.seaky.hamster.core.service.JavaService;
 
-import io.netty.util.concurrent.ImmediateEventExecutor;
 import rx.Observable;
-import rx.subjects.ReplaySubject;
 
 public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
@@ -44,8 +42,8 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   private ClientInterceptorService<Req, Rsp> interceptorSupportService;
 
-  private ConcurrentHashMap<String, JavaReferenceService> serviceCache =
-      new ConcurrentHashMap<String, JavaReferenceService>();
+  private ConcurrentHashMap<String, JavaService> serviceCache =
+      new ConcurrentHashMap<String, JavaService>();
 
   // key 服务端
   private ConcurrentHashMap<String, ClientTransport<Req, Rsp>> clientCache =
@@ -159,15 +157,15 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
         new ClientInterceptorService<Req, Rsp>(protocolExtensionFactory);
   }
 
-  private JavaReferenceService getReferenceService(String serviceName, String referenceApp,
+  private JavaService getReferenceService(String serviceName, String referenceApp,
       String referenceVersion, String referenceGroup) {
     return serviceCache
         .get(Utils.generateKey(serviceName, referenceApp, referenceVersion, referenceGroup));
   }
 
-  private JavaReferenceService addReferService(String serviceName, String referenceApp,
-      String referenceVersion, String referenceGroup, JavaReferenceService service) {
-    JavaReferenceService old = serviceCache.putIfAbsent(
+  private JavaService addReferService(String serviceName, String referenceApp,
+      String referenceVersion, String referenceGroup, JavaService service) {
+    JavaService old = serviceCache.putIfAbsent(
         Utils.generateKey(serviceName, referenceApp, referenceVersion, referenceGroup), service);
     if (old != null)
       return old;
@@ -240,15 +238,15 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   }
 
   @Override
-  public JavaReferenceService findReferenceService(String serviceName, String referApp,
-      String version, String group) {
+  public JavaService findReferenceService(String serviceName, String referApp, String version,
+      String group) {
     if (referApp == null || serviceName == null || version == null)
       return null;
     return getReferenceService(serviceName, referApp, version, group);
   }
 
   @Override
-  public synchronized JavaReferenceService reference(EndpointConfig config) {
+  public synchronized JavaService reference(EndpointConfig config) {
     if (config == null)
       throw new RuntimeException("refer config can not be null");
     String referApp = config.get(ConfigConstans.REFERENCE_APP);
@@ -278,7 +276,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
           "service version contains special char,service version must compose of [a-zA-Z0-9_,],but group is "
               + group);
     }
-    JavaReferenceService service = getReferenceService(serviceName, referApp, version, group);
+    JavaService service = getReferenceService(serviceName, referApp, version, group);
     if (service != null) {
       return service;
     }
@@ -323,7 +321,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   }
 
-  public static class ReferenceService<Req, Rsp> implements JavaReferenceService {
+  public static class ReferenceService<Req, Rsp> implements JavaService {
 
     private AbstractClient<Req, Rsp> client;
 
@@ -344,7 +342,6 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
       this.referenceVersion = referenceVersion;
     }
 
-    @Override
     public SettableFuture<Object> processAsyn(Object[] params) {
       // 检查参数
 
@@ -360,8 +357,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
       return result;
     }
 
-    @Override
-    public Object process(Object[] request) throws Exception {
+    public Object processNormal(Object[] request) throws Exception {
       try {
         return processAsyn(request).get();
       } catch (InterruptedException e) {
@@ -375,23 +371,9 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     }
 
     @Override
-    public Observable<Object> processReactive(Object[] request) {
+    public Observable<Object> process(Object[] request) {
       final SettableFuture<Object> f = processAsyn(request);
-      final ReplaySubject<Object> subject = ReplaySubject.create(1);
-      f.addListener(new Runnable() {
-        public void run() {
-          try {
-            Object o = f.get();
-            subject.onNext(o);
-            subject.onCompleted();
-          } catch (InterruptedException e) {
-            subject.onError(e);
-          } catch (ExecutionException e) {
-            subject.onError(e.getCause());
-          }
-        }
-      }, ImmediateEventExecutor.INSTANCE);
-      return subject;
+      return Observable.from(f);
     }
   }
 

@@ -18,7 +18,7 @@ import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.registeration.RegisterationService;
 import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
-import com.seaky.hamster.core.service.JavaReferenceService;
+import com.seaky.hamster.core.service.JavaService;
 
 import rx.Observable;
 
@@ -52,14 +52,14 @@ public final class ClientHelper {
       throw new RuntimeException("client can not be null");
     if (cls == null || !cls.isInterface())
       throw new RuntimeException("class must be interface");
-    final Map<String, JavaReferenceService> methodServices =
+    final Map<String, JavaService> methodServices =
         getReferInterfaceMap(client, cls, commonConfig, configs);
     T t = (T) Proxy.newProxyInstance(client.getClass().getClassLoader(), new Class<?>[] {cls},
         new InvocationHandler() {
           @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            JavaReferenceService service = methodServices.get(method.getName());
-            Object r = service.process(args);
+            JavaService service = methodServices.get(method.getName());
+            Object r = service.process(args).toBlocking().first();
             return r;
           }
         });
@@ -99,14 +99,14 @@ public final class ClientHelper {
       }
     }
 
-    final Map<String, JavaReferenceService> methodServices =
+    final Map<String, JavaService> methodServices =
         getReferInterfaceMap(client, cls, commonConfig, configs);
     V t = (V) Proxy.newProxyInstance(client.getClass().getClassLoader(), new Class<?>[] {asynCls},
         new InvocationHandler() {
           @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            JavaReferenceService service = methodServices.get(method.getName());
-            Object r = service.processAsyn(args);
+            JavaService service = methodServices.get(method.getName());
+            Object r = service.process(args).toBlocking().toFuture();
             return r;
           }
         });
@@ -149,22 +149,22 @@ public final class ClientHelper {
       }
     }
 
-    final Map<String, JavaReferenceService> methodServices =
+    final Map<String, JavaService> methodServices =
         getReferInterfaceMap(client, cls, commonConfig, configs);
     V t = (V) Proxy.newProxyInstance(client.getClass().getClassLoader(), new Class<?>[] {asynCls},
         new InvocationHandler() {
           @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            JavaReferenceService service = methodServices.get(method.getName());
-            Object r = service.processReactive(args);
+            JavaService service = methodServices.get(method.getName());
+            Object r = service.process(args);
             return r;
           }
         });
     return t;
   }
 
-  public static <T> Map<String, JavaReferenceService> getReferInterfaceMap(
-      final Client<?, ?> client, final Class<T> cls, final EndpointConfig commonConfig,
+  public static <T> Map<String, JavaService> getReferInterfaceMap(final Client<?, ?> client,
+      final Class<T> cls, final EndpointConfig commonConfig,
       final Map<String, EndpointConfig> configs) {
     if (client == null)
       throw new RuntimeException("client can not be null");
@@ -179,8 +179,7 @@ public final class ClientHelper {
       methodNames.add(m.getName());
     }
     // 初始化JavaService
-    final Map<String, JavaReferenceService> methodServices =
-        new HashMap<String, JavaReferenceService>();
+    final Map<String, JavaService> methodServices = new HashMap<String, JavaService>();
     for (Method method : cls.getMethods()) {
       EndpointConfig sc = configs == null ? null : configs.get(method.getName());
       if (sc == null) {
@@ -200,7 +199,7 @@ public final class ClientHelper {
         sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PARAMS,
             Utils.paramsToString(paramNames), true));
       }
-      JavaReferenceService service = client.reference(sc);
+      JavaService service = client.reference(sc);
       methodServices.put(method.getName(), service);
     }
     return methodServices;
