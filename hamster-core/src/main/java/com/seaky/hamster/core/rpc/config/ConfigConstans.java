@@ -112,15 +112,16 @@ public interface ConfigConstans {
 
   public static final String PROVIDER_THREADPOOL_MAXQUEUE = "sp.threadpool.maxqueue";
 
-  public static final int PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT = 1000000;
+  public static final int PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT = -1;
 
   public static final String PROVIDER_THREADPOOL_MAXSIZE = "sp.threadpool.maxsize";
 
-  public static final int PROVIDER_THREADPOOL_MAXSIZE_DEFAULT = 100;
+  public static final int PROVIDER_THREADPOOL_MAXSIZE_DEFAULT = 20;
 
   public static final String PROVIDER_MAX_CONCURRENT = "sp.maxcucurrent";
 
-  public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = -1;
+  public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = 20;
+
 
   public static final String PROVIDER_INTERCEPTORS = "sp.interceptors";
 

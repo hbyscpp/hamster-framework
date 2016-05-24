@@ -42,11 +42,11 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
 
   private ConcurrentHashMap<String, Long> serviceRegistTimes = new ConcurrentHashMap<>();
 
-  //服务的拦截器
+  // 服务的拦截器
   private ConcurrentHashMap<String, List<ServiceInterceptor>> allservicesInterceptors =
       new ConcurrentHashMap<String, List<ServiceInterceptor>>();
 
-  //请求分发
+  // 请求分发
   private RequestDispatcher<Req, Rsp> dispatcher;
 
   private ServerInterceptorSupportService<Req, Rsp> interceptorSupportService;
@@ -54,6 +54,8 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
   private ProtocolExtensionFactory<Req, Rsp> protocolExtensionFactory;
 
   private static Logger logger = LoggerFactory.getLogger(AbstractServer.class);
+
+  private long startTime = 0L;
 
   protected AbstractServer(ProtocolExtensionFactory<Req, Rsp> protocolExtensionFactory) {
     if (protocolExtensionFactory == null)
@@ -78,18 +80,18 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
     String app = serviceConfig.get(ConfigConstans.PROVIDER_APP);
     if (app == null || !app.matches(Constants.APP_NAME_ALLOW_REG)) {
       throw new IllegalArgumentException(
-          "app name contains special char,app name must compose of [0-9 _ . $ a-z A-Z -]");
+          "app name " + app + " is not match " + Constants.APP_NAME_ALLOW_REG);
     }
 
     String serviceName = serviceConfig.get(ConfigConstans.PROVIDER_NAME);
     if (serviceName == null || !serviceName.matches(Constants.SERVICE_NAME_ALLOW_REG)) {
       throw new IllegalArgumentException(
-          "service name contains special char,service name must compose of [0-9 _ . $ a-z A-Z]");
+          "service name " + serviceName + " is not match " + Constants.SERVICE_NAME_ALLOW_REG);
     }
     String version = serviceConfig.get(ConfigConstans.PROVIDER_VERSION);
     if (version == null || !version.matches(Constants.VERSION_NAME_ALLOW_REG)) {
       throw new IllegalArgumentException(
-          "service version contains special char,service version must compose of [0-9 _ . $ a-z A-Z]");
+          "service version " + version + " is not match " + Constants.VERSION_NAME_ALLOW_REG);
     }
     Utils.checkVersionFormat(version);
 
@@ -97,7 +99,7 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
 
     if (group == null || !group.matches(Constants.GROUP_NAME_ALLOW_REG)) {
       throw new IllegalArgumentException(
-          "service group contains special char,service version must compose of [0-9 _ . $ a-z A-Z]");
+          "service group " + group + " is not match " + Constants.GROUP_NAME_ALLOW_REG);
     }
     if (service == null)
       throw new IllegalArgumentException("service instance can not be null");
@@ -203,9 +205,8 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
     if (config.getPort() <= 0) {
       isAutoChoosePort = true;
     }
-
     start(registerationService, config, isAutoChooseAddr, isAutoChoosePort);
-
+    setStartTime(System.currentTimeMillis());
   }
 
   protected abstract void doStart(ServerConfig config) throws Exception;
@@ -299,6 +300,14 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
     String key = Utils.generateKey(serviceName, app, version, group);
 
     return allservicesInterceptors.get(key);
+  }
+
+  public long getStartTime() {
+    return startTime;
+  }
+
+  public void setStartTime(long startTime) {
+    this.startTime = startTime;
   }
 
 }

@@ -3,12 +3,17 @@ package com.seaky.hamster.core.rpc.server;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommand.Setter;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandKey;
+import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
+import com.netflix.hystrix.HystrixThreadPoolKey;
 import com.seaky.hamster.core.rpc.common.DefaultServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
@@ -18,12 +23,10 @@ import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
 import com.seaky.hamster.core.rpc.exception.LossReqParamException;
 import com.seaky.hamster.core.rpc.exception.NotSetResultException;
 import com.seaky.hamster.core.rpc.exception.RpcException;
-import com.seaky.hamster.core.rpc.exception.ServerResourceIsFullException;
 import com.seaky.hamster.core.rpc.exception.ServiceProviderConfigNotFoundException;
 import com.seaky.hamster.core.rpc.exception.ServiceProviderNotFoundException;
 import com.seaky.hamster.core.rpc.exception.ServiceSigMismatchException;
 import com.seaky.hamster.core.rpc.exception.UnknownException;
-import com.seaky.hamster.core.rpc.executor.ServiceThreadpool;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.Attachments;
@@ -34,9 +37,9 @@ import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
 import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaService;
+
 /**
- * server的请求分发，一个jvm中所有server 共享一个dispatcher线程池
- *dispatcher主要用于协议的解析，ServiceContext的创建
+ * server的请求分发，一个jvm中所有server 共享一个dispatcher线程池 dispatcher主要用于协议的解析，ServiceContext的创建
  * 
  * @author seaky
  * @since 1.0.0
@@ -49,60 +52,104 @@ public class RequestDispatcher<Req, Rsp> {
   private static Logger logger = LoggerFactory.getLogger(RequestDispatcher.class);
 
   // 分发消息
-  public void dispatchMessages(List<Req> requests, ServerTransport<Req, Rsp> transport) {
-    try {
-      if (requests.size() == 1) {
-        // 单个消息
-        ServerResourceManager.getDispatcherPool()
-            .execute(new MessageTask<Req, Rsp>(requests.get(0), this, transport));
-      } else {
-        ServerResourceManager.getDispatcherPool()
-            .execute(new MessagesTask<Req, Rsp>(requests, this, transport));
-      }
-    } catch (RejectedExecutionException e) {
-      for (Req req : requests) {
-        ServiceContext sc = initContext(req, transport);
-        setException(sc, new ServerResourceIsFullException("dispatcher threadpool"));
-        writeResponse(sc, transport);
-      }
+  public void dispatchMessages(Req request, ServerTransport<Req, Rsp> transport) {
+
+    ServiceContext context = initContext(request, transport);
+    if (ServiceContextUtils.getResponse(context).isException()) {
+      writeResponse(context, transport);
+      return;
     }
+    String serviceName = ServiceContextUtils.getServiceName(context);
+    String app = ServiceContextUtils.getApp(context);
+    String serviceVersion = ServiceContextUtils.getVersion(context);
+    String group = ServiceContextUtils.getGroup(context);
+    JavaService service = server.findService(serviceName, app, serviceVersion, group);
+    List<ServiceInterceptor> interceptors =
+        server.getServiceInterceptor(serviceName, app, serviceVersion, group);
+    if (service == null) {
+      setException(context, new ServiceProviderNotFoundException(serviceName));
+      writeResponse(context, transport);
+      return;
+    }
+
+    String[] params =
+        server.getServiceDescriptor(app, serviceName, serviceVersion, group).getParamTypes();
+    if (!Utils.isMatch(params,
+        context.getAttribute(ServiceContext.REQUEST_PARAMS, Object[].class))) {
+      setException(context, new ServiceSigMismatchException(serviceName));
+      writeResponse(context, transport);
+      return;
+    }
+
+    Setter setter = createSetter(context, server);
+    ServiceRunner<Req, Rsp> sr =
+        new ServiceRunner<Req, Rsp>(this, service, transport, context, interceptors, setter);
+    sr.execute();
   }
 
-  public static class MessagesTask<Req, Rsp> implements Runnable {
 
-    private List<Req> requests;
+  private Setter createSetter(ServiceContext context, AbstractServer<Req, Rsp> server) {
+    String name = commandName(context, server);
+    Setter setter = Setter
+        .withGroupKey(
+            HystrixCommandGroupKey.Factory.asKey(ServiceContextUtils.getServiceName(context)))
+        .andCommandKey(HystrixCommandKey.Factory.asKey(name));
+    EndpointConfig sc = ServiceContextUtils.getProviderConfig(context);
+    boolean useDispatcherThread =
+        sc.getValueAsBoolean(ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE, false);
 
-    private RequestDispatcher<Req, Rsp> dispatcher;
+    if (useDispatcherThread) {
+      int maxcurrent = sc.getValueAsInt(ConfigConstans.PROVIDER_MAX_CONCURRENT,
+          ConfigConstans.PROVIDER_MAX_CONCURRENT_DEFAULT);
+      setter
+          .andCommandPropertiesDefaults(com.netflix.hystrix.HystrixCommandProperties.Setter()
+              .withExecutionIsolationStrategy(ExecutionIsolationStrategy.SEMAPHORE)
+              .withExecutionIsolationSemaphoreMaxConcurrentRequests(
+                  maxcurrent <= 0 ? Integer.MAX_VALUE : maxcurrent)
+              .withExecutionTimeoutEnabled(false));
+    } else {
+      int maxQueue = sc.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE,
+          ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT);
 
-    private ServerTransport<Req, Rsp> transport;
-
-    public MessagesTask(List<Req> requests, RequestDispatcher<Req, Rsp> dispatcher,
-        ServerTransport<Req, Rsp> transport) {
-      this.requests = requests;
-      this.dispatcher = dispatcher;
-      this.transport = transport;
+      int maxThread = sc.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE,
+          ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE_DEFAULT);
+      String threadPoolName = threadPoolName(context, server);
+      setter
+          .andCommandPropertiesDefaults(com.netflix.hystrix.HystrixCommandProperties.Setter()
+              .withExecutionIsolationStrategy(ExecutionIsolationStrategy.THREAD)
+              .withExecutionTimeoutEnabled(false))
+          .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(threadPoolName))
+          .andThreadPoolPropertiesDefaults(com.netflix.hystrix.HystrixThreadPoolProperties.Setter()
+              .withCoreSize(maxThread).withMaxQueueSize(maxQueue));
     }
-
-    @Override
-    public void run() {
-      if (requests == null || requests.size() == 0)
-        return;
-      for (Req req : requests) {
-        MessageTask<Req, Rsp> subTask = new MessageTask<Req, Rsp>(req, dispatcher, transport);
-        try {
-          ServerResourceManager.getDispatcherPool().execute(subTask);
-        } catch (RejectedExecutionException e) {
-          ServiceContext sc = dispatcher.initContext(req, transport);
-          dispatcher.setException(sc, new ServerResourceIsFullException("dispatcher threadpool"));
-          dispatcher.writeResponse(sc, transport);
-        }
-      }
-
-    }
-
+    return setter;
   }
 
-  private static class ServiceRunner<Req, Rsp> implements Runnable {
+  private String threadPoolName(ServiceContext context, AbstractServer<Req, Rsp> server) {
+
+    String serviceName = ServiceContextUtils.getServiceName(context);
+    String app = ServiceContextUtils.getApp(context);
+    String serviceVersion = ServiceContextUtils.getVersion(context);
+    String group = ServiceContextUtils.getGroup(context);
+    String key = Utils.generateKey(serviceName, app, serviceVersion, group,
+        server.getProtocolExtensionFactory().protocolName(), String.valueOf(server.getStartTime()));
+    return key;
+  }
+
+  private String commandName(ServiceContext context, AbstractServer<Req, Rsp> server) {
+
+    String serviceName = ServiceContextUtils.getServiceName(context);
+    String app = ServiceContextUtils.getApp(context);
+    String serviceVersion = ServiceContextUtils.getVersion(context);
+    String group = ServiceContextUtils.getGroup(context);
+    String key = Utils.generateKey(serviceName, app, serviceVersion, group,
+        server.getProtocolExtensionFactory().protocolName(), String.valueOf(server.getStartTime()));
+    return key;
+  }
+
+
+  private static class ServiceRunner<Req, Rsp> extends HystrixCommand<Void> {
+
 
     private RequestDispatcher<Req, Rsp> dispatcher;
 
@@ -116,7 +163,8 @@ public class RequestDispatcher<Req, Rsp> {
 
     public ServiceRunner(RequestDispatcher<Req, Rsp> dispatcher, JavaService service,
         ServerTransport<Req, Rsp> transport, ServiceContext context,
-        List<ServiceInterceptor> interceptors) {
+        List<ServiceInterceptor> interceptors, Setter setter) {
+      super(setter);
       this.dispatcher = dispatcher;
       this.service = service;
       this.transport = transport;
@@ -125,98 +173,18 @@ public class RequestDispatcher<Req, Rsp> {
     }
 
     @Override
-    public void run() {
+    public Void run() {
       try {
         dispatcher.server.getInterceptorSupportService().process(context, service, interceptors);
       } finally {
         dispatcher.writeResponse(context, transport);
       }
+      return null;
     }
 
   }
 
-  // 处理单个消息
-  public static class MessageTask<Req, Rsp> implements Runnable {
 
-    private Req request;
-
-    private RequestDispatcher<Req, Rsp> dispatcher;
-
-    private ServerTransport<Req, Rsp> transport;
-
-    public MessageTask(Req request, RequestDispatcher<Req, Rsp> dispatcher,
-        ServerTransport<Req, Rsp> transport) {
-      this.request = request;
-      this.dispatcher = dispatcher;
-      this.transport = transport;
-    }
-
-    public void run() {
-      ServiceContext context = dispatcher.initContext(request, transport);
-      if (ServiceContextUtils.getResponse(context).isException()) {
-        dispatcher.writeResponse(context, transport);
-        return;
-      }
-      String serviceName = ServiceContextUtils.getServiceName(context);
-      String app = ServiceContextUtils.getApp(context);
-      String serviceVersion = ServiceContextUtils.getVersion(context);
-      String group = ServiceContextUtils.getGroup(context);
-      JavaService service = dispatcher.server.findService(serviceName, app, serviceVersion, group);
-      List<ServiceInterceptor> interceptors =
-          dispatcher.server.getServiceInterceptor(serviceName, app, serviceVersion, group);
-      if (service == null) {
-        dispatcher.setException(context, new ServiceProviderNotFoundException(serviceName));
-        dispatcher.writeResponse(context, transport);
-        return;
-      }
-
-      EndpointConfig sc = ServiceContextUtils.getProviderConfig(context);
-      String[] params = dispatcher.server
-          .getServiceDescriptor(app, serviceName, serviceVersion, group).getParamTypes();
-      if (!Utils.isMatch(params,
-          context.getAttribute(ServiceContext.REQUEST_PARAMS, Object[].class))) {
-        dispatcher.setException(context, new ServiceSigMismatchException(serviceName));
-        dispatcher.writeResponse(context, transport);
-        return;
-      }
-      // 1判断是否当前线程执行 还是线程池执行
-      // 开始执行,当前线程还是线程池
-      boolean useDispatcherThread =
-          sc.getValueAsBoolean(ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE, false);
-      ServiceRunner<Req, Rsp> sr =
-          new ServiceRunner<Req, Rsp>(dispatcher, service, transport, context, interceptors);
-      if (!useDispatcherThread) {
-
-        String name = sc.get(ConfigConstans.PROVIDER_THREADPOOL_NAME);
-        // 线程池执行
-        ServiceThreadpool pool = null;
-        if (name == null || ConfigConstans.PROVIDER_THREADPOOL_NAME_DEFAULT.equals(name)) {
-          pool = ServerResourceManager.getServiceThreadpoolManager().createDefault();
-        } else {
-          int maxQueue = sc.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE,
-              ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT);
-
-          int maxThread = sc.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE,
-              ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE_DEFAULT);
-
-          pool =
-              ServerResourceManager.getServiceThreadpoolManager().create(name, maxThread, maxQueue);
-        }
-        try {
-          pool.execute(sr);
-        } catch (RejectedExecutionException e) {
-
-          dispatcher.setException(context,
-              new ServerResourceIsFullException("service threadpool name is " + pool.getName()));
-          dispatcher.writeResponse(context, transport);
-        }
-      } else {
-        // 当前线程执行
-        sr.run();
-      }
-
-    }
-  }
 
   private void setException(ServiceContext sc, Throwable e) {
     ServiceContextUtils.getResponse(sc).setResult(e);
@@ -281,6 +249,7 @@ public class RequestDispatcher<Req, Rsp> {
       Response response = ServiceContextUtils.getResponse(sc);
       Attachments requestAttchments = ServiceContextUtils.getRequestAttachments(sc);
 
+      // 回传的attachment
       Map<String, String> allAttachment = requestAttchments.getAllAttachments();
       if (allAttachment != null) {
         for (Entry<String, String> attach : allAttachment.entrySet()) {

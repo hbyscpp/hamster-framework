@@ -31,8 +31,10 @@ public class JavaMethodServiceImpl implements JavaService {
   }
 
   @Override
-  public Observable<Object> process(Object[] request) throws Exception {
+  public Observable<Object> process(final Object[] request) throws Exception {
+
     return Observable.just(method.invoke(objImpl, request));
+
   }
 
   /**

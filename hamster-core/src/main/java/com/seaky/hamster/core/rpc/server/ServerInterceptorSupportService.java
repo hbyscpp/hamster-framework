@@ -11,6 +11,8 @@ import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaService;
 
+import rx.Observable;
+
 public class ServerInterceptorSupportService<Req, Rsp> extends InterceptorSupportService<Req, Rsp> {
 
   public ServerInterceptorSupportService(
@@ -25,8 +27,8 @@ public class ServerInterceptorSupportService<Req, Rsp> extends InterceptorSuppor
       return;
     }
     try {
-      Object result = service.process(ServiceContextUtils.getRequestParams(context));
-      ServiceContextUtils.getResponse(context).setResult(result);
+      Observable<Object> result = service.process(ServiceContextUtils.getRequestParams(context));
+      ServiceContextUtils.getResponse(context).setResult(result.toBlocking().first());
     } catch (Exception e) {
       BusinessException be = new BusinessException(Utils.getActualException(e));
       ServiceContextUtils.getResponse(context).setResult(be);

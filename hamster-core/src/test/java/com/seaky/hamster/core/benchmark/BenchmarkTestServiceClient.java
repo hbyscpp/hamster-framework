@@ -4,13 +4,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 import com.seaky.hamster.core.ClientHelper;
-import com.seaky.hamster.core.extension.ExtensionLoader;
 import com.seaky.hamster.core.rpc.client.Client;
 import com.seaky.hamster.core.rpc.client.ClientConfig;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.ConfigItem;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
-import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
 import com.seaky.hamster.core.rpc.registeration.EtcdRegisterationService;
 
 public class BenchmarkTestServiceClient extends BenchmarkClient {

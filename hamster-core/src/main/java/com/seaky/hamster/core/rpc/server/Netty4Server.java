@@ -39,7 +39,7 @@ public class Netty4Server<Req, Rsp> extends AbstractServer<Req, Rsp> {
 		ServerBootstrap b = new ServerBootstrap();
 		b.option(ChannelOption.SO_BACKLOG, config.getSoBacklog());
 		b.option(ChannelOption.TCP_NODELAY, config.isTcpNoDelay());
-		b.group(ServerResourceManager.getBossGroup(), ServerResourceManager.getWorkerGroup()).channel(NioServerSocketChannel.class);
+		b.group(ServerResourceManager.getConnectThreadPool(), ServerResourceManager.getIOThreadPool()).channel(NioServerSocketChannel.class);
 		b.childHandler(initChannel());
 		b.localAddress(config.getHost(),config.getPort());
 		future = b.bind().sync();
