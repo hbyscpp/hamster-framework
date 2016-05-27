@@ -2,6 +2,7 @@ package com.seaky.hamster.core.rpc.client.cluster;
 
 import java.util.List;
 import java.util.concurrent.Executor;
+
 import com.google.common.util.concurrent.SettableFuture;
 import com.seaky.hamster.core.rpc.client.AbstractClient;
 import com.seaky.hamster.core.rpc.client.ClientTransport;
@@ -62,7 +63,6 @@ public abstract class AbstractClusterService<Req, Rsp> implements ClusterService
     this.context = context;
   }
 
-  // TODO 并发问题
   // 选择ServiceDescriptor
   protected ServiceProviderDescriptor choose(final List<ServiceProviderDescriptor> sds) {
     if (sds == null || sds.size() == 0)

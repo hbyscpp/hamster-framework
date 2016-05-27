@@ -37,9 +37,9 @@ public class TestClient {
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, "testapp", true));
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, "default", true));
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0", true));
+    // sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_ASYNPOOL_THREAD_EXE, "true", true));
 
-
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 30; ++i) {
       final MathReactive hello =
           ClientHelper.referReactiveInterface(cc, Math.class, MathReactive.class, sc, null);
       // 关闭

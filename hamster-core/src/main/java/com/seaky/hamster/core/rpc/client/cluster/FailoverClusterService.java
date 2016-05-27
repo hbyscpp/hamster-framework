@@ -13,8 +13,6 @@ import com.seaky.hamster.core.rpc.exception.NoServiceProviderAvailable;
 import com.seaky.hamster.core.rpc.exception.RpcTimeoutException;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 
-import io.netty.util.concurrent.ImmediateEventExecutor;
-
 public class FailoverClusterService<Req, Rsp> extends AbstractClusterService<Req, Rsp> {
 
   public FailoverClusterService(AbstractClient<Req, Rsp> client,
@@ -60,7 +58,7 @@ public class FailoverClusterService<Req, Rsp> extends AbstractClusterService<Req
 
         }
       }
-    }, ImmediateEventExecutor.INSTANCE);
+    }, executor);
   }
 
 }

@@ -110,7 +110,7 @@ public class AsynServiceExecutor<Req, Rsp> {
     @Override
     public void run() {
 
-      // TODO prProcess 和postProess 不保证在同一个线程执行，需要改进
+      // prProcess 和postProess 保证在同一个线程执行
       // 1执行interceptor
       final List<ServiceInterceptor> interceptors = client.getServiceInterceptors(
           ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),

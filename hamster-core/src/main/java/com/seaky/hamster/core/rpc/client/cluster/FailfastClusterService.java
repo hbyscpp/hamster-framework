@@ -12,8 +12,6 @@ import com.seaky.hamster.core.rpc.exception.AccessRemoteServerException;
 import com.seaky.hamster.core.rpc.exception.NoServiceProviderAvailable;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 
-import io.netty.util.concurrent.ImmediateEventExecutor;
-
 public class FailfastClusterService<Req, Rsp> extends AbstractClusterService<Req, Rsp> {
 
   public FailfastClusterService(AbstractClient<Req, Rsp> client,
@@ -54,7 +52,7 @@ public class FailfastClusterService<Req, Rsp> extends AbstractClusterService<Req
 
         }
       }
-    }, ImmediateEventExecutor.INSTANCE);
+    }, executor);
   }
 
 }
