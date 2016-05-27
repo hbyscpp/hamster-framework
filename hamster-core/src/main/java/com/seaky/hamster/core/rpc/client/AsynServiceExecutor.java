@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -24,7 +23,6 @@ import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
 import com.seaky.hamster.core.rpc.exception.NoRouteServiceProviderException;
 import com.seaky.hamster.core.rpc.exception.NoServiceProviderMatchException;
 import com.seaky.hamster.core.rpc.exception.ServiceProviderNotFoundException;
-import com.seaky.hamster.core.rpc.executor.ServiceThreadpool;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.Attachments;
@@ -34,7 +32,8 @@ import com.seaky.hamster.core.rpc.trace.ClientCallExceptionTrace;
 import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
-import io.netty.util.concurrent.ImmediateEventExecutor;
+import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.EventExecutorGroup;
 
 public class AsynServiceExecutor<Req, Rsp> {
 
@@ -47,6 +46,7 @@ public class AsynServiceExecutor<Req, Rsp> {
   public void callService(ReferenceServiceRequest request, SettableFuture<Object> result,
       EndpointConfig config) {
 
+    // 1初始化context
     ServiceContext sc = new DefaultServiceContext(ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE);
     ServiceContextUtils.setServiceName(sc, request.getServiceName());
     ServiceContextUtils.setReferenceApp(sc, request.getReferenceApp());
@@ -63,30 +63,25 @@ public class AsynServiceExecutor<Req, Rsp> {
 
     if (!notUseThreadpoolConfig) {
       // 异步计算线程之中执行
-      CallRemoteServiceTask<Req, Rsp> task = new CallRemoteServiceTask<Req, Rsp>(client, sc, result,
-          ClientResourceManager.getAsynExecutorPool());
-      ClientResourceManager.getAsynExecutorPool().execute(task);
+      EventExecutor executor = ClientResourceManager.getAsynExecutorPool().next();
+      CallRemoteServiceTask<Req, Rsp> task =
+          new CallRemoteServiceTask<Req, Rsp>(client, sc, result, executor);
+      executor.execute(task);
     } else {
       // 线程池执行
       String serviceThreadpoolName = config.get(ConfigConstans.REFERENCE_THREADPOOL_NAME,
           ConfigConstans.REFERENCE_THREADPOOL_NAME_DEFAULT);
-      ServiceThreadpool pool = null;
-      if (ConfigConstans.REFERENCE_THREADPOOL_NAME_DEFAULT.equals(serviceThreadpoolName)) {
-        pool = ClientResourceManager.getServiceThreadpoolManager().createDefault();
-      } else {
-        int maxQueue = config.getValueAsInt(ConfigConstans.REFERENCE_THREADPOOL_MAXQUEUE,
-            ConfigConstans.REFERENCE_THREADPOOL_MAXQUEUE_DEFAULT);
+      EventExecutorGroup pool = null;
 
-        int maxThread = config.getValueAsInt(ConfigConstans.REFERENCE_THREADPOOL_MAXSIZE,
-            ConfigConstans.REFERENCE_THREADPOOL_MAXSIZE_DEFAULT);
+      int maxThread = config.getValueAsInt(ConfigConstans.REFERENCE_THREADPOOL_MAXSIZE,
+          ConfigConstans.REFERENCE_THREADPOOL_MAXSIZE_DEFAULT);
 
-        pool = ClientResourceManager.getServiceThreadpoolManager().create(serviceThreadpoolName,
-            maxThread, maxQueue);
-      }
-
+      pool = ClientResourceManager.getServiceThreadpoolManager().create(serviceThreadpoolName,
+          maxThread);
+      EventExecutor executor = pool.next();
       CallRemoteServiceTask<Req, Rsp> task =
-          new CallRemoteServiceTask<Req, Rsp>(client, sc, result, pool);
-      pool.execute(task);
+          new CallRemoteServiceTask<Req, Rsp>(client, sc, result, executor);
+      executor.execute(task);
     }
 
   }
@@ -101,10 +96,11 @@ public class AsynServiceExecutor<Req, Rsp> {
 
     private AbstractClient<Req, Rsp> client;
 
-    private Executor executor;
+    private EventExecutor executor;
+
 
     public CallRemoteServiceTask(AbstractClient<Req, Rsp> client, ServiceContext context,
-        SettableFuture<Object> result, Executor executor) {
+        SettableFuture<Object> result, EventExecutor executor) {
       this.client = client;
       this.context = context;
       this.finalResult = result;
@@ -122,9 +118,9 @@ public class AsynServiceExecutor<Req, Rsp> {
           ServiceContextUtils.getReferenceGroup(context), ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE);
       final int size = interceptors == null ? 0 : interceptors.size();
       if (size > 0) {
-        // 无需发送网络请求
         boolean isDone = client.getClientInterceptorService().preProcess(context, interceptors);
         if (isDone) {
+          // 无需发送网络请求
           client.getClientInterceptorService().setFuture(context, finalResult);
           return;
         }
@@ -175,7 +171,7 @@ public class AsynServiceExecutor<Req, Rsp> {
           }
         }
 
-      }, ImmediateEventExecutor.INSTANCE);
+      }, executor);
 
     }
 

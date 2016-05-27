@@ -1,7 +1,5 @@
 package com.seaky.hamster.core.rpc.client;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -14,107 +12,102 @@ import com.seaky.hamster.core.rpc.utils.Utils;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.HashedWheelTimer;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 
 public class ClientResourceManager {
 
-	private static boolean isStart;
+  private static boolean isStart;
 
-	private static EventLoopGroup ioGroup;
+  private static EventLoopGroup ioGroup;
 
-	private static HashedWheelTimer wheelTimer = null;
+  private static HashedWheelTimer wheelTimer = null;
 
-	private static ServiceThreadpoolManager serviceThreadpoolManager;
+  private static ServiceThreadpoolManager serviceThreadpoolManager;
 
-	private static ExecutorService asynExecutorPool;
+  private static EventExecutorGroup asynExecutorPool;
 
-	private static Logger logger = LoggerFactory
-			.getLogger(ClientResourceManager.class);
+  private static Logger logger = LoggerFactory.getLogger(ClientResourceManager.class);
 
-	public synchronized static void start() {
-		if (!isStart) {
-			ioGroup = new NioEventLoopGroup(
-					ClientGlobalConfig.getIoThreadNum(),
-					new NamedThreadFactory("hamster-client-io-pool-worker"));
-			logger.info("client io pool start,pool size is {}",
-					ClientGlobalConfig.getIoThreadNum());
-			wheelTimer = new HashedWheelTimer(new NamedThreadFactory(
-					"hamster-client-wheel-timer"), 500, TimeUnit.MILLISECONDS,
-					1024 * 10);
-			logger.info(
-					"client wheel timer thread start,tick is {}{},wheel size is {}",
-					500, TimeUnit.MILLISECONDS.name(), 1024 * 10);
+  public synchronized static void start() {
+    if (!isStart) {
+      ioGroup = new NioEventLoopGroup(ClientGlobalConfig.getIoThreadNum(),
+          new NamedThreadFactory("hamster-client-io-pool-worker"));
+      logger.info("client io pool start,pool size is {}", ClientGlobalConfig.getIoThreadNum());
+      wheelTimer = new HashedWheelTimer(new NamedThreadFactory("hamster-client-wheel-timer"), 500,
+          TimeUnit.MILLISECONDS, 1024 * 10);
+      logger.info("client wheel timer thread start,tick is {}{},wheel size is {}", 500,
+          TimeUnit.MILLISECONDS.name(), 1024 * 10);
 
-			serviceThreadpoolManager = new ServiceThreadpoolManager("client_",
-					ClientGlobalConfig.getDefaultPoolThreadNum(),
-					ClientGlobalConfig.getDefaultPoolMaxQueue());
+      serviceThreadpoolManager = new ServiceThreadpoolManager("client_");
 
-			asynExecutorPool = Executors.newFixedThreadPool(ClientGlobalConfig
-					.getAsynExecutorThreadNum(), new NamedThreadFactory(
-					"hamster-client-asyn-executor-worker"));
-			logger.info("client asyn executor start,size is {}",
-					ClientGlobalConfig.getAsynExecutorThreadNum());
-			isStart = true;
-		}
-	}
+      asynExecutorPool =
+          new DefaultEventExecutorGroup(ClientGlobalConfig.getAsynExecutorThreadNum(),
+              new NamedThreadFactory("hamster-client-dispatcher-pool"));
+      logger.info("client asyn executor start,size is {}",
+          ClientGlobalConfig.getAsynExecutorThreadNum());
+      isStart = true;
+    }
+  }
 
-	public static ExecutorService getAsynExecutorPool() {
-		return asynExecutorPool;
-	}
+  public static EventExecutorGroup getAsynExecutorPool() {
+    return asynExecutorPool;
+  }
 
-	/**
-	 * @return the ioGroup
-	 */
-	public static EventLoopGroup getIoGroup() {
-		return ioGroup;
-	}
+  /**
+   * @return the ioGroup
+   */
+  public static EventLoopGroup getIoGroup() {
+    return ioGroup;
+  }
 
-	public synchronized static void stop() {
-		if (isStart) {
-			if (ioGroup != null) {
-				try {
-					ioGroup.shutdownGracefully();
-				} catch (Exception e) {
+  public synchronized static void stop() {
+    if (isStart) {
+      if (ioGroup != null) {
+        try {
+          ioGroup.shutdownGracefully();
+        } catch (Exception e) {
 
-					logger.error("shutdown client io pool error", e);
-				}
-				ioGroup = null;
-			}
-			if (wheelTimer != null) {
-				try {
-					wheelTimer.stop();
-				} catch (Exception e) {
-					logger.error("shutdown client wheel timer error", e);
-				}
-				wheelTimer = null;
-			}
-			if (serviceThreadpoolManager != null) {
-				serviceThreadpoolManager.stop();
-			}
-			if (asynExecutorPool != null) {
-				try {
-					Utils.shutdownExecutorService(asynExecutorPool, 30);
-				} catch (Exception e) {
-					logger.error("shutdown client asyn executor  error", e);
-				}
-				asynExecutorPool = null;
-			}
-			isStart = false;
-		}
-	}
+          logger.error("shutdown client io pool error", e);
+        }
+        ioGroup = null;
+      }
+      if (wheelTimer != null) {
+        try {
+          wheelTimer.stop();
+        } catch (Exception e) {
+          logger.error("shutdown client wheel timer error", e);
+        }
+        wheelTimer = null;
+      }
+      if (serviceThreadpoolManager != null) {
+        serviceThreadpoolManager.stop();
+      }
+      if (asynExecutorPool != null) {
+        try {
+          Utils.shutdownExecutorService(asynExecutorPool, 30);
+        } catch (Exception e) {
+          logger.error("shutdown client asyn executor  error", e);
+        }
+        asynExecutorPool = null;
+      }
+      isStart = false;
+    }
+  }
 
-	/**
-	 * @return the referUpdateExecutor
-	 */
+  /**
+   * @return the referUpdateExecutor
+   */
 
-	public static HashedWheelTimer getHashedWheelTimer() {
-		return wheelTimer;
-	}
+  public static HashedWheelTimer getHashedWheelTimer() {
+    return wheelTimer;
+  }
 
-	/**
-	 * @return the serviceThreadpoolManager
-	 */
-	public static ServiceThreadpoolManager getServiceThreadpoolManager() {
-		return serviceThreadpoolManager;
-	}
+  /**
+   * @return the serviceThreadpoolManager
+   */
+  public static ServiceThreadpoolManager getServiceThreadpoolManager() {
+    return serviceThreadpoolManager;
+  }
 
 }

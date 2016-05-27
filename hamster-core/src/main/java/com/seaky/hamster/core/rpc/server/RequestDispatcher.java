@@ -8,12 +8,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommand.Setter;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixCommandKey;
-import com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy;
-import com.netflix.hystrix.HystrixThreadPoolKey;
 import com.seaky.hamster.core.rpc.common.DefaultServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
@@ -38,6 +32,8 @@ import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaService;
 
+import io.netty.util.concurrent.EventExecutorGroup;
+
 /**
  * server的请求分发，一个jvm中所有server 共享一个dispatcher线程池 dispatcher主要用于协议的解析，ServiceContext的创建
  * 
@@ -52,10 +48,11 @@ public class RequestDispatcher<Req, Rsp> {
   private static Logger logger = LoggerFactory.getLogger(RequestDispatcher.class);
 
   // 分发消息
-  public void dispatchMessages(Req request, ServerTransport<Req, Rsp> transport) {
+  public void dispatchMessage(Req request, ServerTransport<Req, Rsp> transport) {
 
     ServiceContext context = initContext(request, transport);
     if (ServiceContextUtils.getResponse(context).isException()) {
+      // 初始化context有异常
       writeResponse(context, transport);
       return;
     }
@@ -64,8 +61,7 @@ public class RequestDispatcher<Req, Rsp> {
     String serviceVersion = ServiceContextUtils.getVersion(context);
     String group = ServiceContextUtils.getGroup(context);
     JavaService service = server.findService(serviceName, app, serviceVersion, group);
-    List<ServiceInterceptor> interceptors =
-        server.getServiceInterceptor(serviceName, app, serviceVersion, group);
+
     if (service == null) {
       setException(context, new ServiceProviderNotFoundException(serviceName));
       writeResponse(context, transport);
@@ -80,49 +76,30 @@ public class RequestDispatcher<Req, Rsp> {
       writeResponse(context, transport);
       return;
     }
-
-    Setter setter = createSetter(context, server);
+    List<ServiceInterceptor> interceptors =
+        server.getServiceInterceptor(serviceName, app, serviceVersion, group);
     ServiceRunner<Req, Rsp> sr =
-        new ServiceRunner<Req, Rsp>(this, service, transport, context, interceptors, setter);
-    sr.execute();
+        new ServiceRunner<Req, Rsp>(this, service, transport, context, interceptors);
+    runService(context, server, sr);
   }
 
 
-  private Setter createSetter(ServiceContext context, AbstractServer<Req, Rsp> server) {
-    String name = commandName(context, server);
-    Setter setter = Setter
-        .withGroupKey(
-            HystrixCommandGroupKey.Factory.asKey(ServiceContextUtils.getServiceName(context)))
-        .andCommandKey(HystrixCommandKey.Factory.asKey(name));
+  private void runService(ServiceContext context, AbstractServer<Req, Rsp> server,
+      ServiceRunner<Req, Rsp> sr) {
     EndpointConfig sc = ServiceContextUtils.getProviderConfig(context);
     boolean useDispatcherThread =
         sc.getValueAsBoolean(ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE, false);
 
     if (useDispatcherThread) {
-      int maxcurrent = sc.getValueAsInt(ConfigConstans.PROVIDER_MAX_CONCURRENT,
-          ConfigConstans.PROVIDER_MAX_CONCURRENT_DEFAULT);
-      setter
-          .andCommandPropertiesDefaults(com.netflix.hystrix.HystrixCommandProperties.Setter()
-              .withExecutionIsolationStrategy(ExecutionIsolationStrategy.SEMAPHORE)
-              .withExecutionIsolationSemaphoreMaxConcurrentRequests(
-                  maxcurrent <= 0 ? Integer.MAX_VALUE : maxcurrent)
-              .withExecutionTimeoutEnabled(false));
+      sr.run();
     } else {
-      int maxQueue = sc.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE,
-          ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT);
-
       int maxThread = sc.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE,
           ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE_DEFAULT);
       String threadPoolName = threadPoolName(context, server);
-      setter
-          .andCommandPropertiesDefaults(com.netflix.hystrix.HystrixCommandProperties.Setter()
-              .withExecutionIsolationStrategy(ExecutionIsolationStrategy.THREAD)
-              .withExecutionTimeoutEnabled(false))
-          .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(threadPoolName))
-          .andThreadPoolPropertiesDefaults(com.netflix.hystrix.HystrixThreadPoolProperties.Setter()
-              .withCoreSize(maxThread).withMaxQueueSize(maxQueue));
+      EventExecutorGroup pool =
+          ServerResourceManager.getServiceThreadpoolManager().create(threadPoolName, maxThread);
+      pool.execute(sr);
     }
-    return setter;
   }
 
   private String threadPoolName(ServiceContext context, AbstractServer<Req, Rsp> server) {
@@ -131,24 +108,11 @@ public class RequestDispatcher<Req, Rsp> {
     String app = ServiceContextUtils.getApp(context);
     String serviceVersion = ServiceContextUtils.getVersion(context);
     String group = ServiceContextUtils.getGroup(context);
-    String key = Utils.generateKey(serviceName, app, serviceVersion, group,
-        server.getProtocolExtensionFactory().protocolName(), String.valueOf(server.getStartTime()));
+    String key = Utils.generateKey(serviceName, app, serviceVersion, group);
     return key;
   }
 
-  private String commandName(ServiceContext context, AbstractServer<Req, Rsp> server) {
-
-    String serviceName = ServiceContextUtils.getServiceName(context);
-    String app = ServiceContextUtils.getApp(context);
-    String serviceVersion = ServiceContextUtils.getVersion(context);
-    String group = ServiceContextUtils.getGroup(context);
-    String key = Utils.generateKey(serviceName, app, serviceVersion, group,
-        server.getProtocolExtensionFactory().protocolName(), String.valueOf(server.getStartTime()));
-    return key;
-  }
-
-
-  private static class ServiceRunner<Req, Rsp> extends HystrixCommand<Void> {
+  private static class ServiceRunner<Req, Rsp> implements Runnable {
 
 
     private RequestDispatcher<Req, Rsp> dispatcher;
@@ -163,8 +127,7 @@ public class RequestDispatcher<Req, Rsp> {
 
     public ServiceRunner(RequestDispatcher<Req, Rsp> dispatcher, JavaService service,
         ServerTransport<Req, Rsp> transport, ServiceContext context,
-        List<ServiceInterceptor> interceptors, Setter setter) {
-      super(setter);
+        List<ServiceInterceptor> interceptors) {
       this.dispatcher = dispatcher;
       this.service = service;
       this.transport = transport;
@@ -173,13 +136,12 @@ public class RequestDispatcher<Req, Rsp> {
     }
 
     @Override
-    public Void run() {
+    public void run() {
       try {
         dispatcher.server.getInterceptorSupportService().process(context, service, interceptors);
       } finally {
         dispatcher.writeResponse(context, transport);
       }
-      return null;
     }
 
   }

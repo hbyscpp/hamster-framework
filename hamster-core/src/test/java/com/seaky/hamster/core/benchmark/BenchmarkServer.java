@@ -30,7 +30,8 @@ public class BenchmarkServer {
     sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, "testapp", true));
     sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, "default", true));
     sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, "1.0.0", true));
-    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE, "true", false));
+    // sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE, "true",
+    // false));
     ServerHelper.exportInterface(server, BenchmarkTestService.class,
         new FixSizeResponsebenchmarkTestService(100), sc, null);
 

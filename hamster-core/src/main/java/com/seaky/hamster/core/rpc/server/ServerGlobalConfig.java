@@ -12,11 +12,6 @@ public class ServerGlobalConfig {
   // 业务分发的线程数目
   private static int dispatcherThreadNum = Runtime.getRuntime().availableProcessors() * 2;
 
-  // 默认公共的线程池线程数目
-  private static int defaultThreadpoolNum = 200;
-
-  // 默认线程池最大队列
-  private static int defaultMaxQueue = 100000;
 
   /**
    * @return the acceptorThreadNum
@@ -60,31 +55,4 @@ public class ServerGlobalConfig {
     ServerGlobalConfig.dispatcherThreadNum = dispatcherThreadNum;
   }
 
-  /**
-   * @return the defaultThreadpoolNum
-   */
-  public static int getDefaultThreadpoolNum() {
-    return defaultThreadpoolNum;
-  }
-
-  /**
-   * @param defaultThreadpoolNum the defaultThreadpoolNum to set
-   */
-  public static void setDefaultThreadpoolNum(int defaultThreadpoolNum) {
-    ServerGlobalConfig.defaultThreadpoolNum = defaultThreadpoolNum;
-  }
-
-  /**
-   * @return the defaultMaxQueue
-   */
-  public static int getDefaultMaxQueue() {
-    return defaultMaxQueue;
-  }
-
-  /**
-   * @param defaultMaxQueue the defaultMaxQueue to set
-   */
-  public static void setDefaultMaxQueue(int defaultMaxQueue) {
-    ServerGlobalConfig.defaultMaxQueue = defaultMaxQueue;
-  }
 }

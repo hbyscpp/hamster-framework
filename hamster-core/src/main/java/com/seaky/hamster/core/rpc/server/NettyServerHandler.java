@@ -23,7 +23,7 @@ public class NettyServerHandler<Req, Rsp> extends ChannelInboundHandlerAdapter {
 
     if (transport.getServer().getProtocolExtensionFactory().getReqClass()
         .isAssignableFrom(msg.getClass())) {
-      transport.getServer().getRequestDispatcher().dispatchMessages((Req) msg, transport);
+      transport.getServer().getRequestDispatcher().dispatchMessage((Req) msg, transport);
     } else {
       // 协议解析出现问题,抛出异常，关闭连接
       throw new MismatchProtocolException(

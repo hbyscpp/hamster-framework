@@ -53,8 +53,7 @@ public class ServerResourceManager {
         new NamedThreadFactory("hamster-server-dispatcher-pool"));
     logger.info("server dispatcher pool start, pool size is {}",
         ServerGlobalConfig.getDispatcherThreadNum());
-    serviceThreadpoolManager = new ServiceThreadpoolManager("server_",
-        ServerGlobalConfig.getDefaultThreadpoolNum(), ServerGlobalConfig.getDefaultMaxQueue());
+    serviceThreadpoolManager = new ServiceThreadpoolManager("server_");
     isStart = true;
 
   }
