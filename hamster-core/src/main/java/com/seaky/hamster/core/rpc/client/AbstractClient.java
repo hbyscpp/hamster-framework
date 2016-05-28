@@ -49,9 +49,11 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
   private ConcurrentHashMap<String, ClientTransport<Req, Rsp>> clientCache =
       new ConcurrentHashMap<String, ClientTransport<Req, Rsp>>();
 
-  // key 服务端－客户端
-  private ConcurrentHashMap<String, Long> referenceCache = new ConcurrentHashMap<String, Long>();
+  // 引用时间的缓存
+  private ConcurrentHashMap<String, Long> referenceTimeCache =
+      new ConcurrentHashMap<String, Long>();
 
+  // 服务拦截器的配置
   private ConcurrentHashMap<ProcessPhase, ConcurrentHashMap<String, List<ServiceInterceptor>>> allservicesInterceptorsBeforeCluster =
       new ConcurrentHashMap<ProcessPhase, ConcurrentHashMap<String, List<ServiceInterceptor>>>();
 
@@ -231,7 +233,8 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
       }
       serviceCache.clear();
       clientCache.clear();
-      referenceCache.clear();
+      referenceTimeCache.clear();
+      allservicesInterceptorsBeforeCluster.clear();
       isRunning = false;
 
     }
@@ -262,21 +265,21 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
           "service name contains special char,service name must compose of [0-9 _ . $ a-z A-Z],but service name is "
               + serviceName);
     }
-    String version = config.get(ConfigConstans.REFERENCE_VERSION);
+    String referVersion = config.get(ConfigConstans.REFERENCE_VERSION);
 
-    if (version == null || !version.matches(Constants.VERSION_NAME_ALLOW_REG)) {
+    if (referVersion == null || !referVersion.matches(Constants.VERSION_NAME_ALLOW_REG)) {
       throw new IllegalArgumentException(
           "service version contains special char,service version must compose of [0-9.],but version is "
-              + version);
+              + referVersion);
     }
-    Utils.checkVersionFormat(version);
-    String group = config.get(ConfigConstans.REFERENCE_GROUP);
-    if (group == null || !group.matches(Constants.GROUP_NAME_ALLOW_REG)) {
+    Utils.checkVersionFormat(referVersion);
+    String referGroup = config.get(ConfigConstans.REFERENCE_GROUP);
+    if (referGroup == null || !referGroup.matches(Constants.GROUP_NAME_ALLOW_REG)) {
       throw new IllegalArgumentException(
           "service version contains special char,service version must compose of [a-zA-Z0-9_,],but group is "
-              + group);
+              + referGroup);
     }
-    JavaService service = getReferenceService(serviceName, referApp, version, group);
+    JavaService service = getReferenceService(serviceName, referApp, referVersion, referGroup);
     if (service != null) {
       return service;
     }
@@ -290,8 +293,8 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     }
     EndpointConfig copyOfConfig = config.deepCopy();
 
-    service = new ReferenceService<Req, Rsp>(this, referApp, serviceName, version, group);
-    service = addReferService(serviceName, referApp, version, group, service);
+    service = new ReferenceService<Req, Rsp>(this, referApp, serviceName, referVersion, referGroup);
+    service = addReferService(serviceName, referApp, referVersion, referGroup, service);
     ServiceReferenceDescriptor rd = new ServiceReferenceDescriptor();
     rd.setConfig(copyOfConfig);
     rd.setPid(Utils.getCurrentVmPid());
@@ -299,17 +302,22 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     long time = System.currentTimeMillis();
     rd.setRegistTime(time);
     rd.setHost(this.config.getHost());
-    referenceCache.put(Utils.generateKey(serviceName, referApp, version, group), time);
+    referenceTimeCache.put(Utils.generateKey(serviceName, referApp, referVersion, referGroup),
+        time);
     try {
       String interceptors = config.get(ConfigConstans.REFERENCE_INTERCEPTORS);
       registerationService.registServiceReference(rd);
-      addServiceInterceptors(serviceName, referApp, version, group, interceptors,
+      addServiceInterceptors(serviceName, referApp, referVersion, referGroup, interceptors,
           ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE);
-      addServiceInterceptors(serviceName, referApp, version, group, interceptors,
+      addServiceInterceptors(serviceName, referApp, referVersion, referGroup, interceptors,
           ProcessPhase.CLIENT_CALL_SERVICE_INSTANCE);
     } catch (Exception e) {
-      removeReferService(serviceName, referApp, version, group);
-      referenceCache.remove(Utils.generateKey(serviceName, referApp, version, group));
+      removeReferService(serviceName, referApp, referVersion, referGroup);
+      removeServiceInterceptors(serviceName, referApp, referVersion, referGroup,
+          ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE);
+      removeServiceInterceptors(serviceName, referApp, referVersion, referGroup,
+          ProcessPhase.CLIENT_CALL_SERVICE_INSTANCE);
+      referenceTimeCache.remove(Utils.generateKey(serviceName, referApp, referVersion, referGroup));
       Utils.throwException(e);
     }
     return service;
@@ -405,6 +413,18 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   }
 
+  private void removeServiceInterceptors(String serviceName, String referApp, String version,
+      String group, ProcessPhase phase) {
+
+    ConcurrentHashMap<String, List<ServiceInterceptor>> serviceInterceptorsMap =
+        allservicesInterceptorsBeforeCluster.get(phase);
+
+    if (serviceInterceptorsMap == null)
+      return;
+    serviceInterceptorsMap.remove(Utils.generateKey(serviceName, referApp, version, group));
+
+  }
+
   public List<ServiceInterceptor> getServiceInterceptors(String serviceName, String referenceApp,
       String referenceVersion, String referenceGroup, ProcessPhase phase) {
     ConcurrentHashMap<String, List<ServiceInterceptor>> serviceInterceptorsMap =
@@ -424,7 +444,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   private ServiceReferenceDescriptor getServiceReferenceDescriptor(String serviceName,
       String referenceApp, String referenceVersion, String referenceGroup) {
-    Long time = referenceCache
+    Long time = referenceTimeCache
         .get(Utils.generateKey(serviceName, referenceApp, referenceVersion, referenceGroup));
     return registerationService.findServiceReference(referenceApp, serviceName, referenceVersion,
         referenceGroup, protocolExtensionFactory.protocolName(), config.getHost(),

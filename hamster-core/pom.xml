@@ -8,7 +8,7 @@
 	</parent>
 	<artifactId>hamster-core</artifactId>
 	<properties>
-<netty.version>4.1.0.CR7</netty.version>
+		<netty.version>4.1.0.Final</netty.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -16,7 +16,6 @@
 			<artifactId>commons-io</artifactId>
 			<version>2.4</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>

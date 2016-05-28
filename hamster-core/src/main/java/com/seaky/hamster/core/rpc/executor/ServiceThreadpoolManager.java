@@ -8,8 +8,8 @@ import io.netty.util.concurrent.EventExecutorGroup;
 
 public class ServiceThreadpoolManager {
 
-  private ConcurrentHashMap<String, EventExecutorGroup> allThreadpools =
-      new ConcurrentHashMap<String, EventExecutorGroup>();
+  private ConcurrentHashMap<String, DefaultEventExecutorGroup> allThreadpools =
+      new ConcurrentHashMap<String, DefaultEventExecutorGroup>();
 
   private String prefix;
 
@@ -20,18 +20,18 @@ public class ServiceThreadpoolManager {
 
   public EventExecutorGroup create(String name, int maxThread) {
     name = prefix + name;
-    EventExecutorGroup threadpool = allThreadpools.get(name);
+    DefaultEventExecutorGroup threadpool = allThreadpools.get(name);
     if (threadpool == null) {
       threadpool =
           new DefaultEventExecutorGroup(maxThread, new NamedThreadFactory("servicepool-" + name));
-      EventExecutorGroup oldThreadpool = allThreadpools.putIfAbsent(name, threadpool);
+      DefaultEventExecutorGroup oldThreadpool = allThreadpools.putIfAbsent(name, threadpool);
       if (oldThreadpool != null) {
         threadpool.shutdownGracefully();
         threadpool = oldThreadpool;
       }
     }
-    if (maxThread > threadpool.children().size()) {
-      EventExecutorGroup newThreadpool =
+    if (maxThread > threadpool.executorCount()) {
+      DefaultEventExecutorGroup newThreadpool =
           new DefaultEventExecutorGroup(maxThread, new NamedThreadFactory("servicepool-" + name));
       allThreadpools.put(name, newThreadpool);
       threadpool.shutdownGracefully();
