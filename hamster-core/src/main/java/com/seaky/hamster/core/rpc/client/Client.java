@@ -38,18 +38,14 @@ public interface Client<Req, Rsp> {
   /**
    * 查询引用
    * 
-   * @param referenceApp 引用的app
    * @param serviceName 服务的名字
-   * @param version 服务的版本
+   * @param referenceApp 引用服务的app名字
+   * @param referenceVersion 服务的版本
+   * @param referenceGroup 服务的分组
    * @return 服务的引用
    */
   JavaService findReferenceService(String serviceName, String referenceApp, String referenceVersion,
       String referenceGroup);
-
-  /**
-   * 关闭客户端
-   */
-  void close();
 
   /**
    * 获取注册中心服务
@@ -57,5 +53,12 @@ public interface Client<Req, Rsp> {
    * @return 注册中心服务
    */
   RegisterationService getRegisterationService();
+
+  /**
+   * 关闭客户端
+   */
+  void close();
+
+
 
 }

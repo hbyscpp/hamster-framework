@@ -87,55 +87,6 @@ public class EtcdRegisterationService implements RegisterationService {
 
   }
 
-  public static class RegistPullRunnable implements Runnable {
-
-
-    private EtcdRegisterationService registService;
-
-    @Override
-    public void run() {
-
-      if (Thread.interrupted()) {
-        logger.info("register pull thread interrup");
-        return;
-
-      }
-      for (ServiceProviderDescriptor sd : registService.localRegistCache.values()) {
-
-        if (registService.watchProviderCache.containsKey(sd.getName())) {
-          continue;
-        } else {
-          registService.updateLocalCache(sd);
-        }
-
-      }
-      for (ServiceReferenceDescriptor rd : registService.localReferCache.values()) {
-        if (registService.watchReferecnceCache.containsKey(rd.getServiceName())) {
-          continue;
-        } else {
-          registService.updateLocalCache(rd);
-        }
-
-      }
-      for (String name : registService.watchProviderCache.keySet()) {
-        try {
-          registService.findServices(name, true);
-        } catch (Exception e) {
-          logger.error("heartbeat regist service error", e);
-        }
-      }
-
-      for (String name : registService.watchReferecnceCache.keySet()) {
-        try {
-          registService.findReferences(name, true);
-        } catch (Exception e) {
-          logger.error("heartbeat regist service error", e);
-        }
-      }
-    }
-
-  }
-
   // 定时注册的线程
   private static class RegistRunnable implements Runnable {
 
@@ -154,23 +105,16 @@ public class EtcdRegisterationService implements RegisterationService {
         return;
 
       }
+      // 更新配置，并刷新
       for (ServiceProviderDescriptor sd : registService.localRegistCache.values()) {
-
-        if (registService.watchProviderCache.containsKey(sd.getName())) {
-          continue;
-        } else {
-          registService.updateLocalCache(sd);
-        }
-
+        registService.updateLocalCache(sd);
+        registService.refreshService(sd, true);
       }
       for (ServiceReferenceDescriptor rd : registService.localReferCache.values()) {
-        if (registService.watchReferecnceCache.containsKey(rd.getServiceName())) {
-          continue;
-        } else {
-          registService.updateLocalCache(rd);
-        }
-
+        registService.updateLocalCache(rd);
+        registService.refreshReference(rd, true);
       }
+      // 更新
       for (String name : registService.watchProviderCache.keySet()) {
         try {
           registService.findServices(name, true);
@@ -187,29 +131,7 @@ public class EtcdRegisterationService implements RegisterationService {
         }
       }
 
-      // 更新
-      for (ServiceProviderDescriptor sd : registService.localRegistCache.values()) {
-        try {
-          if (Thread.interrupted()) {
-            logger.info("register thread interrup");
-            return;
-          }
-          registService.registService(sd, true);
-        } catch (Exception e) {
-          logger.error("heartbeat regist service error", e);
-        }
-      }
-      for (ServiceReferenceDescriptor rd : registService.localReferCache.values()) {
-        try {
-          if (Thread.interrupted()) {
-            logger.info("register thread interrup");
-            return;
-          }
-          registService.registReference(rd, true);
-        } catch (Exception e) {
-          logger.error("heartbeat regist refer error", e);
-        }
-      }
+
     }
   }
 
@@ -232,6 +154,24 @@ public class EtcdRegisterationService implements RegisterationService {
         Utils.throwException(e);
       else {
         logger.error("regist service asyn  error ", e);
+      }
+    }
+
+  }
+
+  private void refreshService(ServiceProviderDescriptor sd, boolean isAsyn) {
+
+    try {
+      EtcdResponsePromise<EtcdKeysResponse> rsp =
+          client.refresh(genProviderPath(sd), DEFAULT_TTL).timeout(5, TimeUnit.SECONDS).send();
+      if (!isAsyn) {
+        rsp.get();
+      }
+    } catch (Exception e) {
+      if (!isAsyn)
+        Utils.throwException(e);
+      else {
+        logger.error("refresh service asyn  error ", e);
       }
     }
 
@@ -272,6 +212,13 @@ public class EtcdRegisterationService implements RegisterationService {
       ServiceProviderDescriptor newsd = ServiceProviderDescriptor.parseStr(node.value);
       localRegistCache.put(serviceKey(newsd), newsd);
 
+    } catch (EtcdException e) {
+      if (e.getErrorCode() != 100) {
+        logger.error("", e);
+      } else {
+        // 不存在再注册
+        registService(sd, true);
+      }
     } catch (Exception e) {
       logger.error("", e);
     }
@@ -286,6 +233,12 @@ public class EtcdRegisterationService implements RegisterationService {
       ServiceReferenceDescriptor newsd = ServiceReferenceDescriptor.parseStr(node.value);
       localReferCache.put(referKey(newsd), newsd);
 
+    } catch (EtcdException e) {
+      if (e.getErrorCode() != 100) {
+        logger.error("", e);
+      } else {
+        registReference(rd, true);
+      }
     } catch (Exception e) {
       logger.error("", e);
     }
@@ -423,6 +376,20 @@ public class EtcdRegisterationService implements RegisterationService {
     try {
       EtcdResponsePromise<EtcdKeysResponse> rsp = client.put(genConsumerPath(rd), rd.toString())
           .timeout(5, TimeUnit.SECONDS).ttl(DEFAULT_TTL).send();
+      if (!isAsyn)
+        rsp.get();
+    } catch (IOException | EtcdException | EtcdAuthenticationException | TimeoutException e) {
+      if (!isAsyn)
+        Utils.throwException(e);
+      else
+        logger.error("regist reference ", e);
+    }
+  }
+
+  private void refreshReference(ServiceReferenceDescriptor rd, boolean isAsyn) {
+    try {
+      EtcdResponsePromise<EtcdKeysResponse> rsp =
+          client.refresh(genConsumerPath(rd), DEFAULT_TTL).timeout(5, TimeUnit.SECONDS).send();
       if (!isAsyn)
         rsp.get();
     } catch (IOException | EtcdException | EtcdAuthenticationException | TimeoutException e) {
