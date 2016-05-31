@@ -125,7 +125,6 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
 
   private void setFuture(ChannelFuture cf, SettableFuture<?> resultFuture, ServiceContext sc) {
     if (cf.isCancelled()) {
-      // TODO why false not true
       resultFuture.cancel(false);
       return;
     }
