@@ -1,5 +1,7 @@
 package com.seaky.hamster.core.test;
 
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
 import com.seaky.hamster.core.ClientHelper;
@@ -39,9 +41,9 @@ public class TestClient {
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0", true));
     // sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_ASYNPOOL_THREAD_EXE, "true", true));
 
-    for (int i = 0; i < 30; ++i) {
-      final MathReactive hello =
-          ClientHelper.referReactiveInterface(cc, Math.class, MathReactive.class, sc, null);
+    final MathReactive hello =
+        ClientHelper.referReactiveInterface(cc, Math.class, MathReactive.class, sc, null);
+    for (int i = 0; i < 1; ++i) {
       // 关闭
       Observable<String> result = hello.hello(String.valueOf(i));
       result.subscribe(new Action1<String>() {
@@ -61,10 +63,47 @@ public class TestClient {
       });
       // Thread.sleep(2000);
     }
-
+    // testOk(hello, 100);
     /**
      * Thread.sleep(10000); ClientResourceManager.stop(); cc.close(); zkcc.close(); lrs.close();
      **/
+  }
+
+  private static void testOk(MathReactive hello, int n) throws InterruptedException {
+
+    CountDownLatch latch = new CountDownLatch(n);
+
+    for (int i = 0; i < n; ++i) {
+      new Thread(new ValidRunner(hello, latch)).start();
+    }
+    Thread.currentThread().join();
+  }
+
+  private static class ValidRunner implements Runnable {
+
+    private MathReactive hello;
+
+    private CountDownLatch latch;
+
+    public ValidRunner(MathReactive hello, CountDownLatch latch) {
+
+      this.hello = hello;
+      this.latch = latch;
+    }
+
+    @Override
+    public void run() {
+      latch.countDown();
+      int x = new Random().nextInt(300);
+      int y = new Random().nextInt(300);
+      int z = hello.add(x, y).toBlocking().single();
+      if (z != (x + y)) {
+        System.out.println("error");
+      } else {
+        System.out.println(z);
+      }
+    }
+
   }
 
 }

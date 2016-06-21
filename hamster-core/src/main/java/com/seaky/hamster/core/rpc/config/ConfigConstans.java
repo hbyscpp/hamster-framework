@@ -6,7 +6,7 @@ public interface ConfigConstans {
   // 消费端调用的超时时间 毫秒为单位
   public static final String REFERENCE_READ_TIMEOUT = "sr.readtimeout";
 
-  public static final int REFERENCE_READ_TIMEOUT_DEFAULT = 1000;
+  public static final int REFERENCE_READ_TIMEOUT_DEFAULT = 3000;
 
   // 消费方集群容错策略
   public static final String REFERENCE_CLUSTER = "sr.cluster";
@@ -131,6 +131,9 @@ public interface ConfigConstans {
 
   public static final boolean PROVIDER_HIDDERN_DEFAULT = false;
 
+  public static final String PROVIDER_FORCE_ACCESS = "sp.forceaccess";
+
+  public static final boolean PROVIDER_FORCE_ACCESS_DEFAULT = false;
 
 
 }

@@ -178,4 +178,8 @@ public class ServiceProviderDescriptor {
     this.config.addConfigItem(
         new ConfigItem(ConfigConstans.PROVIDER_REG_TIME, String.valueOf(registTime), true));
   }
+
+  public boolean isForceAccess() {
+    return this.config.getValueAsBoolean(ConfigConstans.PROVIDER_FORCE_ACCESS, false);
+  }
 }

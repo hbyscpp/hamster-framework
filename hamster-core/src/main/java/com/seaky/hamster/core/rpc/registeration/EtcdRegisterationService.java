@@ -247,25 +247,33 @@ public class EtcdRegisterationService implements RegisterationService {
   private Collection<ServiceProviderDescriptor> findServices(String name, boolean isForce) {
     Boolean isWatch = null;
     if (isForce == false)
-      isWatch = watchProviderCache.putIfAbsent(name, true);
+      isWatch = watchProviderCache.putIfAbsent(name, false);
 
-    if (isWatch == null) {
-
-      // 第一次watch
-      try {
-        EtcdResponsePromise<EtcdKeysResponse> future =
-            client.getDir(baseServiceProviderPath(name)).timeout(5, TimeUnit.SECONDS).send();
-        EtcdKeysResponse rsp = future.get();
-        // 初始化
-        initServiceCache(name, rsp.node, true);
-        // 注册监听
-      } catch (Exception e) {
-        if (e instanceof EtcdException) {
-          if (((EtcdException) e).errorCode == 100)
-            return null;
-        }
-        logger.error("", e);
+    if (isWatch == null || isWatch == false) {
+      Boolean lockObject = watchProviderCache.get(name);
+      if (lockObject == null) {
+        watchProviderCache.putIfAbsent(name, false);
+        lockObject = watchProviderCache.get(name);
       }
+      synchronized (lockObject) {
+        // 第一次watch
+        try {
+          EtcdResponsePromise<EtcdKeysResponse> future =
+              client.getDir(baseServiceProviderPath(name)).timeout(5, TimeUnit.SECONDS).send();
+          EtcdKeysResponse rsp = future.get();
+          // 初始化
+          initServiceCache(name, rsp.node, true);
+          watchProviderCache.put(name, true);
+          // 注册监听
+        } catch (Exception e) {
+          if (e instanceof EtcdException) {
+            if (((EtcdException) e).errorCode == 100)
+              return null;
+          }
+          logger.error("", e);
+        }
+      }
+
     }
     // 继续使用缓存
     ConcurrentHashMap<String, ServiceProviderDescriptor> allSd = serviceDescriptors.get(name);

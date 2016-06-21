@@ -5,11 +5,6 @@ public class MathImpl1 implements Math {
   @Override
   public int add(int x, int y) {
 
-    try {
-      Thread.currentThread().sleep(1000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
     return x + y;
   }
 
@@ -20,7 +15,7 @@ public class MathImpl1 implements Math {
 
   @Override
   public String hello(String h) {
-    return h;
+    return null;
   }
 
 }

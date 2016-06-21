@@ -101,8 +101,21 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
         String.valueOf(config.getMaxConcurrent()), false));
     ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR,
         config.getExceptionConvertor(), false));
-    ec.addConfigItem(
-        new ConfigItem(ConfigConstans.PROVIDER_HIDDERN, String.valueOf(config.isHidden()), false));
+
+    if (config.isHidden() == null) {
+      if (System.getProperty("hamster.provider.hidden") != null) {
+        ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_HIDDERN,
+            System.getProperty("hamster.provider.hidden"), false));
+      } else {
+        ec.addConfigItem(
+            new ConfigItem(ConfigConstans.PROVIDER_HIDDERN, String.valueOf(false), false));
+      }
+    } else {
+      ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_HIDDERN,
+          String.valueOf(config.isHidden()), false));
+    }
+    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_FORCE_ACCESS,
+        String.valueOf(config.isForceAccess()), false));
     return ec;
   }
 

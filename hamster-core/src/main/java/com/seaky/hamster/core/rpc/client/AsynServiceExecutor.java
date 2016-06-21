@@ -217,6 +217,12 @@ public class AsynServiceExecutor<Req, Rsp> {
             && Utils.isGroupMatch(ServiceContextUtils.getReferenceGroup(context), sd.getGroup())
             && client.protocolExtensionFactory.protocolName().equals(sd.getProtocol())) {
           // provider隐藏，客户端只能采用直连的方式
+          if (sd.isForceAccess()) {
+            // 强制使用该provider
+            allSd.clear();
+            allSd.add(sd);
+            break;
+          }
           if (directHostAndPorts != null && directHostAndPorts.size() > 0) {
             // 直连的方式
             if (compareHost(sd, directHostAndPorts)) {

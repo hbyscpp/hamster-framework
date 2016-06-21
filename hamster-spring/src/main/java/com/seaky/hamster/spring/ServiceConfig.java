@@ -21,7 +21,9 @@ public class ServiceConfig {
   private String threadPoolName = null;
 
   // 是否隐藏，隐藏的服务只能通过直连来访问，用于测试
-  private boolean isHidden = false;
+  private Boolean isHidden = null;
+
+  private boolean isForceAccess = false;
 
   public String getVersion() {
     return version;
@@ -91,12 +93,20 @@ public class ServiceConfig {
     this.threadPoolName = threadPoolName;
   }
 
-  public boolean isHidden() {
+  public Boolean isHidden() {
     return isHidden;
   }
 
   public void setHidden(boolean isHidden) {
     this.isHidden = isHidden;
+  }
+
+  public boolean isForceAccess() {
+    return isForceAccess;
+  }
+
+  public void setForceAccess(boolean isForceAccess) {
+    this.isForceAccess = isForceAccess;
   }
 
 
