@@ -10,7 +10,7 @@ public class ReferenceConfig {
 
   private int maxConcurrent = -1;
 
-  private int readtimeout = 1000;
+  private int readtimeout = 3000;
 
   private String exceptionConvertor = "default";
 

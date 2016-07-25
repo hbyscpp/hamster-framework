@@ -1,5 +1,6 @@
 package com.seaky.hamster.core.extension;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,7 +12,23 @@ import com.seaky.hamster.core.objectfactory.ObjectCreatorFactory;
 
 public class ExtensionLoader<T> {
 
-  private static Reflections reflections = new Reflections(new Object[0]);
+  private static Reflections reflections = null;
+
+  static {
+    Package[] packages = Package.getPackages();
+    Set<String> packageNames = new HashSet<>();
+
+    for (int i = 0; i < packages.length; ++i) {
+      int index = packages[i].getName().indexOf(".");
+      if (index == -1) {
+        packageNames.add(packages[i].getName());
+      } else {
+        packageNames.add(packages[i].getName().substring(0, index));
+      }
+    }
+    reflections = new Reflections(packageNames);
+
+  }
 
   private String defaultName;
   private static ConcurrentHashMap<Class<?>, ExtensionLoader<?>> allExt =
@@ -19,6 +36,7 @@ public class ExtensionLoader<T> {
   private ConcurrentHashMap<String, T> allExtInstances = new ConcurrentHashMap<String, T>();
 
   private ExtensionLoader(Class<T> cls) {
+
     if (cls == null)
       throw new IllegalArgumentException("Extension type == null");
     if (!cls.isInterface()) {
