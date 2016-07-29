@@ -384,12 +384,12 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
     if (response.isException()) {
       Throwable e = response.getException();
       if (e instanceof ClientDeserResultException) {
-        logger.error("call remote {}:{} service: {},return exception {}",
+        logger.error("call remote {}:{} service: {},return exception ",
             ServiceContextUtils.getServerHost(sc),
             String.valueOf(ServiceContextUtils.getServerPort(sc)),
             ServiceContextUtils.getServiceName(sc), e);
       } else {
-        logger.debug("call remote {}:{} service: {},return exception {}",
+        logger.debug("call remote {}:{} service: {},return exception ",
             ServiceContextUtils.getServerHost(sc),
             String.valueOf(ServiceContextUtils.getServerPort(sc)),
             ServiceContextUtils.getServiceName(sc), response.getException());

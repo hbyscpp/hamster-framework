@@ -45,11 +45,11 @@ public class TestClient {
         ClientHelper.referReactiveInterface(cc, Math.class, MathReactive.class, sc, null);
     for (int i = 0; i < 1; ++i) {
       // 关闭
-      Observable<String> result = hello.hello(String.valueOf(i));
-      result.subscribe(new Action1<String>() {
+      Observable<Integer> result = hello.sub(1, 2);
+      result.subscribe(new Action1<Integer>() {
 
         @Override
-        public void call(String t1) {
+        public void call(Integer t1) {
           System.out.println("result is:" + t1);
 
         }

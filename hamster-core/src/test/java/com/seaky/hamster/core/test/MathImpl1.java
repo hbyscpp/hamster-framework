@@ -10,7 +10,7 @@ public class MathImpl1 implements Math {
 
   @Override
   public int sub(int x, int y) {
-    return x - y;
+    throw new RuntimeException("not support");
   }
 
   @Override
