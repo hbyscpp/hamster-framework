@@ -167,6 +167,9 @@ public class RequestDispatcher<Req, Rsp> {
     ServiceContextUtils.setRequestAttachments(context, new Attachments());
 
     try {
+      server.getProtocolExtensionFactory().getRequestExtractor().extractTo(request, context);
+      // 验证所需的参数
+      validateRequestInfo(context);
       EndpointConfig config = server.getServiceConfig(ServiceContextUtils.getApp(context),
           ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
           ServiceContextUtils.getGroup(context));
@@ -177,9 +180,7 @@ public class RequestDispatcher<Req, Rsp> {
             ServiceContextUtils.getGroup(context));
       }
       ServiceContextUtils.setProviderConfig(context, new ReadOnlyEndpointConfig(config));
-      server.getProtocolExtensionFactory().getRequestExtractor().extractTo(request, context);
-      // 验证所需的参数
-      validateRequestInfo(context);
+
       // 用自身的配置
 
     } catch (Exception e) {
