@@ -3,9 +3,13 @@ package com.seaky.hamster.core.rpc.protocol.hamster;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
+
 import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
+import com.seaky.hamster.core.rpc.exception.ServerDeserParamException;
+import com.seaky.hamster.core.rpc.exception.ServerNotFoundSerExtension;
 import com.seaky.hamster.core.rpc.protocol.Attachments;
 import com.seaky.hamster.core.rpc.protocol.RequestExtractor;
 import com.seaky.hamster.core.rpc.serialization.Serializer;
@@ -14,7 +18,6 @@ import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 public class HamsterRequestExtractor implements RequestExtractor<HamsterRequest> {
 
 
-  // TODO 抛出异常
   @Override
   public void extractTo(HamsterRequest req, ServiceContext context) {
     ServiceContextUtils.setApp(context, req.getApp());
@@ -34,8 +37,15 @@ public class HamsterRequestExtractor implements RequestExtractor<HamsterRequest>
     ServiceContextUtils.setRequestAttachments(context, attach);
     Serializer ser =
         ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
-    Object[] params = ser.deSerialize(req.getParams(), Object[].class);
-    ServiceContextUtils.setRequestParams(context, params);
+    if (ser == null)
+      throw new ServerNotFoundSerExtension(Constants.KRYO_SERIAL);
+
+    try {
+      Object[] params = ser.deSerialize(req.getParams(), Object[].class);
+      ServiceContextUtils.setRequestParams(context, params);
+    } catch (Exception e) {
+      throw new ServerDeserParamException(ExceptionUtils.getStackTrace(e));
+    }
   }
 
   @Override

@@ -167,10 +167,6 @@ public class RequestDispatcher<Req, Rsp> {
     ServiceContextUtils.setRequestAttachments(context, new Attachments());
 
     try {
-      server.getProtocolExtensionFactory().getRequestExtractor().extractTo(request, context);
-      // 验证所需的参数
-      validateRequestInfo(context);
-      // 用自身的配置
       EndpointConfig config = server.getServiceConfig(ServiceContextUtils.getApp(context),
           ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
           ServiceContextUtils.getGroup(context));
@@ -181,6 +177,11 @@ public class RequestDispatcher<Req, Rsp> {
             ServiceContextUtils.getGroup(context));
       }
       ServiceContextUtils.setProviderConfig(context, new ReadOnlyEndpointConfig(config));
+      server.getProtocolExtensionFactory().getRequestExtractor().extractTo(request, context);
+      // 验证所需的参数
+      validateRequestInfo(context);
+      // 用自身的配置
+
     } catch (Exception e) {
       ServiceContextUtils.getResponse(context).setResult(e);
     }
@@ -233,8 +234,9 @@ public class RequestDispatcher<Req, Rsp> {
           server.getProtocolExtensionFactory().getResponseConvertor();
       Response r = ServiceContextUtils.getResponse(sc);
       if (r.isException()) {
-        String expCon = ServiceContextUtils.getProviderConfig(sc)
-            .get(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR, "default");
+        EndpointConfig config = ServiceContextUtils.getProviderConfig(sc);
+        String expCon = ((config == null) ? "default"
+            : config.get(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR, "default"));
         ExceptionConvertor convert =
             ExtensionLoaderConstants.EXCEPTION_CONVERTOR_EXTENSION.findExtension(expCon);
         ExceptionResult er = convert.convertTo((RpcException) r.getException());
