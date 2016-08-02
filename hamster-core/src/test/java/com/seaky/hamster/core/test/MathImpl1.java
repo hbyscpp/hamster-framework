@@ -10,12 +10,17 @@ public class MathImpl1 implements Math {
 
   @Override
   public int sub(int x, int y) {
-    throw new RuntimeException("not support");
+    return sub1(x, y);
   }
 
   @Override
   public String hello(String h) {
     return null;
+  }
+
+  private int sub1(int x, int y) {
+    throw new RuntimeException("not support");
+
   }
 
 }

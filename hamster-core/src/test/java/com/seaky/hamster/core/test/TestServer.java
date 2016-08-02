@@ -31,6 +31,8 @@ public class TestServer {
     sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, "testapp", true));
     sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, "default", true));
     sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, "1.0.0", true));
+    sc.addConfigItem(
+        new ConfigItem(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR, "mytestxception", true));
     ServerHelper.exportInterface(server, Math.class, new MathImpl1(), sc);
     // ServerHelper.bindInterface("app","key2", server, Math.class,
     // new MathImpl2(), configs);

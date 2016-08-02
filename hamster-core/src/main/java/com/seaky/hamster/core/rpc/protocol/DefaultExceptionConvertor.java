@@ -18,8 +18,6 @@ public class DefaultExceptionConvertor implements ExceptionConvertor {
     ExceptionResult res = new ExceptionResult();
     res.setCode(e.getCode());
     StringBuilder sb = new StringBuilder();
-    if (e.getMessage() != null)
-      sb.append(e.getMessage()).append("\n");
     Throwable root = ExceptionUtils.getRootCause(e);
     String[] stacks = null;
     if (root == null) {
@@ -27,7 +25,26 @@ public class DefaultExceptionConvertor implements ExceptionConvertor {
     } else {
       stacks = ExceptionUtils.getRootCauseStackTrace(root);
     }
-    for (int i = 0; i < 2 && i < stacks.length; ++i) {
+    for (int i = 0; i < stacks.length; ++i) {
+      sb.append(stacks[i]).append("\n");
+    }
+    res.setMsg(sb.toString());
+    return res;
+  }
+
+  // 将
+  protected ExceptionResult convertTo(RpcException e, Throwable inner) {
+    ExceptionResult res = new ExceptionResult();
+    res.setCode(e.getCode());
+    StringBuilder sb = new StringBuilder();
+    Throwable root = ExceptionUtils.getRootCause(inner);
+    String[] stacks = null;
+    if (root == null) {
+      stacks = ExceptionUtils.getRootCauseStackTrace(inner);
+    } else {
+      stacks = ExceptionUtils.getRootCauseStackTrace(root);
+    }
+    for (int i = 1; i < stacks.length; ++i) {
       sb.append(stacks[i]).append("\n");
     }
     res.setMsg(sb.toString());

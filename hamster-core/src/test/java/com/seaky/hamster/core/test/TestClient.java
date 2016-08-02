@@ -39,6 +39,8 @@ public class TestClient {
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, "testapp", true));
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, "default", true));
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0", true));
+    sc.addConfigItem(
+        new ConfigItem(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR, "mytestxception", true));
     // sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_ASYNPOOL_THREAD_EXE, "true", true));
 
     final MathReactive hello =
