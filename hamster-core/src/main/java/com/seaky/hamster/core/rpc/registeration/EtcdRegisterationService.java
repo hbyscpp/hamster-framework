@@ -468,7 +468,7 @@ public class EtcdRegisterationService implements RegisterationService {
       // 第一次watch
       try {
         EtcdResponsePromise<EtcdKeysResponse> future =
-            client.getDir(baseServiceProviderPath(name)).timeout(5, TimeUnit.SECONDS).send();
+            client.getDir(baseServiceConsumerPath(name)).timeout(5, TimeUnit.SECONDS).send();
         EtcdKeysResponse rsp = future.get();
         // 初始化
         initServiceCache(name, rsp.node, false);

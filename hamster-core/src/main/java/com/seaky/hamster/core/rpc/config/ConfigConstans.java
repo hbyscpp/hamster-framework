@@ -118,7 +118,7 @@ public interface ConfigConstans {
 
   public static final int PROVIDER_THREADPOOL_MAXSIZE_DEFAULT = 30;
 
-  public static final String PROVIDER_MAX_CONCURRENT = "sp.maxcucurrent";
+  public static final String PROVIDER_MAX_CONCURRENT = "sp.maxconcurrent";
 
   public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = 100;
 

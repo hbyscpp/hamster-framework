@@ -4,213 +4,145 @@ import java.util.Date;
 
 public class ReferInstanceView {
 
-	private String referApp;
+  private String referApp;
 
-	private String serviceName;
+  private String serviceName;
 
-	private String referVersion;;
-	
-	private String referHost;
+  private String referVersion;
 
-	private int referPort;
+  private String referHost;
 
-	private String protocol;
-	// 服务的地址
-	private String serviceHost;
-	
-	private int servicePort;
+  private String referGroup;
 
-	private String configKey;
-	
-	// 服务端的app
-	private String app;
-	
-	private String serviceVersion;
-	
-	private Date registTime;
-	
+  private String protocol;
+  // 服务端的app
 
-	/**
-	 * @return the serviceName
-	 */
-	public String getServiceName() {
-		return serviceName;
-	}
+  private Date registTime;
 
-	/**
-	 * @param serviceName
-	 *            the serviceName to set
-	 */
-	public void setServiceName(String serviceName) {
-		this.serviceName = serviceName;
-	}
+  private String[] paramTypes;
+
+  private String returnType;
+
+  private String key;
+
+  /**
+   * @return the serviceName
+   */
+  public String getServiceName() {
+    return serviceName;
+  }
+
+  /**
+   * @param serviceName the serviceName to set
+   */
+  public void setServiceName(String serviceName) {
+    this.serviceName = serviceName;
+  }
 
 
-	/**
-	 * @return the protocol
-	 */
-	public String getProtocol() {
-		return protocol;
-	}
+  /**
+   * @return the protocol
+   */
+  public String getProtocol() {
+    return protocol;
+  }
 
-	/**
-	 * @param protocol
-	 *            the protocol to set
-	 */
-	public void setProtocol(String protocol) {
-		this.protocol = protocol;
-	}
+  /**
+   * @param protocol the protocol to set
+   */
+  public void setProtocol(String protocol) {
+    this.protocol = protocol;
+  }
 
-	/**
-	 * @return the referApp
-	 */
-	public String getReferApp() {
-		return referApp;
-	}
+  /**
+   * @return the referApp
+   */
+  public String getReferApp() {
+    return referApp;
+  }
 
-	/**
-	 * @param referApp
-	 *            the referApp to set
-	 */
-	public void setReferApp(String referApp) {
-		this.referApp = referApp;
-	}
+  /**
+   * @param referApp the referApp to set
+   */
+  public void setReferApp(String referApp) {
+    this.referApp = referApp;
+  }
 
 
 
-	/**
-	 * @return the app
-	 */
-	public String getApp() {
-		return app;
-	}
+  /**
+   * @return the clientHost
+   */
+  public String getReferHost() {
+    return referHost;
+  }
 
-	/**
-	 * @param app the app to set
-	 */
-	public void setApp(String app) {
-		this.app = app;
-	}
-
-
+  /**
+   * @param clientHost the clientHost to set
+   */
+  public void setReferHost(String clientHost) {
+    this.referHost = clientHost;
+  }
 
 
+  /**
+   * @return the registTime
+   */
+  public Date getRegistTime() {
+    return registTime;
+  }
 
+  /**
+   * @param registTime the registTime to set
+   */
+  public void setRegistTime(Date registTime) {
+    this.registTime = registTime;
+  }
 
+  /**
+   * @return the referVersion
+   */
+  public String getReferVersion() {
+    return referVersion;
+  }
 
+  /**
+   * @param referVersion the referVersion to set
+   */
+  public void setReferVersion(String referVersion) {
+    this.referVersion = referVersion;
+  }
 
-	/**
-	 * @return the clientHost
-	 */
-	public String getReferHost() {
-		return referHost;
-	}
+  public String[] getParamTypes() {
+    return paramTypes;
+  }
 
-	/**
-	 * @param clientHost the clientHost to set
-	 */
-	public void setReferHost(String clientHost) {
-		this.referHost = clientHost;
-	}
+  public void setParamTypes(String[] paramTypes) {
+    this.paramTypes = paramTypes;
+  }
 
-	/**
-	 * @return the clientPort
-	 */
-	public int getReferPort() {
-		return referPort;
-	}
+  public String getReturnType() {
+    return returnType;
+  }
 
-	/**
-	 * @param clientPort the clientPort to set
-	 */
-	public void setReferPort(int clientPort) {
-		this.referPort = clientPort;
-	}
+  public void setReturnType(String returnType) {
+    this.returnType = returnType;
+  }
 
-	/**
-	 * @return the serverHost
-	 */
-	public String getServiceHost() {
-		return serviceHost;
-	}
+  public String getReferGroup() {
+    return referGroup;
+  }
 
-	/**
-	 * @param serverHost the serverHost to set
-	 */
-	public void setServiceHost(String serverHost) {
-		this.serviceHost = serverHost;
-	}
+  public void setReferGroup(String referGroup) {
+    this.referGroup = referGroup;
+  }
 
-	/**
-	 * @return the serverPort
-	 */
-	public int getServicePort() {
-		return servicePort;
-	}
+  public String getKey() {
+    return key;
+  }
 
-	/**
-	 * @param serverPort the serverPort to set
-	 */
-	public void setServicePort(int serverPort) {
-		this.servicePort = serverPort;
-	}
-
-
-	/**
-	 * @return the configKey
-	 */
-	public String getConfigKey() {
-		return configKey;
-	}
-
-	/**
-	 * @param configKey the configKey to set
-	 */
-	public void setConfigKey(String configKey) {
-		this.configKey = configKey;
-	}
-
-
-	/**
-	 * @return the registTime
-	 */
-	public Date getRegistTime() {
-		return registTime;
-	}
-
-	/**
-	 * @param registTime the registTime to set
-	 */
-	public void setRegistTime(Date registTime) {
-		this.registTime = registTime;
-	}
-
-	/**
-	 * @return the serviceVersion
-	 */
-	public String getServiceVersion() {
-		return serviceVersion;
-	}
-
-	/**
-	 * @param serviceVersion the serviceVersion to set
-	 */
-	public void setServiceVersion(String serviceVersion) {
-		this.serviceVersion = serviceVersion;
-	}
-
-	/**
-	 * @return the referVersion
-	 */
-	public String getReferVersion() {
-		return referVersion;
-	}
-
-	/**
-	 * @param referVersion the referVersion to set
-	 */
-	public void setReferVersion(String referVersion) {
-		this.referVersion = referVersion;
-	}
+  public void setKey(String key) {
+    this.key = key;
+  }
 
 }
