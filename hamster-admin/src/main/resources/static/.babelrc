@@ -1,0 +1,5 @@
+{
+  "presets": ["es2015", "es2016", "react", "stage-0"],
+  "plugins": [ "transform-promise-to-bluebird", "transform-runtime", "add-module-exports", "transform-decorators-legacy", "lodash", ["antd", { "style": "css" }]],
+  "comments": false
+}
