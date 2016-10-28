@@ -5,8 +5,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -264,7 +266,7 @@ public class EtcdRegisterationManageService {
         if (vertexService == null) {
           vertexService = backServiceGraph.addVertex(name);
         }
-        Set<String> apps = vertex.getProperty("apps");
+        Set<String> apps = vertexService.getProperty("apps");
         if (apps == null) {
           apps = new HashSet<>();
           vertexService.setProperty("apps", apps);
@@ -276,7 +278,7 @@ public class EtcdRegisterationManageService {
         if (nodeVertexService == null) {
           nodeVertexService = backNodeGraph.addVertex(sd.getHost());
         }
-        Set<String> nodeApps = vertex.getProperty("apps");
+        Set<String> nodeApps = nodeVertexService.getProperty("apps");
         if (nodeApps == null) {
           nodeApps = new HashSet<>();
           nodeVertexService.setProperty("apps", nodeApps);
@@ -428,18 +430,40 @@ public class EtcdRegisterationManageService {
     return appList;
   }
 
-  public List<ServiceInstanceView> getAllServiceInstance(String serviceName) {
+  public Map<String, List<ServiceInstanceView>> getAllServiceInstance(String serviceName) {
 
-    List<ServiceInstanceView> views = new ArrayList<>();
+    return getAllServiceInstanceFilterByApp(serviceName, null, null);
+  }
+
+  private Map<String, List<ServiceInstanceView>> getAllServiceInstanceFilterByApp(
+      String serviceName, String app, String node) {
+
+    Map<String, List<ServiceInstanceView>> viewMaps = new HashMap<>();
     ConcurrentHashMap<String, ServiceProviderDescriptor> descs =
         serviceDescriptors.get(serviceName);
     if (descs == null)
-      return views;
+      return viewMaps;
     for (Entry<String, ServiceProviderDescriptor> desc : descs.entrySet()) {
-      views.add(convert(desc.getKey(), desc.getValue()));
+      if (StringUtils.isNotBlank(app) && !StringUtils.equals(app, desc.getValue().getApp())) {
+        continue;
+      }
+      if (StringUtils.isNotBlank(node) && !StringUtils.equals(node, desc.getValue().getHost())) {
+        continue;
+      }
+      ServiceInstanceView view = convert(desc.getKey(), desc.getValue());
+      String key =
+          Utils.generateKey(view.getVersion(), view.getGroup(), view.getProtocol(), view.getApp());
+      List<ServiceInstanceView> mapViews = viewMaps.get(key);
+      if (mapViews == null) {
+        mapViews = new ArrayList<>();
+        viewMaps.put(key, mapViews);
+      }
+      mapViews.add(view);
     }
-    return views;
+    return viewMaps;
   }
+
+
 
   private ServiceInstanceView convert(String key, ServiceProviderDescriptor desc) {
     ServiceInstanceView view = new ServiceInstanceView();
@@ -453,6 +477,7 @@ public class EtcdRegisterationManageService {
     view.setVersion(desc.getVersion());
     view.setParamTypes(desc.getParamTypes());
     view.setKey(key);
+    view.setGroup(desc.getGroup());
     EndpointConfig config = desc.getConfig();
     String configStr = config.toString();
     view.setConfig(configStr);
@@ -470,16 +495,36 @@ public class EtcdRegisterationManageService {
 
   }
 
-  public List<ReferInstanceView> getAllReferInstance(String serviceName) {
+  public Map<String, List<ReferInstanceView>> getAllReferInstance(String serviceName) {
 
-    List<ReferInstanceView> views = new ArrayList<>();
+    return getAllReferInstanceFilterByApp(serviceName, null, null);
+  }
+
+  public Map<String, List<ReferInstanceView>> getAllReferInstanceFilterByApp(String serviceName,
+      String app, String node) {
+    Map<String, List<ReferInstanceView>> viewMaps = new HashMap<>();
+
     ConcurrentHashMap<String, ServiceReferenceDescriptor> descs = referDescriptors.get(serviceName);
     if (descs == null)
-      return views;
+      return viewMaps;
     for (Entry<String, ServiceReferenceDescriptor> desc : descs.entrySet()) {
-      views.add(convert(desc.getKey(), desc.getValue()));
+      if (StringUtils.isNotBlank(app) && !StringUtils.equals(app, desc.getValue().getReferApp())) {
+        continue;
+      }
+      if (StringUtils.isNotBlank(node) && !StringUtils.equals(node, desc.getValue().getHost())) {
+        continue;
+      }
+      ReferInstanceView view = convert(desc.getKey(), desc.getValue());
+      String key = Utils.generateKey(view.getReferVersion(), view.getReferGroup(),
+          view.getProtocol(), view.getReferApp());
+      List<ReferInstanceView> mapViews = viewMaps.get(key);
+      if (mapViews == null) {
+        mapViews = new ArrayList<>();
+        viewMaps.put(key, mapViews);
+      }
+      mapViews.add(view);
     }
-    return views;
+    return viewMaps;
   }
 
   private ReferInstanceView convert(String key, ServiceReferenceDescriptor desc) {
@@ -498,10 +543,56 @@ public class EtcdRegisterationManageService {
 
   }
 
+  public Map<String, List<ServiceInstanceView>> getAppServiceList(String app) {
+    Vertex node = graph.getVertex(app);
+    if (node == null)
+      return null;
+
+    Set<String> snames = node.getProperty("serviceName");
+    if (snames == null)
+      return null;
+
+    Map<String, List<ServiceInstanceView>> rst = new HashMap<>();
+    for (String sr : snames) {
+      Map<String, List<ServiceInstanceView>> allviews =
+          getAllServiceInstanceFilterByApp(sr, app, null);
+      if (allviews != null) {
+        rst.putAll(allviews);
+      }
+    }
+    return rst;
+  }
+
+  public Map<String, List<ReferInstanceView>> getAppReferList(String app) {
+    Vertex node = graph.getVertex(app);
+    if (node == null)
+      return null;
+
+    Set<String> snames = node.getProperty("referName");
+    if (snames == null)
+      return null;
+
+    Map<String, List<ReferInstanceView>> rst = new HashMap<>();
+    for (String sr : snames) {
+      Map<String, List<ReferInstanceView>> allviews = getAllReferInstanceFilterByApp(sr, app, null);
+      if (allviews != null) {
+        rst.putAll(allviews);
+      }
+    }
+    return rst;
+  }
+
   public Collection<ServiceProviderDescriptor> searchServiceInstance(String app, String serviceName,
       String version, String host, int port, String protocol) {
     // TODO Auto-generated method stub
     return null;
+  }
+
+  public List<String> getNodeApps(String node) {
+    Vertex nodeVertexService = nodeGraph.getVertex(node);
+    if (nodeVertexService == null)
+      return null;
+    return nodeVertexService.getProperty("apps");
   }
 
 }
