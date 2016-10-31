@@ -1,14 +1,21 @@
-function request(opt){
-    return new Promise(function (resolve, reject) {
+import _ from 'lodash'
+
+function request(option){
+    let opt = _.cloneDeep(option)
+
+    if(opt.url){
+        opt.url = '/api' + opt.url
+    }
+
+    return Promise
+    .resolve($.ajax.call($, opt))
+    .then(res=>{
         // 此处可以根据返回值做权限控制
-        $.ajax(opt)
-            .then(res => {
-                resolve(res)
-            }, err => {
-                reject(new Error(err))
-            })
-    }).catch(err=>{
-        console.log('全局提示ajax请求错误')
+        return res
+    })
+    .catch(function(error){
+        console.log('global handle ajax error:', error)
+        return error
     })
 }
 

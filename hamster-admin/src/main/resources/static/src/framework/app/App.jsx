@@ -41,7 +41,7 @@ let routes = [
 ]
 
 request({
-	url: '/api/checkpwd',
+	url: '/checkpwd',
 	type: 'get',
 	dataType: 'json',
     data: {
@@ -52,60 +52,11 @@ request({
 .then(res=>{
     console.log(res)
 })
-
-/////
-// $.ajax({
-// 	url: '/xapi/checkpwd',
-// 	type: 'get',
-// 	dataType: 'json',
-//     data: {
-//         username: 'admin',
-//         password: 'admin'
-//     }
-// })
-// .done(function() {
-// 	console.log("success");
-
-//     setTimeout(function(){
-//         $.ajax({
-// 	url: '/api/serviceList',
-// 	type: 'get',
-// 	dataType: 'json'
-// })
-// .done(function() {
-// 	console.log("success");
+.catch(err=>{
+    console.log(err)
+})
 
 
-
-
-    
-// })
-// .fail(function() {
-// 	console.log("error");
-// })
-// .always(function() {
-// 	console.log("complete");
-// });
-//     }, 2000)
-
-
-
-// })
-// .fail(function() {
-// 	console.log("error");
-// })
-// .always(function() {
-// 	console.log("complete");
-// });
-
-////////
-// browserHistory.listenBefore(location => {
-//     console.log('browserHistory:listen', location)
-//     // 发布地址栏改变事件
-//     console.info('发布地址栏改变事件')
-//     ytfEvent.emit('App:BrowserHistory', location)
-    
-// })
 class App extends React.Component{
     constructor(props){
         super(props)
@@ -115,13 +66,6 @@ class App extends React.Component{
     componentWillMount(){ 
     }
     componentDidMount(){
-        browserHistory.listenBefore(location => {
-            console.log('browserHistory:listen', location)
-            // 发布地址栏改变事件
-            console.info('发布地址栏改变事件')
-            ytfEvent.emit('App:BrowserHistory', location)
-
-        })
 
     }
 

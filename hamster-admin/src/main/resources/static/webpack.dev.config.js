@@ -25,7 +25,11 @@ var webpackConfig = {
                     '^/api':''
                 },
                 changeOrigin: true
-            }
+            },
+            // '*': {
+            //     target: 'https://api.douban.com',
+            //     changeOrigin: true
+            // }
         }
     },
     /*
@@ -53,7 +57,7 @@ var webpackConfig = {
     cache: true,
     output: {
         path: path.resolve(__dirname, './dist'),
-        publicPath: 'http://localhost:9090/',
+        publicPath: '/',
         filename: '[name].[chunkHash:8].js',
         chunkFilename: "[name].[chunkHash:8].js",
     },

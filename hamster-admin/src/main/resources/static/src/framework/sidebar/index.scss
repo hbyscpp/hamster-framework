@@ -7,7 +7,7 @@
    }
    .ant-menu-root{
        transition: all 0.3s;
-       width: 60px!important;
+       width: 60px;
    }
 
    .ant-menu-root>li>div{
@@ -76,16 +76,12 @@
 
 .yt-admin-framework-sidebar .ant-menu-item{
     transition: .3s;
-    // padding-left: 20px;
-    // border-left: 8px solid transparent;
 }
 
 .yt-admin-framework-sidebar .ant-menu-item-selected {
     transition: .3s;
     border-right: 0;
-    // padding-left: 20px;
-    // border-left: 8px solid #2573e8;
-    background-color: #eaf8fe!important;
+    background-color: #eaf8fe;
 }
 .ant-menu-submenu-vertical{
     z-index: 10;
@@ -107,7 +103,7 @@
         }
         .ant-menu-root{
             transition: all 0.3s;
-            width: 0!important;
+            width: 0;
         }
         .ant-menu-root > li > div,
         .ant-menu-root > li.ant-menu-item{

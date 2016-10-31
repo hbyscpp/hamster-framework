@@ -34,7 +34,7 @@ class Layout extends React.Component{
         return (
             <div className={cls}>
                 <Header />
-                <Sidebar />
+                <Sidebar location={this.props.location} />
                 <Content>
                     
                     {

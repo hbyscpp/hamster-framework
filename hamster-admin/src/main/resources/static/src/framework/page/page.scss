@@ -8,9 +8,15 @@
     }
 }
 
+.yt-admin-page-title{
+    margin: 20px;
+}
 @media (max-width:767px){
     .yt-admin-framework-page{
         .page-content{
         }
+    }
+    .yt-admin-page-title{
+        margin: 10px;
     }
 }
