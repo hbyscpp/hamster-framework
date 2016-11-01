@@ -47,7 +47,7 @@ class Home extends React.Component {
                         return (
                             <Link
                                 target="_blank"
-                                className="operate-btn-48"
+                                className="operate-btn"
                                 to={{ pathname: '/service/service-instance-list', query: { name: record.value } }}>
                                 <Icon type="link" />
                                 提供者
@@ -62,7 +62,7 @@ class Home extends React.Component {
                         // referInstanceList?serviceName=xxx
                         return (
                             <Link
-                                className="operate-btn-48"
+                                className="operate-btn"
                                 target="_blank"
                                 to={{ pathname: '/service/refer-instance-list', query: { name: record.value } }}>
                                 <Icon type="link" />
@@ -87,7 +87,7 @@ class Home extends React.Component {
                         return (
                             <Link
                                 target="_blank"
-                                className="operate-btn-48"
+                                className="operate-btn"
                                 to={{ pathname: '/app/export-service-list', query: { name: record.value } }}>
                                 <Icon type="link" />
                                 服务列表
@@ -102,7 +102,7 @@ class Home extends React.Component {
                         // appReferServiceList?app=xxx
                         return (
                             <Link
-                                className="operate-btn-48"
+                                className="operate-btn"
                                 target="_blank"
                                 to={{ pathname: '/app/refer-service-list', query: { name: record.value } }}>
                                 <Icon type="link" />
@@ -127,7 +127,7 @@ class Home extends React.Component {
                         return (
                             <Link
                                 target="_blank"
-                                className="operate-btn-48"
+                                className="operate-btn"
                                 to={{ pathname: '/node/export-service-list', query: { name: record.value } }}>
                                 <Icon type="link" />
                                 服务列表
@@ -142,7 +142,7 @@ class Home extends React.Component {
                         // nodeReferServiceList?node=xxx
                         return (
                             <Link
-                                className="operate-btn-48"
+                                className="operate-btn"
                                 target="_blank"
                                 to={{ pathname: '/node/refer-service-list', query: { name: record.value } }}>
                                 <Icon type="link" />
