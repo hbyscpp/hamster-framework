@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
+
 @RestController
 public class ServiceController {
 
@@ -85,21 +87,32 @@ public class ServiceController {
   // 列出某个节点部署的应用
   @RequestMapping("/nodeExportServiceList")
   public Object nodeExportServiceList(@RequestParam String node) {
-    return null;
+
+    Map<String, List<ServiceInstanceView>> datas =
+        etcdRegisterationManageService.nodeExportServiceList(node);
+    Response rsp = new Response();
+    rsp.setData(datas);
+    return rsp;
+
   }
 
   @RequestMapping("/nodeReferServiceList")
   public Object nodeReferServiceList(@RequestParam String node) {
-    return null;
+    Map<String, List<ReferInstanceView>> datas =
+        etcdRegisterationManageService.nodeReferServiceList(node);
+    Response rsp = new Response();
+    rsp.setData(datas);
+    return rsp;
+
+
   }
 
-  @RequestMapping("/searchService")
-  public Object searchService(@RequestParam(required = false) String app,
-      @RequestParam(required = false) String serviceName,
-      @RequestParam(required = false) String version, @RequestParam(required = false) String host,
-      @RequestParam(required = false, defaultValue = "0") int port,
-      @RequestParam(required = false) String protocol) {
-    return null;
+  @RequestMapping("/appDependencyGraph")
+  public Object appDependencyGraph() {
+    TinkerGraph datas = etcdRegisterationManageService.appDependencyGraph();
+    Response rsp = new Response();
+    rsp.setData(datas);
+    return rsp;
   }
 
 

@@ -190,7 +190,7 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     this.config = config;
 
     if (StringUtils.isBlank(config.getHost())) {
-      this.config.setHost(NetUtils.getLogHost());
+      this.config.setHost(NetUtils.getLocalHost());
     }
     this.asynServiceExecutor = new AsynServiceExecutor<Req, Rsp>(this);
     ClientResourceManager.start();

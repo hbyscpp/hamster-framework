@@ -284,6 +284,7 @@ public class EtcdRegisterationManageService {
           nodeVertexService.setProperty("apps", nodeApps);
         }
         nodeApps.add(sd.getApp());
+        // TODO 添加机器依赖
       } catch (Exception e) {
         logger.error("init provdier cache {}", n.value, e);
       }
@@ -418,7 +419,7 @@ public class EtcdRegisterationManageService {
 
   public List<String> searchNode(String query) {
     if (StringUtils.isBlank(query))
-      return getAllApp();
+      return getAllNode();
     List<String> appList = new ArrayList<>();
     Iterable<Vertex> vertexs = nodeGraph.getVertices();
 
@@ -544,6 +545,10 @@ public class EtcdRegisterationManageService {
   }
 
   public Map<String, List<ServiceInstanceView>> getAppServiceList(String app) {
+    return getAppServiceList(app, null);
+  }
+
+  public Map<String, List<ServiceInstanceView>> getAppServiceList(String app, String nodeName) {
     Vertex node = graph.getVertex(app);
     if (node == null)
       return null;
@@ -555,7 +560,7 @@ public class EtcdRegisterationManageService {
     Map<String, List<ServiceInstanceView>> rst = new HashMap<>();
     for (String sr : snames) {
       Map<String, List<ServiceInstanceView>> allviews =
-          getAllServiceInstanceFilterByApp(sr, app, null);
+          getAllServiceInstanceFilterByApp(sr, app, nodeName);
       if (allviews != null) {
         rst.putAll(allviews);
       }
@@ -564,6 +569,10 @@ public class EtcdRegisterationManageService {
   }
 
   public Map<String, List<ReferInstanceView>> getAppReferList(String app) {
+    return getAppReferList(app, null);
+  }
+
+  public Map<String, List<ReferInstanceView>> getAppReferList(String app, String nodeName) {
     Vertex node = graph.getVertex(app);
     if (node == null)
       return null;
@@ -574,7 +583,8 @@ public class EtcdRegisterationManageService {
 
     Map<String, List<ReferInstanceView>> rst = new HashMap<>();
     for (String sr : snames) {
-      Map<String, List<ReferInstanceView>> allviews = getAllReferInstanceFilterByApp(sr, app, null);
+      Map<String, List<ReferInstanceView>> allviews =
+          getAllReferInstanceFilterByApp(sr, app, nodeName);
       if (allviews != null) {
         rst.putAll(allviews);
       }
@@ -594,5 +604,40 @@ public class EtcdRegisterationManageService {
       return null;
     return nodeVertexService.getProperty("apps");
   }
+
+  public Map<String, List<ServiceInstanceView>> nodeExportServiceList(String node) {
+    Map<String, List<ServiceInstanceView>> viewMaps = new HashMap<>();
+    Vertex nodeVertexService = nodeGraph.getVertex(node);
+    if (nodeVertexService == null)
+      return viewMaps;
+    List<String> apps = nodeVertexService.getProperty("apps");
+    if (apps == null)
+      return viewMaps;
+    for (String app : apps) {
+      viewMaps.putAll(getAppServiceList(app, node));
+    }
+
+    return viewMaps;
+  }
+
+  public Map<String, List<ReferInstanceView>> nodeReferServiceList(String node) {
+    Map<String, List<ReferInstanceView>> viewMaps = new HashMap<>();
+    Vertex nodeVertexService = nodeGraph.getVertex(node);
+    if (nodeVertexService == null)
+      return viewMaps;
+    List<String> apps = nodeVertexService.getProperty("apps");
+    if (apps == null)
+      return viewMaps;
+    for (String app : apps) {
+      viewMaps.putAll(getAppReferList(app, node));
+    }
+    return viewMaps;
+  }
+
+
+  public TinkerGraph appDependencyGraph() {
+    return graph;
+  }
+
 
 }

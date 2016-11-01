@@ -76,8 +76,8 @@ public class NetUtils {
     return port > MIN_PORT || port <= MAX_PORT;
   }
 
-  private static final Pattern ADDRESS_PATTERN = Pattern
-      .compile("^\\d{1,3}(\\.\\d{1,3}){3}\\:\\d{1,5}$");
+  private static final Pattern ADDRESS_PATTERN =
+      Pattern.compile("^\\d{1,3}(\\.\\d{1,3}){3}\\:\\d{1,5}$");
 
   public static boolean isValidAddress(String address) {
     return ADDRESS_PATTERN.matcher(address).matches();
@@ -104,8 +104,8 @@ public class NetUtils {
   }
 
   public static InetSocketAddress getLocalSocketAddress(String host, int port) {
-    return isInvalidLocalHost(host) ? new InetSocketAddress(port) : new InetSocketAddress(host,
-        port);
+    return isInvalidLocalHost(host) ? new InetSocketAddress(port)
+        : new InetSocketAddress(host, port);
   }
 
   private static final Pattern IP_PATTERN = Pattern.compile("\\d{1,3}(\\.\\d{1,3}){3,5}$");
@@ -114,8 +114,8 @@ public class NetUtils {
     if (address == null || address.isLoopbackAddress())
       return false;
     String name = address.getHostAddress();
-    return (name != null && !ANYHOST.equals(name) && !LOCALHOST.equals(name) && IP_PATTERN.matcher(
-        name).matches());
+    return (name != null && !ANYHOST.equals(name) && !LOCALHOST.equals(name)
+        && IP_PATTERN.matcher(name).matches());
   }
 
   public static String getLocalHost() {
