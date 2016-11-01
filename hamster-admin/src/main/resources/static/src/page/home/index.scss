@@ -36,9 +36,9 @@
     .ant-table-thead{
         display: none;
     }
-    .operate-btn-48{
+    .operate-btn{
         display: block;
-        width: 48px;
+        min-width: 48px;
     }
 }
 .home-search-result.show{
@@ -52,9 +52,9 @@
     .ant-table-thead{
         display: none;
     }
-    .operate-btn-48{
+    .operate-btn{
         display: block;
-        width: 48px;
+        min-width: 48px;
     }
 }
 .home-search-result-mini.show{

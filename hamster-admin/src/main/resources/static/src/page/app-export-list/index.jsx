@@ -12,7 +12,7 @@ import classNames from 'classnames';
 
 import './index.scss'
 
-class ReferInstanceList extends React.Component {
+class AppExportList extends React.Component {
 
     constructor(props) {
         super(props);
@@ -32,13 +32,13 @@ class ReferInstanceList extends React.Component {
     }
     // @name
     searchList(name){
-        // serviceInstanceList?serviceName=xxx
+        // appExportServiceList?app=xxx
         request({
-            url: '/referInstanceList',
+            url: '/appExportServiceList',
             type: 'get',
             dataType: 'json',
             data: {
-                serviceName: name
+                app: name
             }
         })
         .then(res => {
@@ -94,7 +94,7 @@ class ReferInstanceList extends React.Component {
                                     )
                                 })
                                 return (
-                                    <Panel header={'节点'+v.referHost} key={i}>
+                                    <Panel header={'节点'+v.host+':'+v.port} key={i}>
                                         <table className="detail-table">
                                              <tbody>
                                                 {list}
@@ -112,7 +112,7 @@ class ReferInstanceList extends React.Component {
         return (
 
             <Page loading={this.state.isLoading}>
-                <h2 className="yt-admin-page-title">消费者</h2>
+                <h2 className="yt-admin-page-title">应用服务列表</h2>
                 <div className="service-instance-list-wrap">
                     <Collapse accordion>
                         {listPanel}
@@ -124,4 +124,4 @@ class ReferInstanceList extends React.Component {
     }
 }
 
-export default ReferInstanceList
+export default AppExportList

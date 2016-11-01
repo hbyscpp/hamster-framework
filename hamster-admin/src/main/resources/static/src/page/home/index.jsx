@@ -31,7 +31,8 @@ class Home extends React.Component {
                 simple: true
             },
             dataSource: [],
-            columns: [
+            columns: [],
+            serviceColumns: [
                 {
                     title: '内容',
                     key: 'value',
@@ -39,14 +40,14 @@ class Home extends React.Component {
                 },
                 {
                     title: '提供者',
-                    key: 'provider',
+                    key: 'operate1',
                     render: function (text, record) {
                         // serviceInstanceList?serviceName=xxx
                         // link query
                         return (
                             <Link
                                 target="_blank"
-                                className="operate-btn-48"
+                                className="operate-btn"
                                 to={{ pathname: '/service/service-instance-list', query: { name: record.value } }}>
                                 <Icon type="link" />
                                 提供者
@@ -56,16 +57,96 @@ class Home extends React.Component {
                 },
                 {
                     title: '消费者',
-                    key: 'customer',
+                    key: 'operate2',
                     render: function (text, record) {
                         // referInstanceList?serviceName=xxx
                         return (
                             <Link
-                                className="operate-btn-48"
+                                className="operate-btn"
                                 target="_blank"
                                 to={{ pathname: '/service/refer-instance-list', query: { name: record.value } }}>
                                 <Icon type="link" />
                                 消费者
+                            </Link>
+                        )
+                    }
+                },
+            ],
+            appColumns: [
+                {
+                    title: '内容',
+                    key: 'value',
+                    dataIndex: 'value'
+                },
+                {
+                    title: '服务列表',
+                    key: 'operate1',
+                    render: function (text, record) {
+                        // appExportServiceList?app=xxx
+                        // link query
+                        return (
+                            <Link
+                                target="_blank"
+                                className="operate-btn"
+                                to={{ pathname: '/app/export-service-list', query: { name: record.value } }}>
+                                <Icon type="link" />
+                                服务列表
+                            </Link>
+                        )
+                    }
+                },
+                {
+                    title: '引用服务列表',
+                    key: 'operate2',
+                    render: function (text, record) {
+                        // appReferServiceList?app=xxx
+                        return (
+                            <Link
+                                className="operate-btn"
+                                target="_blank"
+                                to={{ pathname: '/app/refer-service-list', query: { name: record.value } }}>
+                                <Icon type="link" />
+                                引用服务列表
+                            </Link>
+                        )
+                    }
+                },
+            ],
+            nodeColumns: [
+                {
+                    title: '内容',
+                    key: 'value',
+                    dataIndex: 'value'
+                },
+                {
+                    title: '服务列表',
+                    key: 'operate1',
+                    render: function (text, record) {
+                        // nodeExportServiceList?node=xxx
+                        // link query
+                        return (
+                            <Link
+                                target="_blank"
+                                className="operate-btn"
+                                to={{ pathname: '/node/export-service-list', query: { name: record.value } }}>
+                                <Icon type="link" />
+                                服务列表
+                            </Link>
+                        )
+                    }
+                },
+                {
+                    title: '引用服务列表',
+                    key: 'operate2',
+                    render: function (text, record) {
+                        // nodeReferServiceList?node=xxx
+                        return (
+                            <Link
+                                className="operate-btn"
+                                target="_blank"
+                                to={{ pathname: '/node/refer-service-list', query: { name: record.value } }}>
+                                <Icon type="link" />
+                                引用服务列表
                             </Link>
                         )
                     }
@@ -89,12 +170,24 @@ class Home extends React.Component {
 
         if(type === 'service'){
             url = '/serviceSearch'
+            this.setState({
+                columns: this.state.serviceColumns
+            })
         } else if(type === 'app'){
             url = '/appSearch'
+            this.setState({
+                columns: this.state.appColumns
+            })
         } else if(type === 'node'){
             url = '/nodeSearch'
+            this.setState({
+                columns: this.state.nodeColumns
+            })
         } else{
             message.error('错误的搜索类型')
+            this.setState({
+                columns: []
+            })
             return
         }
         this.setState({
