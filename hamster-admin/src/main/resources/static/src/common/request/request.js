@@ -4,7 +4,7 @@ function request(option){
     let opt = _.cloneDeep(option)
 
     if(opt.url){
-        opt.url = '/api' + opt.url
+        // opt.url = '/api' + opt.url
     }
 
     return Promise
