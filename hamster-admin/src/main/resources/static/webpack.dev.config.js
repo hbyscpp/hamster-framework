@@ -107,6 +107,11 @@ var webpackConfig = {
         'react-router': 'ReactRouter'
     },
     plugins: [
+        new webpack.DefinePlugin({
+            'process.env': {
+                'NODE_ENV': '"production"'
+            }
+        }),
         new webpack.NoErrorsPlugin(),
         new webpack.ProvidePlugin({
             $: 'jquery',

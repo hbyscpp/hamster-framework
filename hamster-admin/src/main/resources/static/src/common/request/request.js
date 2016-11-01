@@ -3,8 +3,8 @@ import _ from 'lodash'
 function request(option){
     let opt = _.cloneDeep(option)
 
-    if(opt.url){
-        // opt.url = '/api' + opt.url
+    if(opt.url && process.env.NODE_ENV === 'production'){
+        opt.url = '/api' + opt.url
     }
 
     return Promise
