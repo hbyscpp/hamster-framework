@@ -3,7 +3,6 @@ package com.seaky.hamster.admin;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -484,14 +483,14 @@ public class EtcdRegisterationManageService {
     view.setConfig(configStr);
     view.setForceAccess(desc.isForceAccess());
     view.setHidden(desc.isHidden());
-    view.setInterceptors(desc.getConfig().get(ConfigConstans.PROVIDER_INTERCEPTORS));
-    view.setMaxConcurrnet(
-        desc.getConfig().getValueAsInt(ConfigConstans.PROVIDER_MAX_CONCURRENT, -1));
-    view.setThreadpoolNum(
-        desc.getConfig().getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE, 0));
+    view.setMaxConcurrnet(desc.getConfig().getValueAsInt(ConfigConstans.PROVIDER_MAX_CONCURRENT,
+        ConfigConstans.PROVIDER_MAX_CONCURRENT_DEFAULT));
+    view.setThreadpoolNum(desc.getConfig().getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE,
+        ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE_DEFAULT));
     view.setUseThreadpool(
         desc.getConfig().getValueAsBoolean(ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE, false)
             ? false : true);
+    view.setPid(desc.getConfig().get(ConfigConstans.PROVIDER_PID, ""));
     return view;
 
   }
@@ -540,6 +539,7 @@ public class EtcdRegisterationManageService {
     view.setParamTypes(desc.getParamTypes());
     view.setReferGroup(desc.getReferGroup());
     view.setKey(key);
+    view.setPid(desc.getPid());
     return view;
 
   }
@@ -592,13 +592,7 @@ public class EtcdRegisterationManageService {
     return rst;
   }
 
-  public Collection<ServiceProviderDescriptor> searchServiceInstance(String app, String serviceName,
-      String version, String host, int port, String protocol) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  public List<String> getNodeApps(String node) {
+  public Set<String> getNodeApps(String node) {
     Vertex nodeVertexService = nodeGraph.getVertex(node);
     if (nodeVertexService == null)
       return null;
@@ -610,11 +604,13 @@ public class EtcdRegisterationManageService {
     Vertex nodeVertexService = nodeGraph.getVertex(node);
     if (nodeVertexService == null)
       return viewMaps;
-    List<String> apps = nodeVertexService.getProperty("apps");
+    Set<String> apps = nodeVertexService.getProperty("apps");
     if (apps == null)
       return viewMaps;
     for (String app : apps) {
-      viewMaps.putAll(getAppServiceList(app, node));
+      Map<String, List<ServiceInstanceView>> ss = getAppServiceList(app, node);
+      if (ss != null)
+        viewMaps.putAll(ss);
     }
 
     return viewMaps;
@@ -625,11 +621,13 @@ public class EtcdRegisterationManageService {
     Vertex nodeVertexService = nodeGraph.getVertex(node);
     if (nodeVertexService == null)
       return viewMaps;
-    List<String> apps = nodeVertexService.getProperty("apps");
+    Set<String> apps = nodeVertexService.getProperty("apps");
     if (apps == null)
       return viewMaps;
     for (String app : apps) {
-      viewMaps.putAll(getAppReferList(app, node));
+      Map<String, List<ReferInstanceView>> ss = getAppReferList(app, node);
+      if (ss != null)
+        viewMaps.putAll(ss);
     }
     return viewMaps;
   }

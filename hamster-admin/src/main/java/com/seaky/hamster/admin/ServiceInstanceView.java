@@ -38,8 +38,6 @@ public class ServiceInstanceView {
   // 最大并发
   private int maxConcurrnet;
 
-  private String interceptors;
-
   // 是否隐藏
   private boolean isHidden;
 
@@ -48,6 +46,8 @@ public class ServiceInstanceView {
 
   // 服务所有的属性
   private String config;
+
+  private String pid;
 
   /**
    * @return the app
@@ -216,14 +216,6 @@ public class ServiceInstanceView {
     this.maxConcurrnet = maxConcurrnet;
   }
 
-  public String getInterceptors() {
-    return interceptors;
-  }
-
-  public void setInterceptors(String interceptors) {
-    this.interceptors = interceptors;
-  }
-
   public boolean isHidden() {
     return isHidden;
   }
@@ -246,6 +238,14 @@ public class ServiceInstanceView {
 
   public void setGroup(String group) {
     this.group = group;
+  }
+
+  public String getPid() {
+    return pid;
+  }
+
+  public void setPid(String pid) {
+    this.pid = pid;
   }
 
 

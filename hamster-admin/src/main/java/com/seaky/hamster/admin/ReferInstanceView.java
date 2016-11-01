@@ -25,6 +25,8 @@ public class ReferInstanceView {
 
   private String key;
 
+  private String pid;
+
   /**
    * @return the serviceName
    */
@@ -143,6 +145,14 @@ public class ReferInstanceView {
 
   public void setKey(String key) {
     this.key = key;
+  }
+
+  public String getPid() {
+    return pid;
+  }
+
+  public void setPid(String pid) {
+    this.pid = pid;
   }
 
 }
