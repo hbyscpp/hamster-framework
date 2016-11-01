@@ -242,5 +242,3 @@ $RECYCLE.BIN/
 *.project
 *.settings
 *.metadata
-
-/dist/
