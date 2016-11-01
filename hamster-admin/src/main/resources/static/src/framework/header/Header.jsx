@@ -32,6 +32,7 @@ class Header extends React.Component{
         })
     }
     logout(){
+        session.set('isLogin', false)
         browserHistory.push('/login')
     }
     onToggle(){
@@ -57,18 +58,20 @@ class Header extends React.Component{
                     </a>
                 </div>
                 <ul className="yt-admin-framework-header-menu clearfix">
-                    <li className="menu-item">
-                        <a href="javascript:;">
-                            <FAIcon type="leaf"/>
-                            <span className="header-menu-text">叶子</span>
-                        </a>
-                    </li>
-                    <li className="menu-item">
-                        <a href="javascript:;">
-                            <FAIcon type="heartbeat"/>
-                            <span className="header-menu-text">个人信息</span>
-                        </a>
-                    </li>
+                    {
+                    //     <li className="menu-item">
+                    //     <a href="javascript:;">
+                    //         <FAIcon type="leaf"/>
+                    //         <span className="header-menu-text">叶子</span>
+                    //     </a>
+                    // </li>
+                    // <li className="menu-item">
+                    //     <a href="javascript:;">
+                    //         <FAIcon type="heartbeat"/>
+                    //         <span className="header-menu-text">个人信息</span>
+                    //     </a>
+                    // </li>
+                    }
                     <li className="menu-item">
                         <Popconfirm placement="bottomRight" title="您确定要退出系统吗？" onConfirm={this.logout}>
                             <a href="javascript:;">

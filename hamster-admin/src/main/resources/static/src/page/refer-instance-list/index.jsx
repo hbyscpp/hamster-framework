@@ -7,11 +7,12 @@ const Panel = Collapse.Panel
 import _ from 'lodash'
 import Page from 'framework/page'
 import request from 'common/request/request.js'
+import formateDate from 'common/util/formate-date.js'
 import classNames from 'classnames';
 
 import './index.scss'
 
-class ServiceInstanceList extends React.Component {
+class ReferInstanceList extends React.Component {
 
     constructor(props) {
         super(props);
@@ -33,7 +34,7 @@ class ServiceInstanceList extends React.Component {
     searchList(serviceName){
         // serviceInstanceList?serviceName=xxx
         request({
-            url: '/serviceInstanceList',
+            url: '/referInstanceList',
             type: 'get',
             dataType: 'json',
             data: {
@@ -79,15 +80,21 @@ class ServiceInstanceList extends React.Component {
                             value.map((v, i) => {
                                 let list = []
                                 _.forOwn(v, function (vu, ke) {
+                                    // registTime
+                                    let vue = _.isBoolean(vu)?String(vu):vu;
+                                    if(ke === 'registTime'){
+                                        vue = formateDate(vue, 'yyyy-MM-dd hh:mm:ss')
+                                    }
+
                                     list.push(
                                         <tr key={ke}>
                                             <td>{ke}</td>
-                                            <td>{_.isBoolean(vu)?String(vu):vu}</td>
+                                            <td>{vue}</td>
                                         </tr>
                                     )
                                 })
                                 return (
-                                    <Panel header={'节点'+v.host+':'+v.port} key={i}>
+                                    <Panel header={'节点'+v.referHost} key={i}>
                                         <table className="detail-table">
                                              <tbody>
                                                 {list}
@@ -105,7 +112,7 @@ class ServiceInstanceList extends React.Component {
         return (
 
             <Page loading={this.state.isLoading}>
-                <h2 className="yt-admin-page-title">提供者</h2>
+                <h2 className="yt-admin-page-title">消费者</h2>
                 <div className="service-instance-list-wrap">
                     <Collapse accordion>
                         {listPanel}
@@ -117,4 +124,4 @@ class ServiceInstanceList extends React.Component {
     }
 }
 
-export default ServiceInstanceList
+export default ReferInstanceList

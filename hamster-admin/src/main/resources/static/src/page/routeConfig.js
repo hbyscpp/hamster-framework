@@ -15,14 +15,14 @@ export default [
             })
         }
     },
-    // {
-    //     path: '/service/refer-instance-list',
-    //     getComponent: (location, cb) => {
-    //         require.ensure([], (require) => {
-    //             cb(null, require('./refer-instance-list'))
-    //         })
-    //     }
-    // },
+    {
+        path: '/service/refer-instance-list',
+        getComponent: (location, cb) => {
+            require.ensure([], (require) => {
+                cb(null, require('./refer-instance-list'))
+            })
+        }
+    },
     {
         path: '/404',
         getComponent: (location, cb) => {

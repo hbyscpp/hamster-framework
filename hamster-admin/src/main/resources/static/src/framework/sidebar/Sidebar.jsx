@@ -22,45 +22,49 @@ class Sidebar extends React.Component{
        
     }
     componentWillMount(){
+    //     let menuData = [{
+    //           name: '405',
+    //           path: '/405',
+    //           icon: 'leaf',
+    //           children: [
+    //               {
+    //                   name: '406',
+    //                   path: '/406',
+    //                   icon: 'circle'
+    //               },
+    //               {
+    //                   name: '401',
+    //                   path: '/401',
+    //                   icon: 'heart',
+    //                   children: [{
+    //                       name: '409',
+    //                       path: '/409',
+    //                       icon: 'circle'
+    //                   }]
+    //               }
+    //           ]
+    //      },
+    //         {
+    //             name: 'setting',
+    //             path: '/setting',
+    //             icon: 'cog',
+    //             children: [{
+    //                 name: 'home',
+    //                 path: '/home',
+    //                 icon: 'circle'
+    //             },
+    //             {
+    //                 name: '404',
+    //                 path: '/404',
+    //                 icon: 'circle'
+    //             }]
+    //         }
+    //     ]
         let menuData = [{
-              name: '405',
-              path: '/405',
-              icon: 'leaf',
-              children: [
-                  {
-                      name: '406',
-                      path: '/406',
-                      icon: 'circle'
-                  },
-                  {
-                      name: '401',
-                      path: '/401',
-                      icon: 'heart',
-                      children: [{
-                          name: '409',
-                          path: '/409',
-                          icon: 'circle'
-                      }]
-                  }
-              ]
-         },
-            {
-                name: 'setting',
-                path: '/setting',
-                icon: 'setting',
-                children: [{
-                    name: 'home',
-                    path: '/home',
-                    icon: 'circle'
-                },
-                {
-                    name: '404',
-                    path: '/404',
-                    icon: 'circle'
-                }]
-            }
-        ]
-
+            name: '主页',
+            path: '/home',
+            icon: 'home'
+        }]
          this.setState({
              menuData: menuData
          })

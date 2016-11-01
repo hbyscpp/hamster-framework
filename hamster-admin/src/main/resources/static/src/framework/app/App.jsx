@@ -6,6 +6,7 @@ import 'normalize.css'
 import './base.css'
 
 import request from 'common/request/request.js'
+import {local ,session} from 'common/util/storage.js'
 
 import Layout from '../layout/Layout.jsx'
 import Home from '../../page/home'
@@ -22,6 +23,9 @@ let routes = [
         onEnter(nextState, replace) {
             // 可以验证是否登录
             console.info("%c nextState >>>", "color:orange", nextState)
+            if(!session.get('isLogin')){
+                replace('/login')
+            }
         }
     }, {
         path: '/login',
@@ -34,28 +38,15 @@ let routes = [
         path: '*',
         indexRoute: {
             onEnter(nextState, replace) {
-                replace('/404')
+                if(!session.get('isLogin')){
+                    replace('/login')
+                }else{
+                    replace('/404')
+                }
             }
         }
     }
 ]
-
-request({
-	url: '/checkpwd',
-	type: 'get',
-	dataType: 'json',
-    data: {
-        username: 'admin',
-        password: 'admin'
-    }
-})
-.then(res=>{
-    console.log(res)
-})
-.catch(err=>{
-    console.log(err)
-})
-
 
 class App extends React.Component{
     constructor(props){
