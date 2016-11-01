@@ -14,3 +14,16 @@ checkpwd?username=  & password=
 serviceInstanceList?serviceName=xxx
 提供者   消费者
 消费者 referInstanceList?serviceName=xxx
+
+### 应用暴露服务的列表
+appExportServiceList?app=xxx
+服务列表 
+### 应用引用的服务列表
+appReferServiceList?app=xxx
+引用服务列表
+### 节点暴露服务的列表
+nodeExportServiceList?node=xxx
+服务列表
+### 节点引用服务的列表
+nodeReferServiceList?node=xxx
+引用服务列表

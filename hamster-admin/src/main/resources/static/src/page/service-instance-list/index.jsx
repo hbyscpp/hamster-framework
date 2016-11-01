@@ -26,18 +26,18 @@ class ServiceInstanceList extends React.Component {
     }
 
     componentDidMount() {
-        let serviceName = this.props.location.query.name
-        this.searchList(serviceName)
+        let name = this.props.location.query.name
+        this.searchList(name)
     }
-    // @serviceName 服务名字
-    searchList(serviceName){
+    // @name
+    searchList(name){
         // serviceInstanceList?serviceName=xxx
         request({
             url: '/serviceInstanceList',
             type: 'get',
             dataType: 'json',
             data: {
-                serviceName: serviceName
+                serviceName: name
             }
         })
         .then(res => {

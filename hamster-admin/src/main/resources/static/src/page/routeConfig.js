@@ -24,6 +24,38 @@ export default [
         }
     },
     {
+        path: '/app/export-service-list',
+        getComponent: (location, cb) => {
+            require.ensure([], (require) => {
+                cb(null, require('./app-export-list'))
+            })
+        }
+    },
+    {
+        path: '/app/refer-service-list',
+        getComponent: (location, cb) => {
+            require.ensure([], (require) => {
+                cb(null, require('./app-refer-list'))
+            })
+        }
+    },
+    {
+        path: '/node/export-service-list',
+        getComponent: (location, cb) => {
+            require.ensure([], (require) => {
+                cb(null, require('./node-export-list'))
+            })
+        }
+    },
+    {
+        path: '/node/refer-service-list',
+        getComponent: (location, cb) => {
+            require.ensure([], (require) => {
+                cb(null, require('./node-refer-list'))
+            })
+        }
+    },
+    {
         path: '/404',
         getComponent: (location, cb) => {
             require.ensure([], (require) => {
