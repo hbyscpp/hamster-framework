@@ -23,6 +23,8 @@ public class ServiceInstanceView {
 
   private int port;
 
+  private String group;
+
   private String serviceName;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private Date registTime;
@@ -236,6 +238,14 @@ public class ServiceInstanceView {
 
   public void setForceAccess(boolean isForceAccess) {
     this.isForceAccess = isForceAccess;
+  }
+
+  public String getGroup() {
+    return group;
+  }
+
+  public void setGroup(String group) {
+    this.group = group;
   }
 
 
