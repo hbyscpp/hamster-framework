@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Router, browserHistory } from 'react-router'
+import { Router, hashHistory } from 'react-router'
 
 import 'normalize.css'
 import './base.css'
@@ -61,7 +61,7 @@ class App extends React.Component{
     }
 
     render(){
-        return <Router routes={routes} history={browserHistory}/>
+        return <Router routes={routes} history={hashHistory}/>
     }
 }
 

@@ -2,7 +2,7 @@ import React from 'react'
 import {Button, Popconfirm} from "antd";
 
 import FAIcon from 'component/faicon'
-import { browserHistory } from 'react-router'
+import { hashHistory } from 'react-router'
 import LogoImg from './logo-white.png'
 import LogoImgMini from './logo-white-mini.png'
 import ytfEvent from '../ytfEvent'
@@ -33,7 +33,7 @@ class Header extends React.Component{
     }
     logout(){
         session.set('isLogin', false)
-        browserHistory.push('/login')
+        hashHistory.push('/login')
     }
     onToggle(){
         if(local.get('mini')){

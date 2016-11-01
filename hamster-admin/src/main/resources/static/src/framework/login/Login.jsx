@@ -3,7 +3,7 @@ import { Form, Input, Button, Checkbox, Spin, message } from 'antd'
 const FormItem = Form.Item;
 const createForm = Form.create;
 import './index.scss'
-import { browserHistory } from 'react-router'
+import { hashHistory } from 'react-router'
 import request from 'common/request/request.js'
 import {local ,session} from 'common/util/storage.js'
 
@@ -32,7 +32,7 @@ class Login extends React.Component{
                 })
                 if(res.code == 0){
                     session.set('isLogin', true)
-                    browserHistory.push('/home')
+                    hashHistory.push('/home')
                 }else{
                     message.error(res.msg)
                 }
