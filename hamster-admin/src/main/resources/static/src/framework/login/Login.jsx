@@ -40,7 +40,7 @@ class Login extends React.Component{
             })
             .catch(err => {
                 console.log(err)
-                message.error(error.status)
+                message.error('error status: '+err.status)
                 this.setState({
                     loading: false
                 })
