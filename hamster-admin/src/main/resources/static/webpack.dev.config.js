@@ -125,7 +125,6 @@ var webpackConfig = {
         new webpack.optimize.CommonsChunkPlugin({
             names: ['vendor', 'manifest'],
             minChunks: Infinity,
-            // async: true
         }),
         new webpack.NoErrorsPlugin(),
         new HtmlWebpackPlugin({ //根据模板插入css/js等生成最终HTML

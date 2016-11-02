@@ -7,6 +7,8 @@ const Panel = Collapse.Panel
 import _ from 'lodash'
 import Page from 'framework/page'
 import request from 'common/request/request.js'
+import getDesc from 'common/util/getDesc.js'
+import {local ,session} from 'common/util/storage.js'
 import classNames from 'classnames';
 
 import './index.scss'
@@ -18,13 +20,17 @@ class ServiceInstanceList extends React.Component {
 
         this.state = {
             isLoading: true,
-            instanceListData: []
+            instanceListData: [],
+            descConfig: {}
         }
 
-        this.searchList = this.searchList.bind(this);
+        this.searchList = this.searchList.bind(this)
+        this.loadDescConfig = this.loadDescConfig.bind(this)
 
     }
-
+    componentWillMount(){
+        this.loadDescConfig()
+    }
     componentDidMount() {
         let name = this.props.location.query.name
         this.searchList(name)
@@ -60,8 +66,32 @@ class ServiceInstanceList extends React.Component {
         })
 
     }
-    render() {
+    loadDescConfig(){
+        if(session.get('descConfig')){
+            this.setState({
+                descConfig: session.get('descConfig')
+            })
+            return
+        }
 
+        request({
+            url: '/configDesc',
+            type: 'get',
+            dataType: 'json'
+        })
+        .then(res => {
+            if(res.code === 0){
+                this.setState({
+                    descConfig: res.data
+                });
+                session.set('descConfig', res.data)
+            }
+        })
+        .catch(err=>{
+        })
+    }
+    render() {
+        const { descConfig } = this.state
         let listPanel = []
         _.forOwn(this.state.instanceListData, function (value, key) {
             let header = (
@@ -79,10 +109,14 @@ class ServiceInstanceList extends React.Component {
                             value.map((v, i) => {
                                 let list = []
                                 _.forOwn(v, function (vu, ke) {
+                                    let vue = _.isBoolean(vu)?String(vu):vu
+                                    if(_.isArray(vue)){
+                                        vue = vue.join(' | ')
+                                    }
                                     list.push(
                                         <tr key={ke}>
-                                            <td>{ke}</td>
-                                            <td>{_.isBoolean(vu)?String(vu):vu}</td>
+                                            <td>{getDesc(descConfig,ke)}</td>
+                                            <td>{vue}</td>
                                         </tr>
                                     )
                                 })

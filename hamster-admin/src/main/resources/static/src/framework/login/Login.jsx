@@ -17,6 +17,11 @@ class Login extends React.Component{
         this.login = this.login.bind(this)
         this.onKeyPressLogin = this.onKeyPressLogin.bind(this)
     }
+    
+    componentWillMount() {
+        session.remove('descConfig')
+    }
+    
     login(){
         let loginData = this.props.form.getFieldsValue()
         request({
@@ -40,6 +45,7 @@ class Login extends React.Component{
             })
             .catch(err => {
                 console.log(err)
+                hashHistory.push('/home')
                 message.error('error status: '+err.status)
                 this.setState({
                     loading: false

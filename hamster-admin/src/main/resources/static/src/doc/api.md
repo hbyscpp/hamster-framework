@@ -27,3 +27,7 @@ nodeExportServiceList?node=xxx
 ### 节点引用服务的列表
 nodeReferServiceList?node=xxx
 引用服务列表
+
+### 这个请求包含字段描述
+configDesc
+这个请求包含字段描述

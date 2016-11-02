@@ -97,6 +97,12 @@ var webpackConfig = {
             names: ['vendor', 'manifest'],
             minChunks: Infinity
         }),
+        new webpack.optimize.UglifyJsPlugin({
+            compress: {
+                warnings: false,
+                drop_console: true
+            }
+        }),
         new webpack.NoErrorsPlugin(),
         new HtmlWebpackPlugin({ //根据模板插入css/js等生成最终HTML
             filename: './index.html', //生成的html存放路径，相对于path
