@@ -120,7 +120,7 @@ class AppExportList extends React.Component {
                                     if(_.isArray(vue)){
                                         vue = vue.join(' | ')
                                     }
-                                    
+
                                     list.push(
                                         <tr key={ke}>
                                             <td>{getDesc(descConfig,ke)}</td>

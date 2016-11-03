@@ -30,3 +30,11 @@
     npm run local
 
 ```
+### 设置 api 代理
+
+可在 webpack.dev.config.js 里面的 devServer 配置项设置 api 代理
+
+## TODO
+
+1.图片自动压缩配置项暂未添加
+2.发布时候的优化设置逐步加强

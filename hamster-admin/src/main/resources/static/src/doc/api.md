@@ -31,3 +31,22 @@ nodeReferServiceList?node=xxx
 ### 这个请求包含字段描述
 configDesc
 这个请求包含字段描述
+
+
+### 节点list
+nodes = [
+    {
+        id: 0 // 唯一ID ，其他属性在这个对象里面随便加
+    },
+    {
+        id: 1
+    }
+]
+### 关系list
+links = [
+    {
+        source: 0, 
+        target: 1
+    }
+]
+

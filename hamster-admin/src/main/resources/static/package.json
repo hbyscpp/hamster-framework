@@ -5,7 +5,7 @@
   "main": "readme.md",
   "scripts": {
     "clean": "rimraf ./dist",
-    "local": "webpack-dev-server --config ./webpack.dev.config.js",
+    "local": "webpack-dev-server --progress --config ./webpack.dev.config.js",
     "dev": "npm run clean && webpack  --config ./webpack.dev.config.js",
     "test": "npm run clean && webpack  --config ./webpack.test.config.js",
     "prod": "npm run clean && webpack -p --progress --config ./webpack.prod.config.js"

@@ -15,8 +15,14 @@ var webpackConfig = {
         inline: true,
         port: 9090,
         compress: true,
+        // https://webpack.github.io/docs/node.js-api.html
+        // https://github.com/webpack/webpack/blob/master/lib/Stats.js#L50
         stats: {
-            colors: true
+            chunkModules: false,
+            modules: false,
+            error: true,
+            errorDetails: true,
+            publicPath: true
         },
         proxy: {
             '/api': {
@@ -52,7 +58,7 @@ var webpackConfig = {
 
     entry: {
         index: './src/entry/index.jsx',
-        vendor: ['jquery', 'classnames']
+        vendor: ['jquery', 'classnames', 'react', 'react-dom', 'react-router']
     },
     cache: true,
     output: {
@@ -102,9 +108,9 @@ var webpackConfig = {
         autoprefixer({ browsers: ['last 3 versions', 'ie >= 9',] }) 
         ],
     externals: {
-        'react': 'React',
-        'react-dom': 'ReactDOM',
-        'react-router': 'ReactRouter'
+        // 'react': 'React',
+        // 'react-dom': 'ReactDOM',
+        // 'react-router': 'ReactRouter'
     },
     plugins: [
         new webpack.DefinePlugin({
@@ -139,9 +145,9 @@ var webpackConfig = {
             },
             chunksSortMode: 'dependency',
             externalsAssets: {
-                react: '//cdn.bootcss.com/react/15.3.0/react.js',
-                reactDOM: '//cdn.bootcss.com/react/15.3.0/react-dom.js',
-                reactRouter: '//cdn.bootcss.com/react-router/2.6.1/ReactRouter.js'
+                // react: '//cdn.bootcss.com/react/15.3.0/react.js',
+                // reactDOM: '//cdn.bootcss.com/react/15.3.0/react-dom.js',
+                // reactRouter: '//cdn.bootcss.com/react-router/2.6.1/ReactRouter.js'
             }
         })
     ]

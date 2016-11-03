@@ -6,7 +6,7 @@ function request(option){
     if(opt.url && process.env.NODE_ENV === 'development'){
         opt.url = '/api' + opt.url
     }
-    console.log(process.env.NODE_ENV)
+    
     return Promise
     .resolve($.ajax.call($, opt))
     .then(res=>{
