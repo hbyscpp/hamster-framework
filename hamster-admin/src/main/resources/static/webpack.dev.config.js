@@ -26,7 +26,8 @@ var webpackConfig = {
         },
         proxy: {
             '/api': {
-                target: 'http://192.168.30.185:8080',
+                // target: 'http://192.168.30.185:8080',
+                target: 'http://192.168.20.172:8081',
                 pathRewrite: {
                     '^/api':''
                 },
