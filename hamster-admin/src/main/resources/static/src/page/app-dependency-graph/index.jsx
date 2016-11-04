@@ -17,11 +17,14 @@ class AppDependencyGraph extends React.Component {
 
         this.state = {
             isLoading: true,
-            echartsOption: {},
+            echartsOption: {
+                series: []
+            },
             colorArr: ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3']
         }
         this.loadDepdData = this.loadDepdData.bind(this)
         this.setEchartsOption = this.setEchartsOption.bind(this)
+        this.setCycleDepdFlag = this.setCycleDepdFlag.bind(this)
 
     }
     componentDidMount() {
@@ -58,6 +61,28 @@ class AppDependencyGraph extends React.Component {
             })
 
     }
+    // @links
+    // @return links
+    setCycleDepdFlag(links) {
+        let n = {}
+        let r = []
+        for (let i = 0; i < links.length; i++) {
+            r.push(links[i])
+            if (n[links[i].target + links[i].source] === undefined) {
+                n[links[i].source + links[i].target] = i
+
+            } else {
+                console.log(links[i].source + links[i].target)
+                console.log(n[links[i].target + links[i].source])
+                n[links[i].source + links[i].target] = i
+                // 设置标记 isCycleDepdFlag
+                r[i].isCycleDepdFlag = true
+                r[n[links[i].target + links[i].source]].isCycleDepdFlag = true
+            }
+        }
+
+        return r
+    }
     setEchartsOption(data) {
         let colors = this.state.colorArr
         data.nodes.forEach(function(node, index){
@@ -67,6 +92,19 @@ class AppDependencyGraph extends React.Component {
                         color: colors[index%colors.length]
                     }
                 }
+        })
+
+        data.links = this.setCycleDepdFlag(data.links)
+
+        data.links.forEach(function(link, index){
+            if(link.isCycleDepdFlag){
+                link.lineStyle = {
+                    normal: {
+                        color: 'red',
+                        curveness: 0.1
+                    }
+                }
+            }
         })
 
         let option = {
@@ -128,7 +166,7 @@ class AppDependencyGraph extends React.Component {
                 // },
                 lineStyle: {
                     normal: {
-                        curveness: 0.1
+                        // curveness: 0.1
                     }
                 }
             }]
