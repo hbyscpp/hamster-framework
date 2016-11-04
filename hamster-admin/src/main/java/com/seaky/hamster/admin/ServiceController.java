@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
-
 @RestController
 public class ServiceController {
 
@@ -109,12 +107,26 @@ public class ServiceController {
 
   @RequestMapping("/appDependencyGraph")
   public Object appDependencyGraph() {
-    TinkerGraph datas = etcdRegisterationManageService.appDependencyGraph();
+    GraphView datas = etcdRegisterationManageService.appDependencyGraph();
     Response rsp = new Response();
     rsp.setData(datas);
     return rsp;
   }
 
+  @RequestMapping("/nodeDependencyGraph")
+  public Object nodeDependencyGraph() {
+    GraphView datas = etcdRegisterationManageService.nodeDependencyGraph();
+    Response rsp = new Response();
+    rsp.setData(datas);
+    return rsp;
+  }
 
+  @RequestMapping("/configDesc")
+  public Object configDesc() {
+    Map<String, String> datas = HamsterConfigEnum.getConfigMaps();
+    Response rsp = new Response();
+    rsp.setData(datas);
+    return rsp;
+  }
 
 }

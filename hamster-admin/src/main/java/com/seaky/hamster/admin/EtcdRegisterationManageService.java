@@ -20,6 +20,8 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.seaky.hamster.admin.GraphView.LinkView;
+import com.seaky.hamster.admin.GraphView.NodeView;
 import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
@@ -27,6 +29,7 @@ import com.seaky.hamster.core.rpc.executor.NamedThreadFactory;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 import com.seaky.hamster.core.rpc.registeration.ServiceReferenceDescriptor;
 import com.seaky.hamster.core.rpc.utils.Utils;
+import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
@@ -260,6 +263,8 @@ public class EtcdRegisterationManageService {
         }
         names.add(name);
 
+
+
         // 服务视角
         Vertex vertexService = backServiceGraph.getVertex(name);
         if (vertexService == null) {
@@ -272,6 +277,13 @@ public class EtcdRegisterationManageService {
         }
         apps.add(sd.getApp());
 
+        // 服务所在的机器
+        Set<String> nodenames = vertexService.getProperty("nodes");
+        if (nodenames == null) {
+          nodenames = new HashSet<>();
+          vertexService.setProperty("nodes", nodenames);
+        }
+        nodenames.add(sd.getHost());
         // 机器视角
         Vertex nodeVertexService = backNodeGraph.getVertex(sd.getHost());
         if (nodeVertexService == null) {
@@ -330,7 +342,7 @@ public class EtcdRegisterationManageService {
 
           if (apps != null) {
             for (String app : apps) {
-              Vertex inVertex = backServiceGraph.getVertex(app);
+              Vertex inVertex = backgraph.getVertex(app);
               if (inVertex != null) {
                 Edge edge = backgraph.getEdge(sd.getReferApp() + ":" + app);
                 if (edge == null) {
@@ -339,7 +351,38 @@ public class EtcdRegisterationManageService {
                       backgraph.addEdge(sd.getReferApp() + ":" + app, vertex, inVertex, "dependOn");
                 }
                 // TODO 具体依赖的服务明细
-                Set<String> serviceNames = vertex.getProperty("serviceNames");
+                Set<String> serviceNames = edge.getProperty("serviceNames");
+                if (serviceNames == null) {
+                  serviceNames = new HashSet<>();
+                  edge.setProperty("serviceNames", serviceNames);
+                }
+                serviceNames.add(name);
+              }
+
+            }
+
+
+          }
+
+
+          Set<String> nodes = (Set<String>) serviceVertex.getProperty("nodes");
+
+          Vertex outvertex = backNodeGraph.getVertex(sd.getHost());
+          if (outvertex == null) {
+            outvertex = backNodeGraph.addVertex(sd.getHost());
+          }
+          if (nodes != null) {
+            for (String node : nodes) {
+              Vertex inNodeVertex = backNodeGraph.getVertex(node);
+              if (inNodeVertex != null) {
+                Edge edge = backNodeGraph.getEdge(sd.getHost() + ":" + node);
+                if (edge == null) {
+                  // 添加直接依赖边
+                  edge = backNodeGraph.addEdge(sd.getHost() + ":" + node, outvertex, inNodeVertex,
+                      "dependOn");
+                }
+                // TODO 具体依赖的服务明细
+                Set<String> serviceNames = edge.getProperty("serviceNames");
                 if (serviceNames == null) {
                   serviceNames = new HashSet<>();
                   edge.setProperty("serviceNames", serviceNames);
@@ -451,8 +494,8 @@ public class EtcdRegisterationManageService {
         continue;
       }
       ServiceInstanceView view = convert(desc.getKey(), desc.getValue());
-      String key =
-          Utils.generateKey(view.getVersion(), view.getGroup(), view.getProtocol(), view.getApp());
+      String key = Utils.generateKey(view.getVersion(), view.getGroup(), view.getProtocol(),
+          view.getApp(), view.getServiceName());
       List<ServiceInstanceView> mapViews = viewMaps.get(key);
       if (mapViews == null) {
         mapViews = new ArrayList<>();
@@ -516,7 +559,7 @@ public class EtcdRegisterationManageService {
       }
       ReferInstanceView view = convert(desc.getKey(), desc.getValue());
       String key = Utils.generateKey(view.getReferVersion(), view.getReferGroup(),
-          view.getProtocol(), view.getReferApp());
+          view.getProtocol(), view.getReferApp(), view.getServiceName());
       List<ReferInstanceView> mapViews = viewMaps.get(key);
       if (mapViews == null) {
         mapViews = new ArrayList<>();
@@ -633,8 +676,54 @@ public class EtcdRegisterationManageService {
   }
 
 
-  public TinkerGraph appDependencyGraph() {
-    return graph;
+  public GraphView appDependencyGraph() {
+
+    GraphView gview = new GraphView();
+    Iterable<Vertex> iters = graph.getVertices();
+
+    for (Vertex v : iters) {
+      String id = (String) v.getId();
+      NodeView view = new NodeView();
+      view.setId(id);
+      gview.getNodes().add(view);
+    }
+    Iterable<Edge> itersedge = graph.getEdges();
+
+    for (Edge v : itersedge) {
+      Vertex inver = v.getVertex(Direction.IN);
+      LinkView view = new LinkView();
+      view.setTarget((String) inver.getId());
+      Vertex outver = v.getVertex(Direction.OUT);
+      view.setSource((String) outver.getId());
+      view.setServiceName((Set<String>) v.getProperty("serviceNames"));
+      gview.getLinks().add(view);
+    }
+    return gview;
+  }
+
+  public GraphView nodeDependencyGraph() {
+
+    GraphView gview = new GraphView();
+    Iterable<Vertex> iters = nodeGraph.getVertices();
+
+    for (Vertex v : iters) {
+      String id = (String) v.getId();
+      NodeView view = new NodeView();
+      view.setId(id);
+      gview.getNodes().add(view);
+    }
+    Iterable<Edge> itersedge = nodeGraph.getEdges();
+
+    for (Edge v : itersedge) {
+      Vertex inver = v.getVertex(Direction.IN);
+      LinkView view = new LinkView();
+      view.setTarget((String) inver.getId());
+      Vertex outver = v.getVertex(Direction.OUT);
+      view.setSource((String) outver.getId());
+      view.setServiceName((Set<String>) v.getProperty("serviceNames"));
+      gview.getLinks().add(view);
+    }
+    return gview;
   }
 
 
