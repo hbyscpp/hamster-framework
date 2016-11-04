@@ -6,6 +6,7 @@ import { hashHistory } from 'react-router'
 import LogoImg from './logo-white.png'
 import LogoImgMini from './logo-white-mini.png'
 import ytfEvent from '../ytfEvent'
+import request from 'common/request/request.js'
 import {local ,session} from 'common/util/storage.js'
 
 import './index.scss'
@@ -32,6 +33,14 @@ class Header extends React.Component{
         })
     }
     logout(){
+        request({
+            url: '/logout',
+            type: 'get',
+            dataType: 'json'
+        })
+        .then(res=>{})
+        .catch(err=>{})
+        
         session.set('isLogin', false)
         hashHistory.push('/login')
     }

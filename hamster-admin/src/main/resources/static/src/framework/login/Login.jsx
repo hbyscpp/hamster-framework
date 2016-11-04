@@ -44,8 +44,7 @@ class Login extends React.Component{
                 
             })
             .catch(err => {
-                console.log(err)
-                hashHistory.push('/home')
+                
                 message.error('error status: '+err.status)
                 this.setState({
                     loading: false

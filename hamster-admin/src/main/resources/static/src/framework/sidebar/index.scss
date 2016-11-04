@@ -75,7 +75,8 @@
 }
 
 .yt-admin-framework-sidebar .ant-menu-item{
-    transition: .3s;
+    transition: all .3s;
+    border-right: none;
 }
 
 .yt-admin-framework-sidebar .ant-menu-item-selected {

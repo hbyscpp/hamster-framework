@@ -8,6 +8,14 @@ export default [
         }
     },
     {
+        path: '/app-dependency-graph',
+        getComponent: (location, cb) => {
+            require.ensure([], (require) => {
+                cb(null, require('./app-dependency-graph'))
+            })
+        }
+    },
+    {
         path: '/service/service-instance-list',
         getComponent: (location, cb) => {
             require.ensure([], (require) => {

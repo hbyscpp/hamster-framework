@@ -159,6 +159,11 @@ class Home extends React.Component {
     }
     handleSubmit(e) {
         e.preventDefault()
+        request({
+            url: 'appDependencyGraph',
+            type: 'get',
+            dataType: 'json'
+        })
         
         console.log('Received values of form:', this.props.form.getFieldsValue())
         this.searchList(this.props.form.getFieldValue('type'), this.props.form.getFieldValue('q'))
@@ -218,6 +223,8 @@ class Home extends React.Component {
                 this.setState({
                     dataSource: data
                 });
+            }else{
+                message.error(res.msg)
             }
             console.log(res)
         })
@@ -225,7 +232,7 @@ class Home extends React.Component {
             this.setState({
                 isLoading: false
             })
-            console.log(err)
+            message.error('error status: '+err.status)
         })
 
     }
