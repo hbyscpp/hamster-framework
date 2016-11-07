@@ -3,8 +3,6 @@ import {Button, Popconfirm} from "antd";
 
 import FAIcon from 'component/faicon'
 import { hashHistory } from 'react-router'
-import LogoImg from './logo-white.png'
-import LogoImgMini from './logo-white-mini.png'
 import ytfEvent from '../ytfEvent'
 import request from 'common/request/request.js'
 import {local ,session} from 'common/util/storage.js'
@@ -53,12 +51,12 @@ class Header extends React.Component{
         ytfEvent.emit('Sidebar:Toggle')
     }
     render(){
-        const brandLogo = this.state.mini ? LogoImgMini : LogoImg
+        const mini = this.state.mini
 
         return (
             <header className="yt-admin-framework-header clearfix">
                 <h1 className="yt-admin-framework-header-brand">
-                    <img className="brand-logo" src={brandLogo} alt="Yuntu"/>
+                    {mini? 'H': 'hamster'}
                     <Button type="ghost" style={{display: 'none'}}>only for use antd button styles</Button>
                 </h1>
                 <div className="yt-admin-framework-header-sidebar-toggle">

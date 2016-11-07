@@ -97,6 +97,7 @@ class NodeExportList extends React.Component {
         _.forOwn(this.state.instanceListData, function (value, key) {
             let header = (
                 <h3 className="list-title">
+                    <span>服务名:{key.split('~')[4]}</span>
                     <span>应用:{key.split('~')[3]}</span>
                     <span>版本:{key.split('~')[0]}</span>
                     <span>Group:{key.split('~')[1]}</span>

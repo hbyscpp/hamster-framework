@@ -20,7 +20,7 @@ class Sidebar extends React.Component{
     componentWillMount(){
         let menuData = [
             {
-            name: '主页',
+            name: 'dashboard',
             path: '/home',
             icon: 'home'
             },

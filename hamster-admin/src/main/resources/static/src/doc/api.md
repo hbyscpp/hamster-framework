@@ -32,6 +32,10 @@ nodeReferServiceList?node=xxx
 configDesc
 这个请求包含字段描述
 
+### 
+appCycles
+app循环依赖
+
 ###
 appDependencyGraph
 应用依赖关系图
