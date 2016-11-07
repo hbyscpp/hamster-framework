@@ -191,8 +191,10 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
 
   @Override
   public synchronized void start(RegisterationService registerationService, ServerConfig config) {
-    if (registerationService == null || config == null)
-      throw new IllegalArgumentException("regist service or server config  can not be null");
+    if (registerationService == null)
+      throw new IllegalArgumentException("regist service  can not be null");
+    if (config == null)
+      throw new IllegalArgumentException("server config  can not be null");
     if (isRunning())
       throw new RuntimeException(
           "server is running at host " + this.config.getHost() + ",port " + this.config.getPort());
