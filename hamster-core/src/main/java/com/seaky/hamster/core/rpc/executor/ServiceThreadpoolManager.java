@@ -30,7 +30,7 @@ public class ServiceThreadpoolManager {
         threadpool = oldThreadpool;
       }
     }
-    if (maxThread > threadpool.executorCount()) {
+    if (maxThread != threadpool.executorCount()) {
       DefaultEventExecutorGroup newThreadpool =
           new DefaultEventExecutorGroup(maxThread, new NamedThreadFactory("servicepool-" + name));
       allThreadpools.put(name, newThreadpool);

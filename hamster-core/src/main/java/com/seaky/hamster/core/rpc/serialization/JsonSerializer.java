@@ -56,4 +56,9 @@ public class JsonSerializer implements Serializer {
     }
   }
 
+  @Override
+  public boolean isText() {
+    return true;
+  }
+
 }

@@ -8,16 +8,22 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 
-// TODO 优化避免创建datas
 public class HamsterRequestEncoder extends MessageToByteEncoder<HamsterRequest> {
 
   @Override
   protected void encode(ChannelHandlerContext ctx, HamsterRequest msg, ByteBuf out)
       throws Exception {
-    Serializer ser =
-        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
-    byte[] datas = ser.serialize(msg);
-    out.writeInt(datas.length);
-    out.writeBytes(datas);
+    Short version = (Short) msg.getAttachments().get(Constants.PROTOCOL_VERSION);
+    if (version == null || version != 0)
+      throw new RuntimeException("not support encode request version: " + version);
+    if (version == 0) {
+      Serializer ser =
+          ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
+      byte[] datas = ser.serialize(msg);
+      out.writeInt(datas.length + 2);
+      out.writeShort(version);
+      out.writeBytes(datas);
+    }
+
   }
 }

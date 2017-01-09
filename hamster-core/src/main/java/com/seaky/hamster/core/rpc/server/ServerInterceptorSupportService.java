@@ -27,11 +27,13 @@ public class ServerInterceptorSupportService<Req, Rsp> extends InterceptorSuppor
       return;
     }
     try {
-      Observable<Object> result = service.process(ServiceContextUtils.getRequestParams(context));
-      ServiceContextUtils.getResponse(context).setResult(result.toBlocking().first());
+      Observable<Object> result =
+          service.process(ServiceContextUtils.getRequestBody(context).getParams());
+      ServiceContextUtils.getResponseBody(context).setResult(result.toBlocking().first());
     } catch (Exception e) {
       BusinessException be = new BusinessException(Utils.getActualException(e));
-      ServiceContextUtils.getResponse(context).setResult(be);
+      ServiceContextUtils.getResponseBody(context).setResult(be);
+      ServiceContextUtils.getResponseHeader(context).setException(true);
     } finally {
       postProcess(context, interceptors);
     }

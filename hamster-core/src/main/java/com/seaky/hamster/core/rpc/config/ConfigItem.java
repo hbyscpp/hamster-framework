@@ -11,6 +11,7 @@ public class ConfigItem {
 
   private String key;
 
+  // value为null 不会加入到配置之中
   private String value;
 
   private boolean isReadOnly;

@@ -1,8 +1,6 @@
 package com.seaky.hamster.core.rpc.server;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -26,8 +24,13 @@ import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.Attachments;
 import com.seaky.hamster.core.rpc.protocol.ExceptionConvertor;
 import com.seaky.hamster.core.rpc.protocol.ExceptionResult;
-import com.seaky.hamster.core.rpc.protocol.Response;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestBody;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestHeader;
+import com.seaky.hamster.core.rpc.protocol.ProtocolResponseBody;
+import com.seaky.hamster.core.rpc.protocol.ProtocolResponseHeader;
+import com.seaky.hamster.core.rpc.protocol.RequestConvertor;
 import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
+import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 import com.seaky.hamster.core.service.JavaService;
@@ -48,31 +51,38 @@ public class RequestDispatcher<Req, Rsp> {
   private static Logger logger = LoggerFactory.getLogger(RequestDispatcher.class);
 
   // 分发消息
-  public void dispatchMessage(Req request, ServerTransport<Req, Rsp> transport) {
+  public void dispatchMessage(Req request, ProtocolRequestHeader header,
+      ServerTransport<Req, Rsp> transport) {
 
-    ServiceContext context = initContext(request, transport);
-    if (ServiceContextUtils.getResponse(context).isException()) {
+    ServiceContext context = initContext(request, header, transport);
+    if (ServiceContextUtils.getResponseHeader(context).isException()) {
       // 初始化context有异常
       writeResponse(context, transport);
       return;
     }
-    String serviceName = ServiceContextUtils.getServiceName(context);
-    String app = ServiceContextUtils.getApp(context);
-    String serviceVersion = ServiceContextUtils.getVersion(context);
-    String group = ServiceContextUtils.getGroup(context);
+    String serviceName = header.getServiceName();
+    String app = header.getApp();
+    String serviceVersion = header.getVersion();
+    String group = header.getGroup();
     JavaService service = server.findService(serviceName, app, serviceVersion, group);
 
     if (service == null) {
-      setException(context, new ServiceProviderNotFoundException(serviceName));
+      setException(context, new ServiceProviderNotFoundException(String.format(
+          "service %s,app %s,group %s,version %s", serviceName, app, group, serviceVersion)));
       writeResponse(context, transport);
       return;
     }
 
     String[] params =
         server.getServiceDescriptor(app, serviceName, serviceVersion, group).getParamTypes();
-    if (!Utils.isMatch(params,
-        context.getAttribute(ServiceContext.REQUEST_PARAMS, Object[].class))) {
-      setException(context, new ServiceSigMismatchException(serviceName));
+    try {
+      if (!Utils.isMatch(params, ServiceContextUtils.getRequestBody(context).getParams())) {
+        setException(context, new ServiceSigMismatchException(serviceName));
+        writeResponse(context, transport);
+        return;
+      }
+    } catch (ClassNotFoundException e) {
+      setException(context, new ServiceSigMismatchException(serviceName + ":" + e.getMessage()));
       writeResponse(context, transport);
       return;
     }
@@ -104,10 +114,11 @@ public class RequestDispatcher<Req, Rsp> {
 
   private String threadPoolName(ServiceContext context, AbstractServer<Req, Rsp> server) {
 
-    String serviceName = ServiceContextUtils.getServiceName(context);
-    String app = ServiceContextUtils.getApp(context);
-    String serviceVersion = ServiceContextUtils.getVersion(context);
-    String group = ServiceContextUtils.getGroup(context);
+    ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
+    String serviceName = header.getServiceName();
+    String app = header.getApp();
+    String serviceVersion = header.getVersion();
+    String group = header.getGroup();
     String key = Utils.generateKey(serviceName, app, serviceVersion, group);
     return key;
   }
@@ -149,11 +160,13 @@ public class RequestDispatcher<Req, Rsp> {
 
 
   private void setException(ServiceContext sc, Throwable e) {
-    ServiceContextUtils.getResponse(sc).setResult(e);
+    ServiceContextUtils.getResponseBody(sc).setResult(e);
+    ServiceContextUtils.getResponseHeader(sc).setException(true);
   }
 
   // 初始化context
-  private ServiceContext initContext(Req request, ServerTransport<Req, Rsp> transport) {
+  private ServiceContext initContext(Req request, ProtocolRequestHeader header,
+      ServerTransport<Req, Rsp> transport) {
 
     ServiceContext context = new DefaultServiceContext(ProcessPhase.SERVER_CALL_SERVICE);
     ServiceContextUtils.setServerHost(context,
@@ -163,69 +176,75 @@ public class RequestDispatcher<Req, Rsp> {
     ServiceContextUtils.setClientHost(context,
         transport.getRemoteAddress().getAddress().getHostAddress());
     ServiceContextUtils.setClientPort(context, transport.getRemoteAddress().getPort());
-    ServiceContextUtils.setResponse(context, new Response());
-    ServiceContextUtils.setRequestAttachments(context, new Attachments());
+    ServiceContextUtils.setResponseBody(context, new ProtocolResponseBody());
+    ServiceContextUtils.setResponseHeader(context, new ProtocolResponseHeader());
+    ServiceContextUtils.setRequestHeader(context, header);
 
     try {
-      server.getProtocolExtensionFactory().getRequestExtractor().extractTo(request, context);
-      // 验证所需的参数
-      validateRequestInfo(context);
-      EndpointConfig config = server.getServiceConfig(ServiceContextUtils.getApp(context),
-          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
-          ServiceContextUtils.getGroup(context));
+      RequestConvertor<Req> extractor = server.getProtocolExtensionFactory().getRequestConvertor();
 
+      // 验证所需的参数
+      validateRequestInfo(header);
+      EndpointConfig config = server.getServiceConfig(header.getApp(), header.getServiceName(),
+          header.getVersion(), header.getGroup());
       if (config == null) {
-        throw new ServiceProviderConfigNotFoundException(ServiceContextUtils.getApp(context),
-            ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
-            ServiceContextUtils.getGroup(context));
+        throw new ServiceProviderConfigNotFoundException(header.getApp(), header.getServiceName(),
+            header.getVersion(), header.getGroup());
+      }
+      ServiceProviderDescriptor sd = server.getServiceDescriptor(header.getApp(),
+          header.getServiceName(), header.getVersion(), header.getGroup());
+      String[] types = sd.getParamTypes();
+      if (types != null && types.length > 0) {
+        Class<?>[] typeClss = new Class<?>[types.length];
+        int len = types.length;
+        for (int i = 0; i < len; ++i) {
+          typeClss[i] = Utils.findClassByName(types[i]);
+        }
+        ProtocolRequestBody reqbody = extractor.parseProtocolBody(request, header, typeClss);
+        ServiceContextUtils.setRequestBody(context, reqbody);
+      } else {
+        ProtocolRequestBody reqbody = extractor.parseProtocolBody(request, header, null);
+        ServiceContextUtils.setRequestBody(context, reqbody);
       }
       ServiceContextUtils.setProviderConfig(context, new ReadOnlyEndpointConfig(config));
 
       // 用自身的配置
 
     } catch (Exception e) {
-      ServiceContextUtils.getResponse(context).setResult(e);
+      ServiceContextUtils.getResponseBody(context).setResult(e);
+      ServiceContextUtils.getResponseHeader(context).setException(true);
     }
 
     return context;
 
   }
 
-  private void validateRequestInfo(ServiceContext sc) {
-    if (StringUtils.isBlank(ServiceContextUtils.getApp(sc)))
+  private void validateRequestInfo(ProtocolRequestHeader header) {
+    if (StringUtils.isBlank(header.getApp()))
       throw new LossReqParamException("app");
-    if (StringUtils.isBlank(ServiceContextUtils.getVersion(sc)))
+    if (StringUtils.isBlank(header.getVersion()))
       throw new LossReqParamException("version");
-    if (StringUtils.isBlank(ServiceContextUtils.getReferenceApp(sc)))
-      throw new LossReqParamException("reference app");
-    if (StringUtils.isBlank(ServiceContextUtils.getServiceName(sc)))
+    if (StringUtils.isBlank(header.getServiceName()))
       throw new LossReqParamException("service name");
-    if (StringUtils.isBlank(ServiceContextUtils.getReferenceVersion(sc)))
-      throw new LossReqParamException("reference version");
-    if (StringUtils.isBlank(ServiceContextUtils.getGroup(sc)))
+    if (StringUtils.isBlank(header.getGroup()))
       throw new LossReqParamException("group");
-    if (StringUtils.isBlank(ServiceContextUtils.getReferenceGroup(sc)))
-      throw new LossReqParamException("reference group");
+
   }
 
   private void writeResponse(ServiceContext sc, ServerTransport<Req, Rsp> transport) {
     try {
-      Response response = ServiceContextUtils.getResponse(sc);
-      Attachments requestAttchments = ServiceContextUtils.getRequestAttachments(sc);
-
+      ProtocolResponseBody response = ServiceContextUtils.getResponseBody(sc);
+      ProtocolRequestHeader requestAttchments = ServiceContextUtils.getRequestHeader(sc);
       // 回传的attachment
-      Map<String, String> allAttachment = requestAttchments.getAllAttachments();
+      Attachments allAttachment = requestAttchments.getAttachments();
       if (allAttachment != null) {
-        for (Entry<String, String> attach : allAttachment.entrySet()) {
-          ServiceContextUtils.getResponse(sc).getAttachments().addAttachment(attach.getKey(),
-              attach.getValue());
-        }
+        Attachments attachments = ServiceContextUtils.getResponseHeader(sc).getAttachments();
+        attachments.putAttachments(allAttachment);
       }
       if (!response.isDone())
         setException(sc, new NotSetResultException());
-      if (response.isException()) {
-        Throwable e = response.getException();
-
+      if (ServiceContextUtils.getResponseHeader(sc).isException()) {
+        Throwable e = (Throwable) response.getResult();
         if (!(e instanceof RpcException)) {
           setException(sc, new UnknownException(Utils.getActualException(e)));
 
@@ -233,17 +252,16 @@ public class RequestDispatcher<Req, Rsp> {
       }
       ResponseConvertor<Rsp> attrWriter =
           server.getProtocolExtensionFactory().getResponseConvertor();
-      Response r = ServiceContextUtils.getResponse(sc);
-      if (r.isException()) {
+      if (ServiceContextUtils.getResponseHeader(sc).isException()) {
         EndpointConfig config = ServiceContextUtils.getProviderConfig(sc);
         String expCon = ((config == null) ? "default"
             : config.get(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR, "default"));
         ExceptionConvertor convert =
             ExtensionLoaderConstants.EXCEPTION_CONVERTOR_EXTENSION.findExtension(expCon);
-        ExceptionResult er = convert.convertTo((RpcException) r.getException());
-        ServiceContextUtils.getResponse(sc).setResult(er);
+        ExceptionResult er = convert.convertTo((RpcException) response.getResult());
+        ServiceContextUtils.getResponseBody(sc).setResult(er);
       }
-      Rsp rsp = attrWriter.convertTo(ServiceContextUtils.getResponse(sc));
+      Rsp rsp = attrWriter.createResponse(ServiceContextUtils.getResponseHeader(sc), response);
       // TODO 需要统计异常以及成功的次数
       transport.send(rsp, sc);
     } catch (Exception e) {

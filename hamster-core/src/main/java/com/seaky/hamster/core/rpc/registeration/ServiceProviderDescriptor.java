@@ -182,4 +182,19 @@ public class ServiceProviderDescriptor {
   public boolean isForceAccess() {
     return this.config.getValueAsBoolean(ConfigConstans.PROVIDER_FORCE_ACCESS, false);
   }
+
+  public void setMaxProtocolVersion(short version) {
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_MAX_PROTOCOL_VERSION,
+        String.valueOf(version), true));
+  }
+
+  public short getMaxProtocolVersion() {
+    return this.config.getValueAsShort(ConfigConstans.PROVIDER_MAX_PROTOCOL_VERSION,
+        ConfigConstans.PROVIDER_MAX_PROTOCOL_VERSION_DEFAULT);
+  }
+
+  public void setFrameworkVersion(String version) {
+    this.config
+        .addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_FRAMEWORK_VERSION, version, true));
+  }
 }

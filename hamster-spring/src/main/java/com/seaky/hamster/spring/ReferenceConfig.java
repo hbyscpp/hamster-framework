@@ -16,6 +16,8 @@ public class ReferenceConfig {
 
   private String providerAddresses;
 
+  private String interceptors;
+
   public String getVersion() {
     return version;
   }
@@ -70,6 +72,14 @@ public class ReferenceConfig {
 
   public void setProviderAddresses(String providerAddresses) {
     this.providerAddresses = providerAddresses;
+  }
+
+  public String getInterceptors() {
+    return interceptors;
+  }
+
+  public void setInterceptors(String interceptors) {
+    this.interceptors = interceptors;
   }
 
 

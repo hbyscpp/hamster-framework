@@ -158,6 +158,11 @@ public class ServiceReferenceDescriptor {
 
   }
 
+  public void setFrameworkVersion(String version) {
+    this.config
+        .addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_FRAMEWORK_VERSION, version, true));
+  }
+
 
   public static ServiceReferenceDescriptor parseStr(String str) {
     if (StringUtils.isBlank(str))

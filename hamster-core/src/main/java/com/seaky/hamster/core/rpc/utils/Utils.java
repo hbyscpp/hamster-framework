@@ -116,7 +116,8 @@ public class Utils {
   }
 
   // 初步检查参数 是否符合要求 只作基本的判断
-  public static boolean isMatch(String[] paramTypes, Object[] request) {
+  public static boolean isMatch(String[] paramTypes, Object[] request)
+      throws ClassNotFoundException {
 
     int leftLength = paramTypes == null ? 0 : paramTypes.length;
     int rightLength = request == null ? 0 : request.length;
@@ -133,8 +134,7 @@ public class Utils {
     return true;
   }
 
-  private static boolean isCompatibility(String typeName, Object obj) {
-
+  public static Class<?> findClassByName(String typeName) throws ClassNotFoundException {
     Class<?> type = null;
     if ("int".equals(typeName)) {
       type = int.class;
@@ -158,18 +158,23 @@ public class Utils {
       type = char.class;
 
     } else if ("void".equals(typeName)) {
-      type = int.class;
+      type = void.class;
 
     } else if ("boolean".equals(typeName)) {
       type = boolean.class;
 
     } else {
-      try {
-        type = Class.forName(typeName);
-      } catch (ClassNotFoundException e) {
-        return false;
-      }
+      type = Class.forName(typeName);
     }
+    return type;
+
+  }
+
+  private static boolean isCompatibility(String typeName, Object obj)
+      throws ClassNotFoundException {
+
+    Class<?> type = findClassByName(typeName);
+
     if (type.isPrimitive()) {
       if (obj == null)
         return false;

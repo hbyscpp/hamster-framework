@@ -5,9 +5,11 @@ import java.net.InetAddress;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.seaky.hamster.core.VersionConstans;
 import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
@@ -111,6 +113,7 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
           + ",app: " + app + ",version: " + version + ",group: " + group + "]");
     }
 
+    // 设置拦截器
     allservicesInterceptors.putIfAbsent(serviceKey, Utils.extractByProcessPhase(
         serviceConfig.get(ConfigConstans.PROVIDER_INTERCEPTORS), ProcessPhase.SERVER_CALL_SERVICE));
     ServiceProviderDescriptor sd = new ServiceProviderDescriptor();
@@ -122,6 +125,8 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
     long curtime = System.currentTimeMillis();
     sd.setRegistTime(curtime);
     sd.setPid(Utils.getCurrentVmPid());
+    sd.setMaxProtocolVersion(protocolExtensionFactory.protocolMaxVersion());
+    sd.setFrameworkVersion(VersionConstans.VERSION);
     serviceRegistTimes.put(serviceKey, curtime);
     try {
       registerationService.registServiceProvider(sd);
@@ -129,7 +134,7 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
       allservices.remove(serviceKey);
       throw new RuntimeException(e);
     }
-    logger.info("export service {}:{}:{}:{} on {}:{} ", serviceName, app, version, group,
+    logger.info("export service {}:{}:{}:{} on {}:{} success ", serviceName, app, version, group,
         config.getHost(), config.getPort());
   }
 
@@ -199,7 +204,7 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
       throw new RuntimeException(
           "server is running at host " + this.config.getHost() + ",port " + this.config.getPort());
     boolean isAutoChooseAddr = false;
-    if (NetUtils.isInvalidLocalHost(config.getHost())) {
+    if (StringUtils.isBlank(config.getHost())) {
       isAutoChooseAddr = true;
     }
     boolean isAutoChoosePort = false;

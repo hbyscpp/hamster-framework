@@ -2,7 +2,9 @@ package com.seaky.hamster.core.rpc.protocol;
 
 public interface ResponseConvertor<Rsp> {
 
-  Response convertFrom(Rsp rsp);
+  ProtocolResponseHeader parseHeader(Rsp rsp);
 
-  Rsp convertTo(Response rsp);
+  ProtocolResponseBody parseBody(Rsp rsp, ProtocolResponseHeader header, Class<?> type);
+
+  Rsp createResponse(ProtocolResponseHeader header, ProtocolResponseBody body);
 }

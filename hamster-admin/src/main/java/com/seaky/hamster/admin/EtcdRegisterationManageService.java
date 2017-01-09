@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.seaky.hamster.admin.GraphView.LinkView;
 import com.seaky.hamster.admin.GraphView.NodeView;
+import com.seaky.hamster.admin.graph.ElementaryCyclesSearch;
 import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
@@ -70,6 +71,11 @@ public class EtcdRegisterationManageService {
   // 服务
   private TinkerGraph serviceGraph = new TinkerGraph();
 
+  private List<List<String>> appCycles = new ArrayList();
+
+  private List<List<String>> backAppCycles = new ArrayList();
+
+
   // 节点视图
   private TinkerGraph nodeGraph = new TinkerGraph();
 
@@ -88,6 +94,7 @@ public class EtcdRegisterationManageService {
 
   private TinkerGraph backgraph = new TinkerGraph();
 
+  private int appId = 0;
 
 
   public EtcdRegisterationManageService(String basePath, String urls) {
@@ -132,13 +139,15 @@ public class EtcdRegisterationManageService {
 
       // 初始化
       try {
+        etcdRegisterationManageService.appId = 0;
         etcdRegisterationManageService.backreferDescriptors.clear();
         etcdRegisterationManageService.backserviceDescriptors.clear();
         etcdRegisterationManageService.backgraph.clear();
         etcdRegisterationManageService.backNodeGraph.clear();
         etcdRegisterationManageService.backServiceGraph.clear();
         etcdRegisterationManageService.initData();
-
+        // 图分析
+        etcdRegisterationManageService.analysisCycles();
         etcdRegisterationManageService.referDescriptors =
             etcdRegisterationManageService.backreferDescriptors;
         etcdRegisterationManageService.backreferDescriptors =
@@ -158,6 +167,9 @@ public class EtcdRegisterationManageService {
         etcdRegisterationManageService.serviceGraph =
             etcdRegisterationManageService.backServiceGraph;
         etcdRegisterationManageService.backServiceGraph = new TinkerGraph();
+        etcdRegisterationManageService.appCycles = etcdRegisterationManageService.backAppCycles;
+        etcdRegisterationManageService.backAppCycles = new ArrayList<>();
+
 
       } catch (Exception e) {
         logger.error("", e);
@@ -255,6 +267,8 @@ public class EtcdRegisterationManageService {
         Vertex vertex = backgraph.getVertex(sd.getApp());
         if (vertex == null) {
           vertex = backgraph.addVertex(sd.getApp());
+          vertex.setProperty("intId", appId);
+          ++appId;
         }
         Set<String> names = vertex.getProperty("serviceName");
         if (names == null) {
@@ -325,6 +339,8 @@ public class EtcdRegisterationManageService {
         Vertex vertex = backgraph.getVertex(sd.getReferApp());
         if (vertex == null) {
           vertex = backgraph.addVertex(sd.getReferApp());
+          vertex.setProperty("intId", appId);
+          ++appId;
         }
         Set<String> names = vertex.getProperty("referName");
         if (names == null) {
@@ -676,6 +692,10 @@ public class EtcdRegisterationManageService {
   }
 
 
+  public List<List<String>> getAppCycles() {
+    return appCycles;
+  }
+
   public GraphView appDependencyGraph() {
 
     GraphView gview = new GraphView();
@@ -726,5 +746,34 @@ public class EtcdRegisterationManageService {
     return gview;
   }
 
+
+  private void analysisCycles() {
+    Iterable<Vertex> iters = backgraph.getVertices();
+    Object[] apps = new Object[appId];
+    for (Vertex v : iters) {
+      int id = (Integer) v.getProperty("intId");
+      apps[id] = v;
+    }
+    boolean adjMatrix[][] = new boolean[appId][appId];
+
+    for (Edge edge : backgraph.getEdges()) {
+      Vertex outver = edge.getVertex(Direction.OUT);
+      Vertex inver = edge.getVertex(Direction.IN);
+      adjMatrix[(int) outver.getProperty("intId")][(int) inver.getProperty("intId")] = true;
+    }
+
+    ElementaryCyclesSearch ecs = new ElementaryCyclesSearch(adjMatrix, apps);
+    List<List<Object>> cycles = ecs.getElementaryCycles();
+    if (cycles == null)
+      return;
+    for (List<Object> cycle : cycles) {
+      int size = cycle.size();
+      List<String> capps = new ArrayList<>();
+      for (int i = 0; i < size; ++i) {
+        capps.add((String) ((Vertex) cycle.get(i)).getId());
+      }
+      backAppCycles.add(capps);
+    }
+  }
 
 }

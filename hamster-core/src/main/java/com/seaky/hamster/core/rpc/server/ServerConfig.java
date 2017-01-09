@@ -16,6 +16,9 @@ public class ServerConfig {
   // 扫描的结束端口
   private int endScanPort = 40000;
 
+  // 未收到请求释放连接，必须大于客户端空闲心跳间隔
+  private int idleCloseTime = 40;
+
   /**
    * @return the isTcpNoDelay
    */
@@ -99,6 +102,14 @@ public class ServerConfig {
    */
   public void setPort(int port) {
     this.port = port;
+  }
+
+  public int getIdleCloseTime() {
+    return idleCloseTime;
+  }
+
+  public void setIdleCloseTime(int idleCloseTime) {
+    this.idleCloseTime = idleCloseTime;
   }
 
 }

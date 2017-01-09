@@ -15,17 +15,20 @@ public class HamsterRequestDecoder extends ByteBufToObjectDecoder<HamsterRequest
     super(ByteOrder.BIG_ENDIAN, 1024 * 1024 * 10, 0, 4, 0, 4, true);
   }
 
-  // TODO 避免创建byte[]
   @Override
   protected HamsterRequest decode(ByteBuf bytebuf) {
 
-    int allBytelength = bytebuf.readableBytes();
-    byte[] allBytes = new byte[allBytelength];
-    bytebuf.readBytes(allBytes);
-    Serializer ser =
-        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
-    HamsterRequest request = ser.deSerialize(allBytes, HamsterRequest.class);
-    return request;
+    short version = bytebuf.readShort();
+    if (version == 0) {
+      int allBytelength = bytebuf.readableBytes();
+      byte[] allBytes = new byte[allBytelength];
+      bytebuf.readBytes(allBytes);
+      Serializer ser =
+          ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
+      HamsterRequest request = ser.deSerialize(allBytes, HamsterRequest.class);
+      return request;
+    }
+    throw new RuntimeException("not support version " + version);
   }
 
 }

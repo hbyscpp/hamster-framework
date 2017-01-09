@@ -6,6 +6,8 @@ public interface Constants {
 
   public static String SEQ_NUM_KEY = "__seqnum__";
 
+  public static String PROTOCOL_VERSION = "__pversion__";
+
   public static final Charset UTF_8 = Charset.forName("UTF-8");
 
   public static String DEFAULT_CONFIG_KEY = "DEFAULT";
@@ -57,7 +59,23 @@ public interface Constants {
 
   // 序列华类型
 
-  public static String KRYO_SERIAL = "kryo";
+  public static final String KRYO_SERIAL = "kryo";
+
+  public static final String JSON_SERIAL = "json";
+
+  public static final String MSGPACK_SERIAL = "msgpack";
+
+  // 消息的类型
+  public static final String MSG_TYPE = "__mtype__";
+
+  // 正常消息
+  public static final byte MSG_NORMAL_TYPE = 0;
+
+  // 心跳消息
+  public static final byte MSG_HEARTBEAT_TYPE = 1;
+
+  // 心跳响应
+  public static final byte MSG_HEARTBEAT_RSP_TYPE = 2;
 
 
 

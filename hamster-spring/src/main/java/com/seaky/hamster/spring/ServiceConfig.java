@@ -25,6 +25,8 @@ public class ServiceConfig {
 
   private boolean isForceAccess = false;
 
+  private String interceptors;
+
   public String getVersion() {
     return version;
   }
@@ -107,6 +109,14 @@ public class ServiceConfig {
 
   public void setForceAccess(boolean isForceAccess) {
     this.isForceAccess = isForceAccess;
+  }
+
+  public String getInterceptors() {
+    return interceptors;
+  }
+
+  public void setInterceptors(String interceptors) {
+    this.interceptors = interceptors;
   }
 
 

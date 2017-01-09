@@ -10,13 +10,15 @@ import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 @SPI("random")
 public class RandomServiceLoadBalancer implements ServiceLoadBalancer {
 
+  private static Random rnd = new Random();
+
   @Override
   public ServiceProviderDescriptor choose(List<ServiceProviderDescriptor> sds, ServiceContext sc) {
     if (sds == null || sds.size() == 0)
       return null;
     if (sds.size() == 1)
       return sds.get(0);
-    return sds.get(new Random().nextInt(sds.size()));
+    return sds.get(rnd.nextInt(sds.size()));
   }
 
 }

@@ -1,9 +1,7 @@
 package com.seaky.hamster.core.rpc.protocol.hamster;
 
-import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.commons.lang.StringUtils;
+import java.util.concurrent.ConcurrentHashMap;
 
 // 请求的信息
 // 编码
@@ -25,10 +23,10 @@ public class HamsterRequest {
   // 服务名字
   private String serviceName;
   // 参数
-  private byte[] params;
+  private byte[][] params;
 
   // 附加信息，用于框架或者扩展
-  private Map<String, String> attachments;
+  private Map<String, Object> attachments = new ConcurrentHashMap<>();
 
   /**
    * @return the body
@@ -47,8 +45,6 @@ public class HamsterRequest {
    * @param serviceName the serviceName to set
    */
   public void setServiceName(String serviceName) {
-    if (StringUtils.isBlank(serviceName))
-      throw new RuntimeException("service name can not be null");
     this.serviceName = serviceName;
   }
 
@@ -57,20 +53,18 @@ public class HamsterRequest {
   /**
    * @return the attachments
    */
-  public Map<String, String> getAttachments() {
+  public Map<String, Object> getAttachments() {
     return attachments;
   }
 
   /**
    * @param attachments the attachments to set
    */
-  public void setAttachments(Map<String, String> attachments) {
+  public void setAttachments(Map<String, Object> attachments) {
     this.attachments = attachments;
   }
 
-  public void addAttachment(String key, String value) {
-    if (attachments == null)
-      attachments = new HashMap<String, String>();
+  public void addAttachment(String key, Object value) {
     attachments.put(key, value);
   }
 
@@ -107,14 +101,14 @@ public class HamsterRequest {
   /**
    * @return the params
    */
-  public byte[] getParams() {
+  public byte[][] getParams() {
     return params;
   }
 
   /**
    * @param params the params to set
    */
-  public void setParams(byte[] params) {
+  public void setParams(byte[][] params) {
     this.params = params;
   }
 
@@ -163,7 +157,6 @@ public class HamsterRequest {
   public void setReferGroup(String referGroup) {
     this.referGroup = referGroup;
   }
-
 
 
 }

@@ -16,8 +16,8 @@ import com.seaky.hamster.core.rpc.exception.RpcException;
 import com.seaky.hamster.core.rpc.interceptor.InterceptorSupportService;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
-import com.seaky.hamster.core.rpc.protocol.RequestExtractor;
-import com.seaky.hamster.core.rpc.protocol.Response;
+import com.seaky.hamster.core.rpc.protocol.ProtocolResponseBody;
+import com.seaky.hamster.core.rpc.protocol.RequestConvertor;
 import com.seaky.hamster.core.rpc.trace.ClientCallExceptionTrace;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
@@ -39,7 +39,7 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
       }
     }
     try {
-      final SettableFuture<Void> connectFuture = transport.connect(sc);
+      final SettableFuture<Void> connectFuture = transport.connect();
       if (connectFuture.isDone()) {
         connectHandler(result, connectFuture, transport, executor, sc, interceptors);
       } else {
@@ -56,8 +56,9 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
     } catch (Exception e) {
       addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE,
           ServiceContextUtils.getServerHost(sc) + ":" + ServiceContextUtils.getServerPort(sc), e);
-      Response rsp = ServiceContextUtils.getResponse(sc);
+      ProtocolResponseBody rsp = ServiceContextUtils.getResponseBody(sc);
       rsp.setResult(e);
+      ServiceContextUtils.getResponseHeader(sc).setException(true);
       postProcess(sc, interceptors);
       setFuture(sc, result);
       return result;
@@ -71,13 +72,17 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
       final List<ServiceInterceptor> interceptors) {
     try {
       connectFuture.get();
+      ServiceContextUtils.setClientHost(sc,
+          transport.getLocalAddress().getAddress().getHostAddress());
+      ServiceContextUtils.setClientPort(sc, transport.getLocalAddress().getPort());
     } catch (InterruptedException | CancellationException e) {
       // 连接请求被中断，需要用户自行处理，非业务异常
       String addr = Utils.socketAddrToString(transport.getRemoteAddress());
-      CancelConnectToRemoteServerException proex =
-          new CancelConnectToRemoteServerException(ServiceContextUtils.getServiceName(sc), addr, e);
+      CancelConnectToRemoteServerException proex = new CancelConnectToRemoteServerException(
+          ServiceContextUtils.getRequestHeader(sc).getServiceName(), addr, e);
       addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE, addr, e);
-      ServiceContextUtils.getResponse(sc).setResult(proex);
+      ServiceContextUtils.getResponseBody(sc).setResult(proex);
+      ServiceContextUtils.getResponseHeader(sc).setException(true);
       setFuture(sc, result);
       if (e instanceof InterruptedException)
         Thread.currentThread().interrupt();
@@ -86,16 +91,19 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
       // 连接请求被中断，需要用户自行处理，非业务异常
       String addr = Utils.socketAddrToString(transport.getRemoteAddress());
       ErrorConnectRemoteServerException proex = new ErrorConnectRemoteServerException(
-          ServiceContextUtils.getServiceName(sc), addr, e.getCause());
+          ServiceContextUtils.getRequestHeader(sc).getServiceName(), addr, e.getCause());
       addException(sc, ClientCallExceptionTrace.CONNECT_SERVICE_INSTANCE, addr, e.getCause());
-      ServiceContextUtils.getResponse(sc).setResult(proex);
+      ServiceContextUtils.getResponseBody(sc).setResult(proex);
+      ServiceContextUtils.getResponseHeader(sc).setException(true);
+
       setFuture(sc, result);
       return;
     }
     // 连接成功了,写网络
     try {
-      RequestExtractor<Req> reqWriter = protocolExtensionFactory.getRequestExtractor();
-      Req req = reqWriter.extractFrom(sc);
+      RequestConvertor<Req> reqWriter = protocolExtensionFactory.getRequestConvertor();
+      Req req = reqWriter.createRequest(ServiceContextUtils.getRequestHeader(sc),
+          ServiceContextUtils.getRequestBody(sc));
       final SettableFuture<Rsp> r = transport.send(req, sc);
 
       r.addListener(new Runnable() {
@@ -107,7 +115,8 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
     } catch (Exception e) {
       addException(sc, ClientCallExceptionTrace.SEND_SERVICE_INSTANCE,
           Utils.socketAddrToString(transport.getRemoteAddress()), e.getCause());
-      ServiceContextUtils.getResponse(sc).setResult(e);
+      ServiceContextUtils.getResponseBody(sc).setResult(e);
+      ServiceContextUtils.getResponseHeader(sc).setException(true);
       postProcess(sc, interceptors);
       setFuture(sc, result);
     }
@@ -121,7 +130,7 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
       r.get();
     } catch (CancellationException | InterruptedException e) {
       CancelSendToRemoteServer e1 =
-          new CancelSendToRemoteServer(ServiceContextUtils.getServiceName(sc),
+          new CancelSendToRemoteServer(ServiceContextUtils.getRequestHeader(sc).getServiceName(),
               Utils.generateKey(ServiceContextUtils.getServerHost(sc),
                   String.valueOf(ServiceContextUtils.getServerPort(sc))),
               e);
@@ -129,7 +138,8 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
           Utils.generateKey(ServiceContextUtils.getServerHost(sc),
               String.valueOf(ServiceContextUtils.getServerPort(sc))),
           e);
-      ServiceContextUtils.getResponse(sc).setResult(e1);
+      ServiceContextUtils.getResponseBody(sc).setResult(e1);
+      ServiceContextUtils.getResponseHeader(sc).setException(true);
       if (e instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
@@ -141,17 +151,20 @@ public class ClientInterceptorService<Req, Rsp> extends InterceptorSupportServic
           innere);
       if (innere instanceof RpcException) {
         if (innere.getCause() != null) {
-          ServiceContextUtils.getResponse(sc).setResult(innere.getCause());
+          ServiceContextUtils.getResponseBody(sc).setResult(innere.getCause());
+          ServiceContextUtils.getResponseHeader(sc).setException(true);
         } else {
-          ServiceContextUtils.getResponse(sc).setResult(innere);
+          ServiceContextUtils.getResponseBody(sc).setResult(innere);
+          ServiceContextUtils.getResponseHeader(sc).setException(true);
         }
       } else {
-        ErrorSendToRemoteServerException e1 =
-            new ErrorSendToRemoteServerException(ServiceContextUtils.getServiceName(sc),
-                Utils.generateKey(ServiceContextUtils.getServerHost(sc),
-                    String.valueOf(ServiceContextUtils.getServerPort(sc))),
-                innere);
-        ServiceContextUtils.getResponse(sc).setResult(e1);
+        ErrorSendToRemoteServerException e1 = new ErrorSendToRemoteServerException(
+            ServiceContextUtils.getRequestHeader(sc).getServiceName(),
+            Utils.generateKey(ServiceContextUtils.getServerHost(sc),
+                String.valueOf(ServiceContextUtils.getServerPort(sc))),
+            innere);
+        ServiceContextUtils.getResponseBody(sc).setResult(e1);
+        ServiceContextUtils.getResponseHeader(sc).setException(true);
       }
     } finally {
       postProcess(sc, interceptors);

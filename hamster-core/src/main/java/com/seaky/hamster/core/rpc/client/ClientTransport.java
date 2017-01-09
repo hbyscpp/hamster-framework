@@ -5,21 +5,21 @@ import java.net.InetSocketAddress;
 import com.google.common.util.concurrent.SettableFuture;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 
-public interface ClientTransport<Req,Rsp> {
+public interface ClientTransport<Req, Rsp> {
 
-	SettableFuture<Void> connect(ServiceContext sc);
-	
-	SettableFuture<Rsp> send(Req req,ServiceContext sc);
+  SettableFuture<Void> connect();
 
-	InetSocketAddress getLocalAddress();
+  SettableFuture<Rsp> send(Req req, ServiceContext sc);
 
-	InetSocketAddress getRemoteAddress();
+  InetSocketAddress getLocalAddress();
 
-	//只有连接状态返回true
-	boolean isConnected();
-	
-	//正在连接的状态
-	boolean isClosed();
-	
-	void close();
+  InetSocketAddress getRemoteAddress();
+
+  // 只有连接状态返回true
+  boolean isConnected();
+
+  // 正在连接的状态
+  boolean isClosed();
+
+  void close();
 }

@@ -16,6 +16,7 @@ import java.util.Map;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.serializers.CompatibleFieldSerializer;
 import com.seaky.hamster.core.annotations.SPI;
 
 import de.javakaffee.kryoserializers.ArraysAsListSerializer;
@@ -73,6 +74,7 @@ public class KryoSerializer implements Serializer {
       _kryo.register(InetSocketAddress.class, new InetSocketAddressSerializer());
       UnmodifiableCollectionsSerializer.registerSerializers(_kryo);
       SynchronizedCollectionsSerializer.registerSerializers(_kryo);
+      _kryo.setDefaultSerializer(CompatibleFieldSerializer.class);
       return _kryo;
     }
   };
@@ -123,9 +125,13 @@ public class KryoSerializer implements Serializer {
       String host = input.readString();
       int port = input.readInt(true);
       return new InetSocketAddress(host, port);
-
     }
 
+  }
+
+  @Override
+  public boolean isText() {
+    return false;
   }
 
 }

@@ -129,4 +129,11 @@ public class ServiceController {
     return rsp;
   }
 
+  @RequestMapping("/appCycles")
+  public Object cycles() {
+    Response rsp = new Response();
+    rsp.setData(etcdRegisterationManageService.getAppCycles());
+    return rsp;
+  }
+
 }

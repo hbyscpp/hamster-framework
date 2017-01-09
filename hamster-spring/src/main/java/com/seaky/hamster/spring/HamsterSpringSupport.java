@@ -1,17 +1,21 @@
 package com.seaky.hamster.spring;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import com.seaky.hamster.core.ClientHelper;
 import com.seaky.hamster.core.ServerHelper;
+import com.seaky.hamster.core.objectfactory.ObjectCreatorFactory;
 import com.seaky.hamster.core.rpc.client.Client;
 import com.seaky.hamster.core.rpc.client.ClientConfig;
 import com.seaky.hamster.core.rpc.client.ClientResourceManager;
@@ -81,76 +85,114 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
 
     T obj = null;
     if (config.getBeanId() != null) {
-      obj = (T) context.getBean(config.getBeanId());
+      obj = context.getBean(config.getBeanId(), cls);
     } else {
       obj = context.getBean(cls);
     }
     EndpointConfig ec = createEndPonintConfig(config);
+    Map<String, EndpointConfig> mconfigs = createExportMethodConfig(config.getMethodConfigs());
+    ServerHelper.exportInterface(allServers.get(config.getServerId()), cls, obj, ec, mconfigs);
+  }
 
-    ServerHelper.exportInterface(allServers.get(config.getServerId()), cls, obj, ec, null);
+  private static Map<String, EndpointConfig> createExportMethodConfig(
+      Map<String, ServiceConfig> sconfigs) {
+    Map<String, EndpointConfig> configs = new HashMap<String, EndpointConfig>();
+    if (sconfigs != null) {
+      for (Entry<String, ServiceConfig> entry : sconfigs.entrySet()) {
+        configs.put(entry.getKey(), createEndPonintConfig(entry.getValue()));
+      }
+    }
+    return configs;
 
   }
 
-  private static EndpointConfig createEndPonintConfig(ClassExportConfig config) {
+  private static Map<String, EndpointConfig> createReferenceMethodConfig(
+      Map<String, ReferenceConfig> sconfigs) {
+    Map<String, EndpointConfig> configs = new HashMap<String, EndpointConfig>();
+    if (sconfigs != null) {
+      for (Entry<String, ReferenceConfig> entry : sconfigs.entrySet()) {
+        configs.put(entry.getKey(), createEndPonintConfig(entry.getValue()));
+      }
+    }
+    return configs;
+
+  }
+
+  private static EndpointConfig createEndPonintConfig(ServiceConfig config) {
     EndpointConfig ec = new EndpointConfig();
 
-    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, config.getApp(), true));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, config.getGroup(), true));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, config.getVersion(), true));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_MAX_CONCURRENT,
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_APP, config.getApp(), true));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_GROUP, config.getGroup(), true));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_VERSION, config.getVersion(), true));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_MAX_CONCURRENT,
         String.valueOf(config.getMaxConcurrent()), false));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR,
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR,
         config.getExceptionConvertor(), false));
-
+    addConfigItem(ec,
+        new ConfigItem(ConfigConstans.PROVIDER_INTERCEPTORS, config.getInterceptors(), true));
     if (config.isHidden() == null) {
       if (System.getProperty("hamster.provider.hidden") != null) {
-        ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_HIDDERN,
+        addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_HIDDERN,
             System.getProperty("hamster.provider.hidden"), false));
       } else {
-        ec.addConfigItem(
+        addConfigItem(ec,
             new ConfigItem(ConfigConstans.PROVIDER_HIDDERN, String.valueOf(false), false));
       }
     } else {
-      ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_HIDDERN,
+      addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_HIDDERN,
           String.valueOf(config.isHidden()), false));
     }
-    ec.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_FORCE_ACCESS,
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_FORCE_ACCESS,
         String.valueOf(config.isForceAccess()), false));
     return ec;
   }
 
-  private static EndpointConfig createEndPonintConfig(ClassReferenceConfig config) {
+  private static EndpointConfig createEndPonintConfig(ReferenceConfig config) {
     EndpointConfig ec = new EndpointConfig();
-    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, config.getApp(), true));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, config.getGroup(), true));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, config.getVersion(), true));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_MAX_CONCURRENT,
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_APP, config.getApp(), true));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_GROUP, config.getGroup(), true));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_VERSION, config.getVersion(), true));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_MAX_CONCURRENT,
         String.valueOf(config.getMaxConcurrent()), false));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_READ_TIMEOUT,
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_READ_TIMEOUT,
         String.valueOf(config.getReadtimeout()), false));
-    ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR,
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR,
         config.getExceptionConvertor(), false));
     if (StringUtils.isNotBlank(config.getProviderAddresses()))
-      ec.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_SERVICE_PROVIDER_ADDRESSES,
+      addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_SERVICE_PROVIDER_ADDRESSES,
           config.getProviderAddresses(), false));
+    if (config.getInterceptors() != null) {
+      addConfigItem(ec,
+          new ConfigItem(ConfigConstans.PROVIDER_INTERCEPTORS, config.getInterceptors(), true));
+    }
     return ec;
   }
 
+  private static void addConfigItem(EndpointConfig ec, ConfigItem item) {
+    if (item.getValue() == null)
+      return;
+    ec.addConfigItem(item);
+  }
+
   public <T> T referenceService(Class<T> cls, ClassReferenceConfig config) {
+
+    Map<String, EndpointConfig> mconfigs = createReferenceMethodConfig(config.getMethodConfigs());
     return ClientHelper.referInterface(allClients.get(config.getClientId()), cls,
-        createEndPonintConfig(config), null);
+        createEndPonintConfig(config), mconfigs);
   }
 
   public <T, V> V referenceAsynService(Class<T> cls, Class<V> asynClass,
       ClassReferenceConfig config) {
+    Map<String, EndpointConfig> mconfigs = createReferenceMethodConfig(config.getMethodConfigs());
     return ClientHelper.referAsynInterface(allClients.get(config.getClientId()), cls, asynClass,
-        createEndPonintConfig(config), null);
+        createEndPonintConfig(config), mconfigs);
   }
 
   public <T, V> V referenceReactiveService(Class<T> cls, Class<V> reactiveClass,
       ClassReferenceConfig config) {
+    Map<String, EndpointConfig> mconfigs = createReferenceMethodConfig(config.getMethodConfigs());
     return ClientHelper.referReactiveInterface(allClients.get(config.getClientId()), cls,
-        reactiveClass, createEndPonintConfig(config), null);
+        reactiveClass, createEndPonintConfig(config), mconfigs);
   }
 
 
@@ -169,6 +211,7 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
 
   @PostConstruct
   public void afterPropertiesSet() throws Exception {
+    initSpringObjectCreator();
     initRegisterationService();
     initServer();
     initClient();
@@ -189,6 +232,12 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
     if (service != null)
       service.close();
 
+  }
+
+  public void initSpringObjectCreator() {
+    SpringObjectCreator creator = new SpringObjectCreator();
+    creator.setApplicationContext(context);
+    ObjectCreatorFactory.registerObjectCreator("spring", creator);
   }
 
   public abstract void initRegisterationService();

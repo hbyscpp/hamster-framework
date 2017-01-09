@@ -3,10 +3,15 @@ package com.seaky.hamster.core.rpc.config;
 public interface ConfigConstans {
 
 
-  // 消费端调用的超时时间 毫秒为单位
+  // 消费端调用的超时时间 毫秒为单位,此超时包含，网络，容错策略里面的超时
   public static final String REFERENCE_READ_TIMEOUT = "sr.readtimeout";
 
-  public static final int REFERENCE_READ_TIMEOUT_DEFAULT = 3000;
+  public static final int REFERENCE_READ_TIMEOUT_DEFAULT = 5000;
+
+  // 调用的总时常，小于0代表不做限定
+  public static final String REFERENCE_CALL_TIMEOUT = "sr.calltimeout";
+
+  public static final int REFERENCE_CALL_TIMEOUT_DEFAULT = -1;
 
   // 消费方集群容错策略
   public static final String REFERENCE_CLUSTER = "sr.cluster";
@@ -57,6 +62,8 @@ public interface ConfigConstans {
 
   public static final String REFERENCE_HOST = "sr.host";
 
+
+
   // 引用指定的provider的地址127.0.0.1:-1;127.
   public static final String REFERENCE_SERVICE_PROVIDER_ADDRESSES = "sr.provider.addresses";
 
@@ -71,13 +78,37 @@ public interface ConfigConstans {
 
   public static final String REFERENCE_EXCEPTION_CONVERTOR = "sr.exception.convertor";
 
-  // 服务提供方和引用方都可以配置
-  public static final String SERVICE_MAXCONCURRENT = "s.maxconcurrent";
+  // 断路器 默认恢复时间10s
+  public static final String REFERENCE_CIRCUITBREAKER_HALFOPEN_DELAY =
+      "sr.circuitbreaker.halfopen.delay";
+  public static final int REFERENCE_CIRCUITBREAKER_HALFOPEN_DELAY_DEFAULT = 10000;
 
-  public static final String SERVICE_INTERCEPTOR = "s.interceptor";
+  public static final String REFERENCE_CIRCUITBREAKER_OPEN_TOTAL_NUMBER =
+      "sr.circuitbreaker.open.total.number";
 
-  public static final String SERVICE_THREADPOOL = "s.threadpool";
+  public static final int REFERENCE_CIRCUITBREAKER_OPEN_TOTAL_NUMBER_DEFAULT = 3;
 
+  public static final String REFERENCE_CIRCUITBREAKER_OPEN_FAIL_NUMBER =
+      "sr.circuitbreaker.open.fail.number";
+
+  public static final int REFERENCE_CIRCUITBREAKER_OPEN_FAIL_NUMBER_DEFAULT = 3;
+
+
+  public static final String REFERENCE_CIRCUITBREAKER_CLOSE_TOTAL_NUMBER =
+      "sr.circuitbreaker.close.total.number";
+
+  public static final int REFERENCE_CIRCUITBREAKER_CLOSE_TOTAL_NUMBER_DEFAULT = 3;
+
+  public static final String REFERENCE_CIRCUITBREAKER_CLOSE_SUCCESS_NUMBER =
+      "sr.circuitbreaker.close.success.number";
+
+  public static final int REFERENCE_CIRCUITBREAKER_CLOSE_SUCCESS_NUMBER_DEFAULT = 3;
+
+  public static final String REFERENCE_MAX_PROTOCOL_VERSION = "sr.max.protocol.version";
+
+  public static final short REFERENCE_MAX_PROTOCOL_VERSION_DEFAULT = 0;
+
+  public static final String REFERENCE_FRAMEWORK_VERSION = "sr.framework.version";
 
 
   // 服务提供方的配置
@@ -122,6 +153,10 @@ public interface ConfigConstans {
 
   public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = 100;
 
+  public static final String PROVIDER_WEIGHT = "sp.weight";
+
+  public static final int PROVIDER_WEIGHT_DEFAULT = 1;
+
 
   public static final String PROVIDER_INTERCEPTORS = "sp.interceptors";
 
@@ -134,6 +169,12 @@ public interface ConfigConstans {
   public static final String PROVIDER_FORCE_ACCESS = "sp.forceaccess";
 
   public static final boolean PROVIDER_FORCE_ACCESS_DEFAULT = false;
+
+  public static final String PROVIDER_MAX_PROTOCOL_VERSION = "sp.max.protocol.version";
+
+  public static final short PROVIDER_MAX_PROTOCOL_VERSION_DEFAULT = 0;
+
+  public static final String PROVIDER_FRAMEWORK_VERSION = "sp.framework.version";
 
 
 }

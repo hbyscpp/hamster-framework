@@ -1,5 +1,6 @@
 package com.seaky.hamster.spring;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,8 +15,12 @@ public class ClassExportConfig extends ServiceConfig {
 
 
 
-  public void addConfig(String name, ServiceConfig config) {
+  public void addMethodConfig(String name, ServiceConfig config) {
     configs.put(name, config);
+  }
+
+  public Map<String, ServiceConfig> getMethodConfigs() {
+    return Collections.unmodifiableMap(configs);
   }
 
 

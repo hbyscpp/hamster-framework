@@ -16,7 +16,7 @@ import com.seaky.hamster.core.rpc.server.Server;
 @SPI("hamster")
 public interface ProtocolExtensionFactory<Req, Rsp> {
 
-  RequestExtractor<Req> getRequestExtractor();
+  RequestConvertor<Req> getRequestConvertor();
 
   ResponseConvertor<Rsp> getResponseConvertor();
 
@@ -30,6 +30,11 @@ public interface ProtocolExtensionFactory<Req, Rsp> {
 
   String protocolName();
 
+  // 支持的最大协议版本
+  short protocolMaxVersion();
 
+  Req createHeartbeatRequest();
+
+  Rsp createHeartbeatResponse();
 
 }

@@ -1,191 +1,130 @@
 package com.seaky.hamster.core.rpc.common;
 
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
-import com.seaky.hamster.core.rpc.protocol.Attachments;
-import com.seaky.hamster.core.rpc.protocol.Response;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestBody;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestHeader;
+import com.seaky.hamster.core.rpc.protocol.ProtocolResponseBody;
+import com.seaky.hamster.core.rpc.protocol.ProtocolResponseHeader;
 import com.seaky.hamster.core.rpc.trace.ClientCallExceptionTrace;
 
 public class ServiceContextUtils {
 
-	public static String getServiceName(ServiceContext sc) {
+  public static ProtocolRequestHeader getRequestHeader(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.SERVICENAME, String.class);
-	}
+    return sc.getAttribute(ServiceContext.REQUEST_HEADER, ProtocolRequestHeader.class);
+  }
 
-	public static String getApp(ServiceContext sc) {
+  public static void setRequestHeader(ServiceContext sc, ProtocolRequestHeader header) {
 
-		return sc.getAttribute(ServiceContext.APP, String.class);
-	}
+    sc.setAttribute(ServiceContext.REQUEST_HEADER, header);
+  }
 
-	public static String getGroup(ServiceContext sc) {
+  public static ProtocolRequestBody getRequestBody(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.GROUP, String.class);
-	}
+    return sc.getAttribute(ServiceContext.REQUEST_BODY, ProtocolRequestBody.class);
+  }
 
-	public static String getVersion(ServiceContext sc) {
+  public static void setRequestBody(ServiceContext sc, ProtocolRequestBody body) {
 
-		return sc.getAttribute(ServiceContext.VERSION, String.class);
-	}
+    sc.setAttribute(ServiceContext.REQUEST_BODY, body);
+  }
 
-	public static String getReferenceApp(ServiceContext sc) {
+  public static ProtocolResponseHeader getResponseHeader(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.REFERENCE_APP, String.class);
-	}
+    return sc.getAttribute(ServiceContext.RESPONSE_HEADER, ProtocolResponseHeader.class);
+  }
 
-	public static String getReferenceGroup(ServiceContext sc) {
+  public static void setResponseHeader(ServiceContext sc, ProtocolResponseHeader header) {
 
-		return sc.getAttribute(ServiceContext.REFERENCE_GROUP, String.class);
-	}
+    sc.setAttribute(ServiceContext.RESPONSE_HEADER, header);
+  }
 
-	public static String getReferenceVersion(ServiceContext sc) {
+  public static ProtocolResponseBody getResponseBody(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.REFERENCE_VERSION, String.class);
-	}
+    return sc.getAttribute(ServiceContext.RESPONSE_BODY, ProtocolResponseBody.class);
+  }
 
-	public static EndpointConfig getReferenceConfig(ServiceContext sc) {
+  public static void setResponseBody(ServiceContext sc, ProtocolResponseBody body) {
 
-		return sc.getAttribute(ServiceContext.REFERENCE_CONFIG,
-				EndpointConfig.class);
-	}
+    sc.setAttribute(ServiceContext.RESPONSE_BODY, body);
+  }
 
-	public static EndpointConfig getProviderConfig(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.PROVIDER_CONFIG,
-				EndpointConfig.class);
-	}
 
-	public static String getServerHost(ServiceContext sc) {
+  public static EndpointConfig getReferenceConfig(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.SERVER_HOST, String.class);
-	}
+    return sc.getAttribute(ServiceContext.REFERENCE_CONFIG, EndpointConfig.class);
+  }
 
-	public static Integer getServerPort(ServiceContext sc) {
+  public static void setReferenceConfig(ServiceContext sc, EndpointConfig config) {
 
-		return sc.getAttribute(ServiceContext.SERVER_PORT, Integer.class);
-	}
+    sc.setAttribute(ServiceContext.REFERENCE_CONFIG, config);
+  }
 
-	public static String getClientHost(ServiceContext sc) {
+  public static EndpointConfig getProviderConfig(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.CLINET_HOST, String.class);
-	}
+    return sc.getAttribute(ServiceContext.PROVIDER_CONFIG, EndpointConfig.class);
+  }
 
-	public static Integer getClientPort(ServiceContext sc) {
+  public static String getServerHost(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.CLINET_PORT, Integer.class);
-	}
+    return sc.getAttribute(ServiceContext.SERVER_HOST, String.class);
+  }
 
-	public static Object[] getRequestParams(ServiceContext sc) {
+  public static Integer getServerPort(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.REQUEST_PARAMS, Object[].class);
-	}
+    return sc.getAttribute(ServiceContext.SERVER_PORT, Integer.class);
+  }
 
-	public static Attachments getRequestAttachments(ServiceContext sc) {
+  public static String getClientHost(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.REQUEST_ATTACHMENTS,
-				Attachments.class);
-	}
+    return sc.getAttribute(ServiceContext.CLINET_HOST, String.class);
+  }
 
-	public static Response getResponse(ServiceContext sc) {
+  public static Integer getClientPort(ServiceContext sc) {
 
-		return sc.getAttribute(ServiceContext.RESPONSE, Response.class);
-	}
+    return sc.getAttribute(ServiceContext.CLINET_PORT, Integer.class);
+  }
 
-	
-	
-	public static ClientCallExceptionTrace getInterceptorExceptionTrace(ServiceContext sc) {
-		return sc.getAttribute(ServiceContext.EXCEPTION_TRACE, ClientCallExceptionTrace.class);
-	}
-	
-	
-	//-------------------set
-	public static void setServiceName(ServiceContext sc, String serviceName) {
 
-		sc.setAttribute(ServiceContext.SERVICENAME, serviceName);
-	}
 
-	public static void setApp(ServiceContext sc, String app) {
+  public static ClientCallExceptionTrace getInterceptorExceptionTrace(ServiceContext sc) {
+    return sc.getAttribute(ServiceContext.EXCEPTION_TRACE, ClientCallExceptionTrace.class);
+  }
 
-		sc.setAttribute(ServiceContext.APP, app);
-	}
 
-	public static void setGroup(ServiceContext sc, String group) {
+  // -------------------set
 
-		sc.setAttribute(ServiceContext.GROUP, group);
-	}
 
-	public static void setVersion(ServiceContext sc, String version) {
+  public static void setProviderConfig(ServiceContext sc, EndpointConfig config) {
 
-		sc.setAttribute(ServiceContext.VERSION, version);
-	}
+    sc.setAttribute(ServiceContext.PROVIDER_CONFIG, config);
+  }
 
-	public static void setReferenceApp(ServiceContext sc, String referenceApp) {
+  public static void setServerHost(ServiceContext sc, String host) {
 
-		sc.setAttribute(ServiceContext.REFERENCE_APP, referenceApp);
-	}
+    sc.setAttribute(ServiceContext.SERVER_HOST, host);
+  }
 
-	public static void setReferenceGroup(ServiceContext sc,
-			String referenceGroup) {
+  public static void setServerPort(ServiceContext sc, int port) {
 
-		sc.setAttribute(ServiceContext.REFERENCE_GROUP, referenceGroup);
-	}
+    sc.setAttribute(ServiceContext.SERVER_PORT, port);
+  }
 
-	public static void setReferenceVersion(ServiceContext sc,
-			String referenceVersion) {
+  public static void setClientHost(ServiceContext sc, String host) {
 
-		sc.setAttribute(ServiceContext.REFERENCE_VERSION, referenceVersion);
-	}
+    sc.setAttribute(ServiceContext.CLINET_HOST, host);
+  }
 
-	public static void setReferenceConfig(ServiceContext sc,
-			EndpointConfig config) {
+  public static void setClientPort(ServiceContext sc, int port) {
 
-		sc.setAttribute(ServiceContext.REFERENCE_CONFIG, config);
-	}
+    sc.setAttribute(ServiceContext.CLINET_PORT, port);
+  }
 
-	public static void setProviderConfig(ServiceContext sc,
-			EndpointConfig config) {
 
-		sc.setAttribute(ServiceContext.PROVIDER_CONFIG, config);
-	}
-
-	public static void setServerHost(ServiceContext sc, String host) {
-
-		sc.setAttribute(ServiceContext.SERVER_HOST, host);
-	}
-
-	public static void setServerPort(ServiceContext sc, int port) {
-
-		sc.setAttribute(ServiceContext.SERVER_PORT, port);
-	}
-
-	public static void setClientHost(ServiceContext sc, String host) {
-
-		sc.setAttribute(ServiceContext.CLINET_HOST, host);
-	}
-
-	public static void setClientPort(ServiceContext sc, int port) {
-
-		sc.setAttribute(ServiceContext.CLINET_PORT, port);
-	}
-
-	public static void setRequestParams(ServiceContext sc, Object[] params) {
-
-		sc.setAttribute(ServiceContext.REQUEST_PARAMS, params);
-	}
-
-	public static void setRequestAttachments(ServiceContext sc,
-			Attachments attachments) {
-
-		sc.setAttribute(ServiceContext.REQUEST_ATTACHMENTS, attachments);
-	}
-
-	public static void setResponse(ServiceContext sc, Response response) {
-
-		sc.setAttribute(ServiceContext.RESPONSE, response);
-	}
-
-	public static void setInterceptorExceptionTrace(ServiceContext sc,
-			ClientCallExceptionTrace trace) {
-		sc.setAttribute(ServiceContext.EXCEPTION_TRACE, trace);
-	}
+  public static void setInterceptorExceptionTrace(ServiceContext sc,
+      ClientCallExceptionTrace trace) {
+    sc.setAttribute(ServiceContext.EXCEPTION_TRACE, trace);
+  }
 
 }

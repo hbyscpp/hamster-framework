@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -14,6 +15,7 @@ import com.seaky.hamster.core.rpc.client.cluster.ClusterService;
 import com.seaky.hamster.core.rpc.client.cluster.ClusterServiceFactory;
 import com.seaky.hamster.core.rpc.client.loadbalancer.ServiceLoadBalancer;
 import com.seaky.hamster.core.rpc.client.router.ServiceRouter;
+import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.common.DefaultServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
@@ -22,18 +24,24 @@ import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.config.ReadOnlyEndpointConfig;
 import com.seaky.hamster.core.rpc.exception.NoRouteServiceProviderException;
 import com.seaky.hamster.core.rpc.exception.NoServiceProviderMatchException;
+import com.seaky.hamster.core.rpc.exception.RpcTimeoutException;
 import com.seaky.hamster.core.rpc.exception.ServiceProviderNotFoundException;
 import com.seaky.hamster.core.rpc.interceptor.ProcessPhase;
 import com.seaky.hamster.core.rpc.interceptor.ServiceInterceptor;
-import com.seaky.hamster.core.rpc.protocol.Attachments;
-import com.seaky.hamster.core.rpc.protocol.Response;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestBody;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestHeader;
+import com.seaky.hamster.core.rpc.protocol.ProtocolResponseBody;
+import com.seaky.hamster.core.rpc.protocol.ProtocolResponseHeader;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
 import com.seaky.hamster.core.rpc.trace.ClientCallExceptionTrace;
 import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.EventExecutorGroup;
+import net.jodah.failsafe.CircuitBreaker;
 
 public class AsynServiceExecutor<Req, Rsp> {
 
@@ -43,21 +51,45 @@ public class AsynServiceExecutor<Req, Rsp> {
     this.client = client;
   }
 
-  public void callService(ReferenceServiceRequest request, SettableFuture<Object> result,
-      EndpointConfig config) {
+  public void callService(final ReferenceServiceRequest request,
+      final SettableFuture<Object> result, EndpointConfig config, boolean isPreConnect) {
 
     // 1初始化context
     ServiceContext sc = new DefaultServiceContext(ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE);
-    ServiceContextUtils.setServiceName(sc, request.getServiceName());
-    ServiceContextUtils.setReferenceApp(sc, request.getReferenceApp());
-    ServiceContextUtils.setReferenceVersion(sc, request.getReferenceVersion());
-    ServiceContextUtils.setReferenceGroup(sc, request.getReferenceGroup());
-    ServiceContextUtils.setRequestParams(sc, request.getParams());
-    ServiceContextUtils.setRequestAttachments(sc, new Attachments());
+
+    ProtocolRequestHeader header = new ProtocolRequestHeader();
+    header.setServiceName(request.getServiceName());
+    header.setReferenceApp(request.getReferenceApp());
+    header.setReferenceGroup(request.getReferenceGroup());
+    header.setReferenceVersion(request.getReferenceVersion());
+    ProtocolRequestBody body = new ProtocolRequestBody();
+    body.setParams(request.getParams());
+    ServiceContextUtils.setRequestHeader(sc, header);
+    ServiceContextUtils.setRequestBody(sc, body);
     ServiceContextUtils.setReferenceConfig(sc, new ReadOnlyEndpointConfig(config));
-    ServiceContextUtils.setResponse(sc, new Response());
-    ServiceContextUtils.setInterceptorExceptionTrace(sc,
-        new ClientCallExceptionTrace(client.getAndIncrementTraceId()));
+    ProtocolResponseHeader rspheader = new ProtocolResponseHeader();
+    ServiceContextUtils.setResponseHeader(sc, rspheader);
+    ServiceContextUtils.setResponseBody(sc, new ProtocolResponseBody());
+
+    final long seqNum = client.getAndIncrementSeqNum();
+    header.getAttachments().putLong(Constants.SEQ_NUM_KEY, seqNum);
+    ServiceContextUtils.setInterceptorExceptionTrace(sc, new ClientCallExceptionTrace(seqNum));
+
+    if (!isPreConnect) {
+      int callTimeout = config.getValueAsInt(ConfigConstans.REFERENCE_CALL_TIMEOUT, -1);
+      if (callTimeout > 0) {
+        ClientResourceManager.getHashedWheelTimer().newTimeout(new TimerTask() {
+          @Override
+          public void run(Timeout timeout) throws Exception {
+            result.setException(new RpcTimeoutException(String.format(
+                "call service %s from app: %s,group:%s,version:%s,seq number:%d timeout",
+                request.getServiceName(), request.getReferenceApp(), request.getReferenceGroup(),
+                request.getReferenceVersion(), seqNum)));
+          }
+        }, callTimeout, TimeUnit.MILLISECONDS);
+        // TODO 统计超时次数
+      }
+    }
     boolean notUseThreadpoolConfig =
         config.getValueAsBoolean(ConfigConstans.REFERENCE_ASYNPOOL_THREAD_EXE, false);
 
@@ -65,7 +97,7 @@ public class AsynServiceExecutor<Req, Rsp> {
       // 异步计算线程之中执行
       EventExecutor executor = ClientResourceManager.getAsynExecutorPool().next();
       CallRemoteServiceTask<Req, Rsp> task =
-          new CallRemoteServiceTask<Req, Rsp>(client, sc, result, executor);
+          new CallRemoteServiceTask<Req, Rsp>(client, sc, result, executor, isPreConnect);
       executor.execute(task);
     } else {
       // 线程池执行
@@ -80,7 +112,7 @@ public class AsynServiceExecutor<Req, Rsp> {
           maxThread);
       EventExecutor executor = pool.next();
       CallRemoteServiceTask<Req, Rsp> task =
-          new CallRemoteServiceTask<Req, Rsp>(client, sc, result, executor);
+          new CallRemoteServiceTask<Req, Rsp>(client, sc, result, executor, isPreConnect);
       executor.execute(task);
     }
 
@@ -98,13 +130,15 @@ public class AsynServiceExecutor<Req, Rsp> {
 
     private EventExecutor executor;
 
+    private boolean isPreConnect;
 
     public CallRemoteServiceTask(AbstractClient<Req, Rsp> client, ServiceContext context,
-        SettableFuture<Object> result, EventExecutor executor) {
+        SettableFuture<Object> result, EventExecutor executor, boolean isPreConnect) {
       this.client = client;
       this.context = context;
       this.finalResult = result;
       this.executor = executor;
+      this.isPreConnect = isPreConnect;
     }
 
     @Override
@@ -112,12 +146,12 @@ public class AsynServiceExecutor<Req, Rsp> {
 
       // prProcess 和postProess 保证在同一个线程执行
       // 1执行interceptor
+      ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
       final List<ServiceInterceptor> interceptors = client.getServiceInterceptors(
-          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
-          ServiceContextUtils.getReferenceVersion(context),
-          ServiceContextUtils.getReferenceGroup(context), ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE);
+          header.getServiceName(), header.getReferenceApp(), header.getReferenceVersion(),
+          header.getReferenceGroup(), ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE);
       final int size = interceptors == null ? 0 : interceptors.size();
-      if (size > 0) {
+      if (size > 0 && !isPreConnect) {
         boolean isDone = client.getClientInterceptorService().preProcess(context, interceptors);
         if (isDone) {
           // 无需发送网络请求
@@ -131,23 +165,24 @@ public class AsynServiceExecutor<Req, Rsp> {
       ClusterService<Req, Rsp> clusterService = null;
       ServiceLoadBalancer loadBalancer = null;
       try {
-        sds = chooseServiceInstances();
+        sds = chooseServiceInstances(isPreConnect);
         loadBalancer = getLoadBalancer();
         clusterService = getClusterService(loadBalancer);
       } catch (Exception e) {
         // 执行出现问题
-        client.getClientInterceptorService().addException(context,
-            ClientCallExceptionTrace.SELECT_CLUSTER_SERVICE_PREPROCESS,
-            ServiceContextUtils.getServiceName(context), e);
-        postProcess(interceptors, size, e);
-        return;
+        if (!isPreConnect) {
+          client.getClientInterceptorService().addException(context,
+              ClientCallExceptionTrace.SELECT_CLUSTER_SERVICE_PREPROCESS, header.getServiceName(),
+              e);
+          postProcess(interceptors, size, e);
+          return;
+        }
       }
       try {
         clusterService.process(sds, executor, result);
       } catch (Exception e) {
         client.getClientInterceptorService().addException(context,
-            ClientCallExceptionTrace.CALL_CLUSTER_SERVICE,
-            ServiceContextUtils.getServiceName(context), e);
+            ClientCallExceptionTrace.CALL_CLUSTER_SERVICE, header.getServiceName(), e);
         postProcess(interceptors, size, e);
         return;
 
@@ -158,7 +193,7 @@ public class AsynServiceExecutor<Req, Rsp> {
           try {
             // 未发生任何异常
             Object obj = result.get();
-            ServiceContextUtils.getResponse(context).setResult(obj);
+            ServiceContextUtils.getResponseBody(context).setResult(obj);
             postProcess(interceptors, size, null);
             return;
           } catch (InterruptedException e) {
@@ -178,7 +213,9 @@ public class AsynServiceExecutor<Req, Rsp> {
     private void postProcess(final List<ServiceInterceptor> receiveInterceptors, final int size,
         Throwable e) {
       if (e != null) {
-        ServiceContextUtils.getResponse(context).setResult(e);
+        ServiceContextUtils.getResponseBody(context).setResult(e);
+        ServiceContextUtils.getResponseHeader(context).setException(true);
+
       }
       client.getClientInterceptorService().postProcess(context, receiveInterceptors, size);
       client.getClientInterceptorService().setFuture(context, finalResult);
@@ -191,66 +228,140 @@ public class AsynServiceExecutor<Req, Rsp> {
       ClusterServiceFactory csf =
           ExtensionLoaderConstants.CLUSTER_EXTENSION.findExtension(clusterName);
       if (csf == null) {
-        throw new RuntimeException("no service cluster found,name is " + clusterName);
+        throw new RuntimeException("no service cluster extension found,name is " + clusterName);
       }
       // 每个请求创建集群实例对象
       return csf.createService(client, loadbalancer, context);
     }
 
-    private List<ServiceProviderDescriptor> chooseServiceInstances() {
+    private List<ServiceProviderDescriptor> chooseServiceInstances(boolean isPreConnect)
+        throws ClassNotFoundException {
       // 2获取服务的所有实例
+      ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
       Collection<ServiceProviderDescriptor> allServiceDescriptors =
-          client.getAllServices(ServiceContextUtils.getServiceName(context));
+          client.getAllServices(header.getServiceName());
       if (allServiceDescriptors == null || allServiceDescriptors.size() == 0) {
-        throw new ServiceProviderNotFoundException(ServiceContextUtils.getServiceName(context));
+        throw new ServiceProviderNotFoundException(
+            String.format("service %s,reference app %s,reference group %s,reference version %s",
+                header.getServiceName(), header.getReferenceApp(), header.getReferenceGroup(),
+                header.getReferenceVersion()));
+      }
+
+      List<ServiceProviderDescriptor> allAvaiableSd = new ArrayList<ServiceProviderDescriptor>();
+      for (ServiceProviderDescriptor sd : allServiceDescriptors) {
+        CircuitBreaker cb = client.getCircuitBreaker(sd.getName(), sd.getApp(), sd.getGroup(),
+            sd.getVersion(), sd.getHost(), String.valueOf(sd.getPort()));
+        if (cb == null) {
+          cb = new CircuitBreaker();
+          int openFailNumber = ServiceContextUtils.getReferenceConfig(context).getValueAsInt(
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_OPEN_FAIL_NUMBER,
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_OPEN_FAIL_NUMBER_DEFAULT);
+          int openTotalNumber = ServiceContextUtils.getReferenceConfig(context).getValueAsInt(
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_OPEN_TOTAL_NUMBER,
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_OPEN_TOTAL_NUMBER_DEFAULT);
+          cb.withFailureThreshold(openFailNumber, openTotalNumber);
+
+          int closeSuccessNumber = ServiceContextUtils.getReferenceConfig(context).getValueAsInt(
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_CLOSE_SUCCESS_NUMBER,
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_CLOSE_SUCCESS_NUMBER_DEFAULT);
+          int closeTotalNumber = ServiceContextUtils.getReferenceConfig(context).getValueAsInt(
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_CLOSE_TOTAL_NUMBER,
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_CLOSE_TOTAL_NUMBER_DEFAULT);
+          cb.withFailureThreshold(closeSuccessNumber, closeTotalNumber);
+          cb.withSuccessThreshold(closeSuccessNumber, closeTotalNumber);
+          int halfOpenTime = ServiceContextUtils.getReferenceConfig(context).getValueAsInt(
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_HALFOPEN_DELAY,
+              ConfigConstans.REFERENCE_CIRCUITBREAKER_HALFOPEN_DELAY_DEFAULT);
+          cb.withDelay(halfOpenTime, TimeUnit.MILLISECONDS);
+          cb = client.putCircuitBreaker(sd.getName(), sd.getApp(), sd.getGroup(), sd.getVersion(),
+              sd.getHost(), String.valueOf(sd.getPort()), cb);
+        }
+        if (!cb.allowsExecution()) {
+          // 排除节点
+          continue;
+        }
+        allAvaiableSd.add(sd);
+      }
+
+      if (allAvaiableSd.size() == 0) {
+        throw new ServiceProviderNotFoundException(
+            String.format("service %s,reference app %s,reference group %s,reference version %s",
+                header.getServiceName(), header.getReferenceApp(), header.getReferenceGroup(),
+                header.getReferenceVersion()));
       }
       List<ServiceProviderDescriptor> allSd = new ArrayList<ServiceProviderDescriptor>();
       String addesses = ServiceContextUtils.getReferenceConfig(context)
           .get(ConfigConstans.REFERENCE_SERVICE_PROVIDER_ADDRESSES, null);
       Map<String, Integer> directHostAndPorts = addressToMap(addesses);
       // 3选择有配置的实例
-      for (ServiceProviderDescriptor sd : allServiceDescriptors) {
+      for (ServiceProviderDescriptor sd : allAvaiableSd) {
+
         // 匹配相同参数和查看是否是直接指定连接的方式
-        if (compareParam(context, sd)
-            && Utils.isVersionComp(ServiceContextUtils.getReferenceVersion(context),
-                sd.getVersion())
-            && Utils.isGroupMatch(ServiceContextUtils.getReferenceGroup(context), sd.getGroup())
-            && client.protocolExtensionFactory.protocolName().equals(sd.getProtocol())) {
-          // provider隐藏，客户端只能采用直连的方式
+        // 先判断断路器是否开启，开启的不进入这个之中
+
+        if ((isPreConnect || compareParam(context, sd))
+            && Utils.isVersionComp(header.getReferenceVersion(), sd.getVersion())
+            && Utils.isGroupMatch(header.getReferenceGroup(), sd.getGroup())
+            && client.getProtocolExtensionFactory().protocolName().equals(sd.getProtocol())) {
           if (sd.isForceAccess()) {
             // 强制使用该provider
             allSd.clear();
             allSd.add(sd);
+            if (isPreConnect) {
+              preConnect(sd);
+            }
             break;
           }
+          // provider隐藏，客户端只能采用直连的方式
           if (directHostAndPorts != null && directHostAndPorts.size() > 0) {
             // 直连的方式
             if (compareHost(sd, directHostAndPorts)) {
               allSd.add(sd);
+              if (isPreConnect) {
+                preConnect(sd);
+              }
             }
           } else {
             // 非直连
             if (!sd.isHidden()) {
               allSd.add(sd);
+              if (isPreConnect) {
+                preConnect(sd);
+              }
             }
           }
         }
       }
       if (allSd.size() == 0) {
-        throw new NoServiceProviderMatchException(ServiceContextUtils.getServiceName(context));
+        throw new NoServiceProviderMatchException(
+            String.format("service %s,reference app %s,reference group %s,reference version %s",
+                header.getServiceName(), header.getReferenceApp(), header.getReferenceGroup(),
+                header.getReferenceVersion()));
       }
+      if (isPreConnect)
+        return allSd;
       // 4 route 从实例中选择符合要求的实例
       String routerName = ServiceContextUtils.getReferenceConfig(context)
           .get(ConfigConstans.REFERENCE_ROUTER, ConfigConstans.REFERENCE_ROUTER_DEFAULT);
       ServiceRouter router = ExtensionLoaderConstants.ROUTER_EXTENSION.findExtension(routerName);
       if (router == null) {
-        throw new RuntimeException("no service router found,router name " + routerName);
+        throw new RuntimeException("no service router extension found,router name is" + routerName);
       }
       // 选出可以提供服务的集群实例
       List<ServiceProviderDescriptor> sds = router.choose(allSd, context);
       if (sds == null || sds.size() == 0)
-        throw new NoRouteServiceProviderException(ServiceContextUtils.getServiceName(context));
+        throw new NoRouteServiceProviderException(
+            String.format("service %s,reference app %s,reference group %s,reference version %s",
+                header.getServiceName(), header.getReferenceApp(), header.getReferenceGroup(),
+                header.getReferenceVersion()));
       return sds;
+    }
+
+    private void preConnect(ServiceProviderDescriptor sd) {
+      ClientTransport<Req, Rsp> transport = client.getTransport(sd);
+      if (!transport.isConnected())
+        transport.connect();
+      return;
     }
 
     private boolean compareHost(ServiceProviderDescriptor sd,
@@ -286,14 +397,15 @@ public class AsynServiceExecutor<Req, Rsp> {
       return addrMap;
     }
 
-    private boolean compareParam(ServiceContext context, ServiceProviderDescriptor sd) {
+    private boolean compareParam(ServiceContext context, ServiceProviderDescriptor sd)
+        throws ClassNotFoundException {
       EndpointConfig config = ServiceContextUtils.getReferenceConfig(context);
       String returnType = config.get(ConfigConstans.REFERENCE_RETURN);
 
       if (!StringUtils.equals(returnType, sd.getReturnType()))
         return false;
 
-      Object[] params = ServiceContextUtils.getRequestParams(context);
+      Object[] params = ServiceContextUtils.getRequestBody(context).getParams();
       return Utils.isMatch(sd.getParamTypes(), params);
 
     }
@@ -303,7 +415,7 @@ public class AsynServiceExecutor<Req, Rsp> {
           ConfigConstans.REFERENCE_LOADBALANCER, ConfigConstans.REFERENCE_LOADBALANCER_DEFAULT);
       ServiceLoadBalancer lb = ExtensionLoaderConstants.LOADBALANCE_EXTENSION.findExtension(lbName);
       if (lb == null) {
-        throw new RuntimeException("no loadbalancer found,name is " + lbName);
+        throw new RuntimeException("no loadbalancer extension found,name is " + lbName);
       }
       return lb;
     }

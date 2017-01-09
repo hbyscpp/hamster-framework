@@ -1,15 +1,18 @@
 package com.seaky.hamster.core.rpc.protocol.hamster;
 
 import com.seaky.hamster.core.annotations.SPI;
+import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
-import com.seaky.hamster.core.rpc.protocol.RequestExtractor;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestHeader;
+import com.seaky.hamster.core.rpc.protocol.ProtocolResponseHeader;
+import com.seaky.hamster.core.rpc.protocol.RequestConvertor;
 import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
 
 @SPI("hamster")
 public class HamsterProtocolExtensionFactory
     implements ProtocolExtensionFactory<HamsterRequest, HamsterResponse> {
-  private static HamsterResponseExtractor repextractor = new HamsterResponseExtractor();
-  private static HamsterRequestExtractor extractor = new HamsterRequestExtractor();
+  private static HamsterResponseConvertor repextractor = new HamsterResponseConvertor();
+  private static HamsterRequestConvertor extractor = new HamsterRequestConvertor();
 
   public HamsterServer createServer() {
     HamsterServer server = new HamsterServer();
@@ -17,7 +20,7 @@ public class HamsterProtocolExtensionFactory
   }
 
   @Override
-  public RequestExtractor<HamsterRequest> getRequestExtractor() {
+  public RequestConvertor<HamsterRequest> getRequestConvertor() {
     return extractor;
   }
 
@@ -45,4 +48,28 @@ public class HamsterProtocolExtensionFactory
   public String protocolName() {
     return "hamster";
   }
+
+  @Override
+  public short protocolMaxVersion() {
+    return 0;
+  }
+
+  @Override
+  public HamsterRequest createHeartbeatRequest() {
+    ProtocolRequestHeader header = new ProtocolRequestHeader();
+    header.getAttachments().putByte(Constants.MSG_TYPE, Constants.MSG_HEARTBEAT_TYPE);
+    header.getAttachments().putShort(Constants.PROTOCOL_VERSION, (short) 0);
+    return extractor.createRequest(header, null);
+  }
+
+  @Override
+  public HamsterResponse createHeartbeatResponse() {
+    ProtocolResponseHeader header = new ProtocolResponseHeader();
+    header.getAttachments().putByte(Constants.MSG_TYPE, Constants.MSG_HEARTBEAT_RSP_TYPE);
+    header.getAttachments().putShort(Constants.PROTOCOL_VERSION, (short) 0);
+    return repextractor.createResponse(header, null);
+  }
+
+
+
 }

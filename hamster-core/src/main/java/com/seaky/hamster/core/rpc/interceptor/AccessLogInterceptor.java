@@ -7,6 +7,7 @@ import com.seaky.hamster.core.rpc.annotation.ServiceInterceptorAnnotation;
 import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestHeader;
 
 @ServiceInterceptorAnnotation(name = "accesslog", phases = {ProcessPhase.SERVER_CALL_SERVICE,
     ProcessPhase.CLIENT_CALL_CLUSTER_SERVICE, ProcessPhase.CLIENT_CALL_SERVICE_INSTANCE})
@@ -27,25 +28,21 @@ public class AccessLogInterceptor extends DefaultServiceInterceptor {
   protected void postServerProcess(ServiceContext context) {
 
     long costTime = getCostTime(context);
-    Throwable e = ServiceContextUtils.getResponse(context).getException();
-    if (e != null) {
+    boolean isException = ServiceContextUtils.getResponseHeader(context).isException();
+    ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
+    if (isException) {
       serverlogger.info("{}:{}:{}:{} access from {}:{}:{}:{}:{},seq num {},cost {} ms\n",
-          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getApp(context),
-          ServiceContextUtils.getVersion(context), ServiceContextUtils.getGroup(context),
+          header.getServiceName(), header.getApp(), header.getVersion(), header.getGroup(),
           ServiceContextUtils.getClientHost(context), ServiceContextUtils.getClientPort(context),
-          ServiceContextUtils.getReferenceApp(context), ServiceContextUtils.getVersion(context),
-          ServiceContextUtils.getReferenceGroup(context),
-          ServiceContextUtils.getRequestAttachments(context).getAttachment(Constants.SEQ_NUM_KEY),
-          costTime, e);
+          header.getReferenceApp(), header.getReferenceVersion(), header.getReferenceGroup(),
+          header.getAttachments().getAsLong(Constants.SEQ_NUM_KEY), costTime,
+          ServiceContextUtils.getResponseBody(context).getResult());
     } else {
       serverlogger.info("{}:{}:{}:{} access from {}:{}:{}:{}:{},seq num {},cost {} ms",
-          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getApp(context),
-          ServiceContextUtils.getVersion(context), ServiceContextUtils.getGroup(context),
+          header.getServiceName(), header.getApp(), header.getVersion(), header.getGroup(),
           ServiceContextUtils.getClientHost(context), ServiceContextUtils.getClientPort(context),
-          ServiceContextUtils.getReferenceApp(context), ServiceContextUtils.getVersion(context),
-          ServiceContextUtils.getReferenceGroup(context),
-          ServiceContextUtils.getRequestAttachments(context).getAttachment(Constants.SEQ_NUM_KEY),
-          costTime);
+          header.getReferenceApp(), header.getReferenceVersion(), header.getReferenceGroup(),
+          header.getAttachments().getAsLong(Constants.SEQ_NUM_KEY), costTime);
     }
   }
 
@@ -70,26 +67,23 @@ public class AccessLogInterceptor extends DefaultServiceInterceptor {
   protected void postClientProcess(ServiceContext context) {
 
     long costTime = getCostTime(context);
-    Throwable e = ServiceContextUtils.getResponse(context).getException();
-    if (e != null) {
+    boolean isException = ServiceContextUtils.getResponseHeader(context).isException();
+    ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
+
+    if (isException) {
       clientlogger.info("{}:{}:{}:{} request to {}:{}:{}:{}:{},traceId {},seqNum {},cost {} ms\n",
-          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
-          ServiceContextUtils.getReferenceVersion(context),
-          ServiceContextUtils.getReferenceGroup(context),
-          ServiceContextUtils.getServerHost(context), ServiceContextUtils.getServerPort(context),
-          ServiceContextUtils.getApp(context), ServiceContextUtils.getVersion(context),
-          ServiceContextUtils.getGroup(context),
-          ServiceContextUtils.getRequestAttachments(context).getAttachment(Constants.SEQ_NUM_KEY),
-          ServiceContextUtils.getInterceptorExceptionTrace(context).getTraceId(), costTime, e);
+          header.getServiceName(), header.getApp(), header.getVersion(), header.getGroup(),
+          ServiceContextUtils.getClientHost(context), ServiceContextUtils.getClientPort(context),
+          header.getReferenceApp(), header.getReferenceVersion(), header.getReferenceGroup(),
+          header.getAttachments().getAsLong(Constants.SEQ_NUM_KEY),
+          ServiceContextUtils.getInterceptorExceptionTrace(context).getTraceId(), costTime,
+          ServiceContextUtils.getResponseBody(context).getResult());
     } else {
       clientlogger.info("{}:{}:{}:{} request to {}:{}:{}:{}:{},traceId {},seqNum {},cost {} ms",
-          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
-          ServiceContextUtils.getReferenceVersion(context),
-          ServiceContextUtils.getReferenceGroup(context),
-          ServiceContextUtils.getServerHost(context), ServiceContextUtils.getServerPort(context),
-          ServiceContextUtils.getApp(context), ServiceContextUtils.getVersion(context),
-          ServiceContextUtils.getGroup(context),
-          ServiceContextUtils.getRequestAttachments(context).getAttachment(Constants.SEQ_NUM_KEY),
+          header.getServiceName(), header.getApp(), header.getVersion(), header.getGroup(),
+          ServiceContextUtils.getClientHost(context), ServiceContextUtils.getClientPort(context),
+          header.getReferenceApp(), header.getReferenceVersion(), header.getReferenceGroup(),
+          header.getAttachments().getAsLong(Constants.SEQ_NUM_KEY),
           ServiceContextUtils.getInterceptorExceptionTrace(context).getTraceId(), costTime);
     }
   }
@@ -102,18 +96,16 @@ public class AccessLogInterceptor extends DefaultServiceInterceptor {
   @Override
   protected void postClientClusterProcess(ServiceContext context) {
     long costTime = getCostTime(context);
-    Throwable e = ServiceContextUtils.getResponse(context).getException();
-    if (e != null) {
-      clientlogger.info("{}:{}:{}:{} call traceid {},cost {} ms\n",
-          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
-          ServiceContextUtils.getReferenceVersion(context),
-          ServiceContextUtils.getReferenceGroup(context),
-          ServiceContextUtils.getInterceptorExceptionTrace(context).getTraceId(), costTime, e);
+    boolean isException = ServiceContextUtils.getResponseHeader(context).isException();
+    ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
+    if (isException) {
+      clientlogger.info("{}:{}:{}:{} call traceid {},cost {} ms\n", header.getServiceName(),
+          header.getReferenceApp(), header.getReferenceVersion(), header.getReferenceGroup(),
+          ServiceContextUtils.getInterceptorExceptionTrace(context).getTraceId(), costTime,
+          ServiceContextUtils.getResponseBody(context).getResult());
     } else {
-      clientlogger.info("{}:{}:{}:{} call traceid {},cost {} ms",
-          ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
-          ServiceContextUtils.getReferenceVersion(context),
-          ServiceContextUtils.getReferenceGroup(context),
+      clientlogger.info("{}:{}:{}:{} call traceid {},cost {} ms", header.getServiceName(),
+          header.getReferenceApp(), header.getReferenceVersion(), header.getReferenceGroup(),
           ServiceContextUtils.getInterceptorExceptionTrace(context).getTraceId(), costTime);
     }
   }

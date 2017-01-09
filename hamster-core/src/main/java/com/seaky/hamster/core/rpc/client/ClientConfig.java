@@ -8,10 +8,21 @@ public class ClientConfig {
   private int connectTimeout = 1;
 
 
+  // 调用超时时间
   private int readTimeout = 3;
+
+
+  // 心跳发送时间
+  private int heartbeatIdleTime = 30;
 
   // 指定ip
   private String host;
+
+  // 重连次数
+  private int maxReconnectNum = 3;
+
+  // 重连间隔
+  private int reconnectInterval = 10;
 
   /**
    * @return the connectTimeout
@@ -48,6 +59,31 @@ public class ClientConfig {
   public void setHost(String host) {
     this.host = host;
   }
+
+  public int getHeartbeatIdleTime() {
+    return heartbeatIdleTime;
+  }
+
+  public void setHeartbeatIdleTime(int heartbeatIdleTime) {
+    this.heartbeatIdleTime = heartbeatIdleTime;
+  }
+
+  public int getMaxReconnectNum() {
+    return maxReconnectNum;
+  }
+
+  public void setMaxReconnectNum(int maxReconnectNum) {
+    this.maxReconnectNum = maxReconnectNum;
+  }
+
+  public int getReconnectInterval() {
+    return reconnectInterval;
+  }
+
+  public void setReconnectInterval(int reconnectInterval) {
+    this.reconnectInterval = reconnectInterval;
+  }
+
 
 
 }

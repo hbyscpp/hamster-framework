@@ -21,16 +21,6 @@
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.esotericsoftware.kryo</groupId>
-			<artifactId>kryo</artifactId>
-			<version>2.24.0</version>
-		</dependency>
-		<dependency>
-			<groupId>de.javakaffee</groupId>
-			<artifactId>kryo-serializers</artifactId>
-			<version>0.26</version>
-		</dependency>
-		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>16.0.1</version>
@@ -103,6 +93,26 @@
 			<artifactId>junit</artifactId>
 			<version>4.10</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.msgpack</groupId>
+			<artifactId>jackson-dataformat-msgpack</artifactId>
+			<version>0.8.11</version>
+		</dependency>
+		<dependency>
+			<groupId>net.jodah</groupId>
+			<artifactId>failsafe</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.esotericsoftware</groupId>
+			<artifactId>kryo</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>de.javakaffee</groupId>
+			<artifactId>kryo-serializers</artifactId>
+			<version>0.41</version>
 		</dependency>
 	</dependencies>
 	<repositories>

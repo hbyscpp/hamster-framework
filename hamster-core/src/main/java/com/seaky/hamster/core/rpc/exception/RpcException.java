@@ -11,7 +11,7 @@ public class RpcException extends RuntimeException {
   // 服务端调用服务实现抛出的异常
   public static int BUSINESS_EXCEPTION = -1;
 
-  // 未找到任何的服务实例
+  // 未找到任何的服务实例,服务端未找到注册的服务
   public static int SERVICE_PROVIDER_NOT_FOUNT = -2;
 
   // 客户端和服务端不匹配的协议

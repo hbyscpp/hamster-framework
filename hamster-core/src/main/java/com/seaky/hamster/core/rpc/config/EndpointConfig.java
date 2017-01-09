@@ -85,6 +85,13 @@ public class EndpointConfig {
     return Boolean.valueOf(value);
   }
 
+  public short getValueAsShort(String key, short defaultValue) {
+    String value = get(key);
+    if (value == null)
+      return defaultValue;
+    return Short.valueOf(value);
+  }
+
   public EndpointConfig deepCopy() {
     EndpointConfig cf = new EndpointConfig();
 

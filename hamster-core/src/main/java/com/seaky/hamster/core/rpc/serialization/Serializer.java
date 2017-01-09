@@ -15,4 +15,6 @@ public interface Serializer {
   <T> T deSerialize(InputStream input, Class<T> cls);
 
   <T> void serializer(T obj, OutputStream output);
+
+  boolean isText();
 }

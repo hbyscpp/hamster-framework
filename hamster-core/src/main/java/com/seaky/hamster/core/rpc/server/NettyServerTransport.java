@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.protocol.ProtocolExtensionFactory;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestHeader;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -41,45 +42,36 @@ public class NettyServerTransport<Req, Rsp> implements ServerTransport<Req, Rsp>
 
       @Override
       public void operationComplete(ChannelFuture future) throws Exception {
+        ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
         if (future.isSuccess()) {
           logger.debug(
               "send response success. server addr:{}:{},app: {},service name: {},version: {},group {},client addr: {}:{},referApp:{},refer version:{},refer group {}",
               ServiceContextUtils.getServerHost(context),
-              ServiceContextUtils.getServerPort(context), ServiceContextUtils.getApp(context),
-              ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
-              ServiceContextUtils.getGroup(context), ServiceContextUtils.getClientHost(context),
-              ServiceContextUtils.getClientPort(context),
-              ServiceContextUtils.getReferenceApp(context),
-              ServiceContextUtils.getReferenceVersion(context),
-              ServiceContextUtils.getReferenceGroup(context));
+              ServiceContextUtils.getServerPort(context), header.getApp(), header.getServiceName(),
+              header.getVersion(), header.getGroup(), ServiceContextUtils.getClientHost(context),
+              ServiceContextUtils.getClientPort(context), header.getReferenceApp(),
+              header.getReferenceVersion(), header.getReferenceGroup());
           return;
         }
         if (future.cause() != null) {
           logger.error(
               "send response error. server addr:{}:{},app: {},service name: {},version: {},group {},client addr: {}:{},referApp:{},refer version:{},refer group {}.{}",
               ServiceContextUtils.getServerHost(context),
-              ServiceContextUtils.getServerPort(context), ServiceContextUtils.getApp(context),
-              ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
-              ServiceContextUtils.getGroup(context), ServiceContextUtils.getClientHost(context),
-              ServiceContextUtils.getClientPort(context),
-              ServiceContextUtils.getReferenceApp(context),
-              ServiceContextUtils.getReferenceVersion(context),
-              ServiceContextUtils.getReferenceGroup(context), future.cause());
+              ServiceContextUtils.getServerPort(context), header.getApp(), header.getServiceName(),
+              header.getVersion(), header.getGroup(), ServiceContextUtils.getClientHost(context),
+              ServiceContextUtils.getClientPort(context), header.getReferenceApp(),
+              header.getReferenceVersion(), header.getReferenceGroup(), future.cause());
 
         }
 
         if (future.isCancelled()) {
-
           logger.error(
               "send response cancel. server addr:{}:{},app: {},service name: {},version: {},group {},client addr: {}:{},referApp:{},refer version:{},refer group {}.{}",
               ServiceContextUtils.getServerHost(context),
-              ServiceContextUtils.getServerPort(context), ServiceContextUtils.getApp(context),
-              ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
-              ServiceContextUtils.getGroup(context), ServiceContextUtils.getClientHost(context),
-              ServiceContextUtils.getClientPort(context),
-              ServiceContextUtils.getReferenceApp(context),
-              ServiceContextUtils.getReferenceVersion(context),
-              ServiceContextUtils.getReferenceGroup(context), future.cause());
+              ServiceContextUtils.getServerPort(context), header.getApp(), header.getServiceName(),
+              header.getVersion(), header.getGroup(), ServiceContextUtils.getClientHost(context),
+              ServiceContextUtils.getClientPort(context), header.getReferenceApp(),
+              header.getReferenceVersion(), header.getReferenceGroup(), future.cause());
 
 
         }
@@ -95,6 +87,11 @@ public class NettyServerTransport<Req, Rsp> implements ServerTransport<Req, Rsp>
   @Override
   public InetSocketAddress getRemoteAddress() {
     return (InetSocketAddress) channel.remoteAddress();
+  }
+
+  @Override
+  public void close() {
+    channel.close();
   }
 
 }

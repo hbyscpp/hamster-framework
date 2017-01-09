@@ -19,13 +19,18 @@ public class HamsterResponseDecoder extends ByteBufToObjectDecoder<HamsterRespon
 
   @Override
   protected HamsterResponse decode(ByteBuf bytebuf) {
-    int allBytelength = bytebuf.readableBytes();
-    byte[] allBytes = new byte[allBytelength];
-    bytebuf.readBytes(allBytes);
-    Serializer ser =
-        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
-    HamsterResponse response = ser.deSerialize(allBytes, HamsterResponse.class);
-    return response;
+    short version = bytebuf.readShort();
+    if (version == 0) {
+      int allBytelength = bytebuf.readableBytes();
+      byte[] allBytes = new byte[allBytelength];
+      bytebuf.readBytes(allBytes);
+      Serializer ser =
+          ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
+      HamsterResponse response = ser.deSerialize(allBytes, HamsterResponse.class);
+      return response;
+    }
+    throw new RuntimeException("not support version " + version);
+
   }
 
 }

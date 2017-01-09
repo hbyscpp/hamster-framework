@@ -11,8 +11,8 @@ import io.netty.channel.ChannelPipeline;
  * @version
  * @since 1.0.0
  */
-public interface ServerChannelPipelineConfigurator<Req,Rsp,T extends ServerTransport<Req, Rsp>> {
-	
-	void config(T transport,ChannelPipeline pipeline);
+public interface ServerChannelPipelineConfigurator<Req, Rsp, T extends ServerTransport<Req, Rsp>> {
+
+  void config(T transport, ChannelPipeline pipeline, ServerConfig config);
 
 }

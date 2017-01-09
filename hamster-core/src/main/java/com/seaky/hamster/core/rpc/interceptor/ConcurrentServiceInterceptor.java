@@ -9,6 +9,7 @@ import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
 import com.seaky.hamster.core.rpc.config.ConfigConstans;
 import com.seaky.hamster.core.rpc.config.EndpointConfig;
 import com.seaky.hamster.core.rpc.exception.ServiceReachMaxConcurrent;
+import com.seaky.hamster.core.rpc.protocol.ProtocolRequestHeader;
 import com.seaky.hamster.core.rpc.utils.Utils;
 
 @ServiceInterceptorAnnotation(name = "concurrence",
@@ -23,15 +24,14 @@ public class ConcurrentServiceInterceptor extends DefaultServiceInterceptor {
     int max = getConcurrentNum(ServiceContextUtils.getProviderConfig(context), true);
     if (max <= 0)
       return;
-    boolean isOk = checkReachMaxConcurrent(Utils.generateKey("server",
-        ServiceContextUtils.getServiceName(context), ServiceContextUtils.getApp(context),
-        ServiceContextUtils.getVersion(context), ServiceContextUtils.getGroup(context)), max);
+    ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
+    boolean isOk = checkReachMaxConcurrent(Utils.generateKey("server", header.getServiceName(),
+        header.getApp(), header.getVersion(), header.getGroup()), max);
     if (isOk)
       return;
-    ServiceContextUtils.getResponse(context)
-        .setResult(new ServiceReachMaxConcurrent(ServiceContextUtils.getApp(context),
-            ServiceContextUtils.getServiceName(context), ServiceContextUtils.getVersion(context),
-            true));
+    ServiceContextUtils.getResponseBody(context).setResult(new ServiceReachMaxConcurrent(
+        header.getApp(), header.getServiceName(), header.getVersion(), true));
+    ServiceContextUtils.getResponseHeader(context).setException(true);
 
   }
 
@@ -40,30 +40,30 @@ public class ConcurrentServiceInterceptor extends DefaultServiceInterceptor {
     int max = getConcurrentNum(ServiceContextUtils.getReferenceConfig(context), false);
     if (max <= 0)
       return;
-    boolean isOk = checkReachMaxConcurrent(Utils.generateKey("client",
-        ServiceContextUtils.getServiceName(context), ServiceContextUtils.getReferenceApp(context),
-        ServiceContextUtils.getReferenceVersion(context)), max);
+    ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
+
+    boolean isOk = checkReachMaxConcurrent(Utils.generateKey("client", header.getServiceName(),
+        header.getReferenceApp(), header.getReferenceVersion()), max);
     if (isOk)
       return;
-    ServiceContextUtils.getResponse(context)
-        .setResult(new ServiceReachMaxConcurrent(ServiceContextUtils.getReferenceApp(context),
-            ServiceContextUtils.getServiceName(context),
-            ServiceContextUtils.getReferenceVersion(context), false));
-
+    ServiceContextUtils.getResponseBody(context).setResult(new ServiceReachMaxConcurrent(
+        header.getReferenceApp(), header.getServiceName(), header.getReferenceVersion(), false));
+    ServiceContextUtils.getResponseHeader(context).setException(true);
   }
 
   @Override
   protected void postServerProcess(ServiceContext context) {
+    ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
 
-    decrCurConcurrentNum(Utils.generateKey("server", ServiceContextUtils.getServiceName(context),
-        ServiceContextUtils.getApp(context), ServiceContextUtils.getVersion(context)));
+    decrCurConcurrentNum(
+        Utils.generateKey("server", header.getServiceName(), header.getApp(), header.getVersion()));
   }
 
   @Override
   protected void postClientClusterProcess(ServiceContext context) {
-    decrCurConcurrentNum(Utils.generateKey("client", ServiceContextUtils.getServiceName(context),
-        ServiceContextUtils.getReferenceApp(context),
-        ServiceContextUtils.getReferenceVersion(context)));
+    ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
+    decrCurConcurrentNum(Utils.generateKey("client", header.getServiceName(),
+        header.getReferenceApp(), header.getReferenceVersion()));
   }
 
   private boolean checkReachMaxConcurrent(String key, int maxConcurrent) {
