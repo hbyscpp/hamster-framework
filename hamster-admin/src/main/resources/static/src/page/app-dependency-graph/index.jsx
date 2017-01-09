@@ -4,7 +4,11 @@ import React from 'react'
 import { message, Button, Icon, Popover, Radio } from 'antd'
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
-import ReactEcharts from 'echarts-for-react'
+
+import 'echarts/lib/chart/graph'
+import 'echarts/lib/component/tooltip'
+import 'echarts/lib/component/title'
+import ReactEcharts from 'component/echarts-for-react'
 
 import Page from 'framework/page'
 import request from 'common/request/request.js'
@@ -113,7 +117,7 @@ class AppDependencyGraph extends React.Component {
             type: 'get',
             dataType: 'json'
         })
-
+        
         let appDependencyGraphPromise = request({
             url: '/appDependencyGraph',
             type: 'get',
