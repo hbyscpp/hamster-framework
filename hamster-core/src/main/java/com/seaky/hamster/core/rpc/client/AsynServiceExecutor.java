@@ -76,7 +76,8 @@ public class AsynServiceExecutor<Req, Rsp> {
     ServiceContextUtils.setInterceptorExceptionTrace(sc, new ClientCallExceptionTrace(seqNum));
 
     if (!isPreConnect) {
-      int callTimeout = config.getValueAsInt(ConfigConstans.REFERENCE_CALL_TIMEOUT, -1);
+      int callTimeout = config.getValueAsInt(ConfigConstans.REFERENCE_CALL_TIMEOUT,
+          ConfigConstans.REFERENCE_CALL_TIMEOUT_DEFAULT);
       if (callTimeout > 0) {
         ClientResourceManager.getHashedWheelTimer().newTimeout(new TimerTask() {
           @Override

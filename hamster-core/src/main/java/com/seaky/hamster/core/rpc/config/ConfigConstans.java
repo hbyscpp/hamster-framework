@@ -2,12 +2,12 @@ package com.seaky.hamster.core.rpc.config;
 
 public interface ConfigConstans {
 
-
-  // 消费端调用的超时时间 毫秒为单位,此超时包含，网络，容错策略里面的超时
+  // 单个响应超时
   public static final String REFERENCE_READ_TIMEOUT = "sr.readtimeout";
 
   public static final int REFERENCE_READ_TIMEOUT_DEFAULT = 5000;
 
+  // 消费端调用的超时时间 毫秒为单位,此超时包含，网络，容错策略里面的超时
   // 调用的总时常，小于0代表不做限定
   public static final String REFERENCE_CALL_TIMEOUT = "sr.calltimeout";
 
@@ -104,6 +104,7 @@ public interface ConfigConstans {
 
   public static final int REFERENCE_CIRCUITBREAKER_CLOSE_SUCCESS_NUMBER_DEFAULT = 3;
 
+  // 协议版本
   public static final String REFERENCE_MAX_PROTOCOL_VERSION = "sr.max.protocol.version";
 
   public static final short REFERENCE_MAX_PROTOCOL_VERSION_DEFAULT = 0;

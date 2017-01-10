@@ -158,6 +158,17 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
         String.valueOf(config.getReadtimeout()), false));
     addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR,
         config.getExceptionConvertor(), false));
+    // 断路器
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_CLOSE_SUCCESS_NUMBER,
+        String.valueOf(config.getCircuitbreakerCloseSuccessNumber()), false));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_CLOSE_TOTAL_NUMBER,
+        String.valueOf(config.getCircuitbreakerCloseTotalNumber()), false));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_OPEN_FAIL_NUMBER,
+        String.valueOf(config.getCircuitbreakerOpenFailNumber()), false));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_OPEN_TOTAL_NUMBER,
+        String.valueOf(config.getCircuitbreakerOpenTotalNumber()), false));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_HALFOPEN_DELAY,
+        String.valueOf(config.getCircuitbreakerHalfopenDelay()), false));
     if (StringUtils.isNotBlank(config.getProviderAddresses()))
       addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_SERVICE_PROVIDER_ADDRESSES,
           config.getProviderAddresses(), false));

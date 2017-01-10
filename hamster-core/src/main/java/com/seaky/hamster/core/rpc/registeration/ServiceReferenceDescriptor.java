@@ -38,6 +38,21 @@ public class ServiceReferenceDescriptor {
   /**
    * @param protocol the protocol to set
    */
+  public void setMaxProtocolVersion(short version) {
+    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_MAX_PROTOCOL_VERSION,
+        String.valueOf(version), true));
+  }
+
+  /**
+   * @return the protocol
+   */
+  public short getMaxProtocolVersion() {
+    return config.getValueAsShort(ConfigConstans.REFERENCE_MAX_PROTOCOL_VERSION, (short) 0);
+  }
+
+  /**
+   * @param protocol the protocol to set
+   */
   public void setProtocol(String protocol) {
     config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PROTOCOL, protocol, true));
   }
