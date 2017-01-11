@@ -19,20 +19,12 @@ public class HamsterRequest {
   private String referVersion;
   // 服务提供者提供的版本
   private String serviceVersion;
-
   // 服务名字
   private String serviceName;
   // 参数
   private byte[][] params;
-
   // 附加信息，用于框架或者扩展
   private Map<String, Object> attachments = new ConcurrentHashMap<>();
-
-  /**
-   * @return the body
-   */
-
-
 
   /**
    * @return the serviceName

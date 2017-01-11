@@ -65,4 +65,9 @@ public class HttpProtocolExtensionFactory
     return null;
   }
 
+  @Override
+  public String defaultSerialization() {
+    return "msgpack";
+  }
+
 }

@@ -13,7 +13,7 @@ public class HamsterRequestEncoder extends MessageToByteEncoder<HamsterRequest> 
   @Override
   protected void encode(ChannelHandlerContext ctx, HamsterRequest msg, ByteBuf out)
       throws Exception {
-    Short version = (Short) msg.getAttachments().get(Constants.PROTOCOL_VERSION);
+    Short version = (Short) msg.getAttachments().get(Constants.PROTOCOL_VERSION_KEY);
     if (version == null || version != 0)
       throw new RuntimeException("not support encode request version: " + version);
     if (version == 0) {

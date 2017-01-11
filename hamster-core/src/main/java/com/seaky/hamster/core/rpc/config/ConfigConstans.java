@@ -111,6 +111,12 @@ public interface ConfigConstans {
 
   public static final String REFERENCE_FRAMEWORK_VERSION = "sr.framework.version";
 
+  // 序列化
+  public static final String REFERENCE_SERIALIZATION = "sr.serialization";
+  // 服务降级配置
+  public static final String REFERENCE_FALLABCK_CLASSNAME = "sr.fallback.classname";
+
+  public static final String REFERENCE_FALLABCK_METHODNAME = "sr.fallback.methodname";
 
   // 服务提供方的配置
   // readonly

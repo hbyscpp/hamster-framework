@@ -4,9 +4,9 @@ import java.nio.charset.Charset;
 
 public interface Constants {
 
-  public static String SEQ_NUM_KEY = "__seqnum__";
+  public static String SEQ_NUM_KEY = "_seq_";
 
-  public static String PROTOCOL_VERSION = "__pversion__";
+  public static String PROTOCOL_VERSION_KEY = "_pv_";
 
   public static final Charset UTF_8 = Charset.forName("UTF-8");
 

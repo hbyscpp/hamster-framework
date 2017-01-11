@@ -80,7 +80,7 @@ public class HamsterResponseConvertor implements ResponseConvertor<HamsterRespon
 
   @Override
   public HamsterResponse createResponse(ProtocolResponseHeader header, ProtocolResponseBody body) {
-    Short version = header.getAttachments().getAsShort(Constants.PROTOCOL_VERSION);
+    Short version = header.getAttachments().getAsShort(Constants.PROTOCOL_VERSION_KEY);
     if (version == null || version != 0)
       throw new RuntimeException("not support version " + version);
     HamsterResponse rsp = new HamsterResponse();
@@ -99,8 +99,8 @@ public class HamsterResponseConvertor implements ResponseConvertor<HamsterRespon
       return rsp;
 
     }
-    throw new RuntimeException(
-        "not support version " + header.getAttachments().getAsShort(Constants.PROTOCOL_VERSION));
+    throw new RuntimeException("not support version "
+        + header.getAttachments().getAsShort(Constants.PROTOCOL_VERSION_KEY));
   }
 
 

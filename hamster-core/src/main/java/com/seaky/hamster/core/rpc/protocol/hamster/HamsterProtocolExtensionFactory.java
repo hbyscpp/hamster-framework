@@ -58,7 +58,7 @@ public class HamsterProtocolExtensionFactory
   public HamsterRequest createHeartbeatRequest() {
     ProtocolRequestHeader header = new ProtocolRequestHeader();
     header.getAttachments().putByte(Constants.MSG_TYPE, Constants.MSG_HEARTBEAT_TYPE);
-    header.getAttachments().putShort(Constants.PROTOCOL_VERSION, (short) 0);
+    header.getAttachments().putShort(Constants.PROTOCOL_VERSION_KEY, (short) 0);
     return extractor.createRequest(header, null);
   }
 
@@ -66,8 +66,13 @@ public class HamsterProtocolExtensionFactory
   public HamsterResponse createHeartbeatResponse() {
     ProtocolResponseHeader header = new ProtocolResponseHeader();
     header.getAttachments().putByte(Constants.MSG_TYPE, Constants.MSG_HEARTBEAT_RSP_TYPE);
-    header.getAttachments().putShort(Constants.PROTOCOL_VERSION, (short) 0);
+    header.getAttachments().putShort(Constants.PROTOCOL_VERSION_KEY, (short) 0);
     return repextractor.createResponse(header, null);
+  }
+
+  @Override
+  public String defaultSerialization() {
+    return "kryo";
   }
 
 

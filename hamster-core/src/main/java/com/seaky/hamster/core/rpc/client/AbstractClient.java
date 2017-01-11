@@ -43,8 +43,8 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
 
   private ClientInterceptorService<Req, Rsp> interceptorSupportService;
 
-  private ConcurrentHashMap<String, ReferenceService> serviceCache =
-      new ConcurrentHashMap<String, ReferenceService>();
+  private ConcurrentHashMap<String, ReferenceService<Req, Rsp>> serviceCache =
+      new ConcurrentHashMap<String, ReferenceService<Req, Rsp>>();
 
   // key 服务端
   private ConcurrentHashMap<String, ClientTransport<Req, Rsp>> clientCache =

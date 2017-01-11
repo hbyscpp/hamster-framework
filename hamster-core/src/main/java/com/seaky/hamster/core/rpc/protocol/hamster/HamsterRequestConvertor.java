@@ -82,7 +82,7 @@ public class HamsterRequestConvertor implements RequestConvertor<HamsterRequest>
 
   @Override
   public HamsterRequest createRequest(ProtocolRequestHeader header, ProtocolRequestBody body) {
-    Short version = header.getAttachments().getAsShort(Constants.PROTOCOL_VERSION);
+    Short version = header.getAttachments().getAsShort(Constants.PROTOCOL_VERSION_KEY);
     if (version == null || version != 0)
       throw new RuntimeException("not support version " + version);
     HamsterRequest request = new HamsterRequest();

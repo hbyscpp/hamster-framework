@@ -43,23 +43,7 @@ public class HttpResponseConvertor implements ResponseConvertor<FullHttpResponse
       for (Entry<String, Object> entry : attach.entrySet()) {
         String key = entry.getKey();
         Object value = entry.getValue();
-        if (value instanceof Byte) {
-          attachments.putByte(key, (Byte) value);
-        } else if (value instanceof Short) {
-          attachments.putShort(key, (Short) value);
-        } else if (value instanceof Integer) {
-          attachments.putInt(key, (Integer) value);
-        } else if (value instanceof Long) {
-          attachments.putLong(key, (Long) value);
-        } else if (value instanceof Float) {
-          attachments.putFloat(key, (Float) value);
-        } else if (value instanceof Double) {
-          attachments.putDouble(key, (Double) value);
-        } else if (value instanceof String) {
-          attachments.putString(key, (String) value);
-        } else if (value instanceof Boolean) {
-          attachments.putBoolean(key, (Boolean) value);
-        }
+        attachments.putValue(key, value);
       }
     }
     header.setAttachments(attachments);

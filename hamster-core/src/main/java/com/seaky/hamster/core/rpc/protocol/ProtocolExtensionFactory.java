@@ -37,4 +37,6 @@ public interface ProtocolExtensionFactory<Req, Rsp> {
 
   Rsp createHeartbeatResponse();
 
+  String defaultSerialization();
+
 }

@@ -95,6 +95,27 @@ public class Attachments {
     return (String) obj;
   }
 
+  public void putValue(String key, Object value) {
+    if (value instanceof Byte) {
+      this.putByte(key, (Byte) value);
+    } else if (value instanceof Short) {
+      this.putShort(key, (Short) value);
+    } else if (value instanceof Integer) {
+      this.putInt(key, (Integer) value);
+    } else if (value instanceof Long) {
+      this.putLong(key, (Long) value);
+    } else if (value instanceof Float) {
+      this.putFloat(key, (Float) value);
+    } else if (value instanceof Double) {
+      this.putDouble(key, (Double) value);
+    } else if (value instanceof String) {
+      this.putString(key, (String) value);
+    } else if (value instanceof Boolean) {
+      this.putBoolean(key, (Boolean) value);
+    }
+    throw new RuntimeException(
+        "hamster attachment not support value class type " + value.getClass());
+  }
 
   public void putByte(String key, byte value) {
     attachments.put(key, value);
