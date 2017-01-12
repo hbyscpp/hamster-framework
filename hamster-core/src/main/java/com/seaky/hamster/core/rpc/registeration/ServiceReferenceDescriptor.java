@@ -25,7 +25,7 @@ public class ServiceReferenceDescriptor {
    */
   public void setServiceName(String serviceName) {
 
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_NAME, serviceName, true));
+    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_NAME, serviceName));
   }
 
   /**
@@ -38,23 +38,8 @@ public class ServiceReferenceDescriptor {
   /**
    * @param protocol the protocol to set
    */
-  public void setMaxProtocolVersion(short version) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_MAX_PROTOCOL_VERSION,
-        String.valueOf(version), true));
-  }
-
-  /**
-   * @return the protocol
-   */
-  public short getMaxProtocolVersion() {
-    return config.getValueAsShort(ConfigConstans.REFERENCE_MAX_PROTOCOL_VERSION, (short) 0);
-  }
-
-  /**
-   * @param protocol the protocol to set
-   */
   public void setProtocol(String protocol) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PROTOCOL, protocol, true));
+    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PROTOCOL, protocol));
   }
 
   /**
@@ -68,7 +53,7 @@ public class ServiceReferenceDescriptor {
    * @param referApp the referApp to set
    */
   public void setReferApp(String referApp) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, referApp, true));
+    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, referApp));
   }
 
   public String getHost() {
@@ -80,7 +65,7 @@ public class ServiceReferenceDescriptor {
    * @param registTime the registTime to set
    */
   public void setHost(String host) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_HOST, host, true));
+    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_HOST, host));
   }
 
   /**
@@ -96,7 +81,7 @@ public class ServiceReferenceDescriptor {
    */
   public void setRegistTime(long registTime) {
     config.addConfigItem(
-        new ConfigItem(ConfigConstans.REFERENCE_REG_TIME, String.valueOf(registTime), true));
+        new ConfigItem(ConfigConstans.REFERENCE_REG_TIME, String.valueOf(registTime)));
   }
 
   /**
@@ -110,7 +95,7 @@ public class ServiceReferenceDescriptor {
    * @param referVersion the referVersion to set
    */
   public void setReferVersion(String referVersion) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, referVersion, true));
+    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, referVersion));
   }
 
   public EndpointConfig getConfig() {
@@ -126,7 +111,7 @@ public class ServiceReferenceDescriptor {
   }
 
   public void setPid(String pid) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PID, pid, true));
+    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PID, pid));
   }
 
   public String getReferGroup() {
@@ -134,12 +119,12 @@ public class ServiceReferenceDescriptor {
   }
 
   public void setReferGroup(String referGroup) {
-    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, referGroup, true));
+    config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, referGroup));
   }
 
   public void setParamTypes(String[] params) {
-    this.config.addConfigItem(
-        new ConfigItem(ConfigConstans.REFERENCE_PARAMS, paramsToString(params), true));
+    this.config
+        .addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_PARAMS, paramsToString(params)));
   }
 
   public String[] getParamTypes() {
@@ -160,7 +145,7 @@ public class ServiceReferenceDescriptor {
   }
 
   public void setReturnType(String returnType) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_RETURN, returnType, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_RETURN, returnType));
   }
 
   public String getReturnType() {
@@ -174,8 +159,7 @@ public class ServiceReferenceDescriptor {
   }
 
   public void setFrameworkVersion(String version) {
-    this.config
-        .addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_FRAMEWORK_VERSION, version, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_FRAMEWORK_VERSION, version));
   }
 
 

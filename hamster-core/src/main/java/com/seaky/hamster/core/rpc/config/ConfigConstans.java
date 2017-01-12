@@ -42,17 +42,13 @@ public interface ConfigConstans {
 
   public static final String REFERENCE_ASYNPOOL_THREAD_EXE = "sr.asynpool.thread.exe";
 
-  public static final String REFERENCE_THREADPOOL_NAME = "sr.threadpool.name";
-
-  public static final String REFERENCE_THREADPOOL_NAME_DEFAULT = "__COMMON__";
-
   public static final String REFERENCE_THREADPOOL_MAXQUEUE = "sr.threadpool.maxqueue";
 
-  public static final int REFERENCE_THREADPOOL_MAXQUEUE_DEFAULT = 100;
+  public static final int REFERENCE_THREADPOOL_MAXQUEUE_DEFAULT = -1;
 
   public static final String REFERENCE_THREADPOOL_MAXSIZE = "sr.threadpool.maxsize";
 
-  public static final int REFERENCE_THREADPOOL_MAXSIZE_DEFAULT = 100;
+  public static final int REFERENCE_THREADPOOL_MAXSIZE_DEFAULT = 10;
 
   public static final String REFERENCE_MAX_CONCURRENT = "sr.maxcucurrent";
 
@@ -105,9 +101,6 @@ public interface ConfigConstans {
   public static final int REFERENCE_CIRCUITBREAKER_CLOSE_SUCCESS_NUMBER_DEFAULT = 3;
 
   // 协议版本
-  public static final String REFERENCE_MAX_PROTOCOL_VERSION = "sr.max.protocol.version";
-
-  public static final short REFERENCE_MAX_PROTOCOL_VERSION_DEFAULT = 0;
 
   public static final String REFERENCE_FRAMEWORK_VERSION = "sr.framework.version";
 
@@ -144,10 +137,6 @@ public interface ConfigConstans {
 
   public static final String PROVIDER_DISPATCHER_THREAD_EXE = "sp.dispatcher.thread.exe";
 
-  public static final String PROVIDER_THREADPOOL_NAME = "sp.threadpool.name";
-
-  public static final String PROVIDER_THREADPOOL_NAME_DEFAULT = "__COMMON__";
-
   public static final String PROVIDER_THREADPOOL_MAXQUEUE = "sp.threadpool.maxqueue";
 
   public static final int PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT = -1;
@@ -158,7 +147,7 @@ public interface ConfigConstans {
 
   public static final String PROVIDER_MAX_CONCURRENT = "sp.maxconcurrent";
 
-  public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = 100;
+  public static final int PROVIDER_MAX_CONCURRENT_DEFAULT = -1;
 
   public static final String PROVIDER_WEIGHT = "sp.weight";
 
@@ -177,9 +166,6 @@ public interface ConfigConstans {
 
   public static final boolean PROVIDER_FORCE_ACCESS_DEFAULT = false;
 
-  public static final String PROVIDER_MAX_PROTOCOL_VERSION = "sp.max.protocol.version";
-
-  public static final short PROVIDER_MAX_PROTOCOL_VERSION_DEFAULT = 0;
 
   public static final String PROVIDER_FRAMEWORK_VERSION = "sp.framework.version";
 

@@ -27,9 +27,9 @@ public class BenchmarkServer {
     sconfig.setPort(12345);
     server.start(rs, sconfig);
     EndpointConfig sc = new EndpointConfig();
-    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, "testapp", true));
-    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, "default", true));
-    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, "1.0.0", true));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, "testapp"));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, "default"));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, "1.0.0"));
     // sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE, "true",
     // false));
     ServerHelper.exportInterface(server, BenchmarkTestService.class,

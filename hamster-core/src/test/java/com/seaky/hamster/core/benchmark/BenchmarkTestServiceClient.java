@@ -22,13 +22,12 @@ public class BenchmarkTestServiceClient extends BenchmarkClient {
   public static void main(String[] args) throws Exception {
     ClientConfig conf = new ClientConfig();
     EtcdRegisterationService lrs = new EtcdRegisterationService("hamster", "http://localhost:2379");
-    Client<?, ?> hc =
-        ClientHelper.createClient("hamster", lrs, conf);
+    Client<?, ?> hc = ClientHelper.createClient("hamster", lrs, conf);
 
     EndpointConfig sc = new EndpointConfig();
-    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, "testapp", true));
-    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, "default", true));
-    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0", true));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, "testapp"));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, "default"));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0"));
     BenchmarkTestService service =
         ClientHelper.referInterface(hc, BenchmarkTestService.class, sc, null);
     BenchmarkTestServiceClient client = new BenchmarkTestServiceClient(service);

@@ -25,7 +25,17 @@ public class ReferenceConfig {
   // 是否线程池执行
   private boolean isUseThreadPoolExe = false;
 
-  private String theadpoolName = null;
+  private Integer theadpoolMaxQueueSize = ConfigConstans.REFERENCE_THREADPOOL_MAXQUEUE_DEFAULT;
+
+  private Integer theadpoolSize = ConfigConstans.REFERENCE_THREADPOOL_MAXSIZE_DEFAULT;
+
+  private String loadbalancer = null;
+
+  private String cluster = null;
+
+  private String router = null;
+
+  private String serializerName = null;
 
   private int circuitbreakerOpenFailNumber =
       ConfigConstans.REFERENCE_CIRCUITBREAKER_OPEN_FAIL_NUMBER_DEFAULT;
@@ -153,6 +163,63 @@ public class ReferenceConfig {
 
   public void setCircuitbreakerOpenFailNumber(int circuitbreakerOpenFailNumber) {
     this.circuitbreakerOpenFailNumber = circuitbreakerOpenFailNumber;
+  }
+
+  public boolean isUseThreadPoolExe() {
+    return isUseThreadPoolExe;
+  }
+
+  public void setUseThreadPoolExe(boolean isUseThreadPoolExe) {
+    this.isUseThreadPoolExe = isUseThreadPoolExe;
+  }
+
+
+  public String getSerializerName() {
+    return serializerName;
+  }
+
+  public void setSerializerName(String serializerName) {
+    this.serializerName = serializerName;
+  }
+
+  public Integer getTheadpoolMaxQueueSize() {
+    return theadpoolMaxQueueSize;
+  }
+
+  public void setTheadpoolMaxQueueSize(Integer theadpoolMaxQueueSize) {
+    this.theadpoolMaxQueueSize = theadpoolMaxQueueSize;
+  }
+
+  public Integer getTheadpoolSize() {
+    return theadpoolSize;
+  }
+
+  public void setTheadpoolSize(Integer theadpoolSize) {
+    this.theadpoolSize = theadpoolSize;
+  }
+
+  public String getLoadbalancer() {
+    return loadbalancer;
+  }
+
+  public void setLoadbalancer(String loadbalancer) {
+    this.loadbalancer = loadbalancer;
+  }
+
+  public String getCluster() {
+    return cluster;
+  }
+
+  public void setCluster(String cluster) {
+    this.cluster = cluster;
+  }
+
+  public String getRouter() {
+    return router;
+  }
+
+  public void setRouter(String router) {
+    this.router = router;
   }
 
 

@@ -13,17 +13,28 @@ public class HamsterRequestEncoder extends MessageToByteEncoder<HamsterRequest> 
   @Override
   protected void encode(ChannelHandlerContext ctx, HamsterRequest msg, ByteBuf out)
       throws Exception {
-    Short version = (Short) msg.getAttachments().get(Constants.PROTOCOL_VERSION_KEY);
-    if (version == null || version != 0)
-      throw new RuntimeException("not support encode request version: " + version);
-    if (version == 0) {
-      Serializer ser =
-          ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
-      byte[] datas = ser.serialize(msg);
-      out.writeInt(datas.length + 2);
-      out.writeShort(version);
-      out.writeBytes(datas);
+    Byte msgType = (Byte) msg.getAttachments().get(Constants.MSG_TYPE);
+    if (msgType == null) {
+      msgType = Constants.MSG_NORMAL_TYPE;
     }
+    if (msgType != Constants.MSG_NORMAL_TYPE) {
+      // 心跳消息
+      out.writeInt(1);
+      out.writeByte(msgType);
+      return;
+    }
+    version0Encode(msg, out);
+  }
+
+  private void version0Encode(HamsterRequest msg, ByteBuf out) {
+    // 类型,版本和数据
+    Serializer ser =
+        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
+    byte[] body = ser.serialize(msg);
+    out.writeInt(body.length + 2);
+    out.writeByte(Constants.MSG_NORMAL_TYPE);
+    out.writeByte(0);
+    out.writeBytes(body);
 
   }
 }

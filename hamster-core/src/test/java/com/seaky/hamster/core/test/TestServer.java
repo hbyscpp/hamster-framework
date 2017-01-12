@@ -20,7 +20,7 @@ public class TestServer {
     EtcdRegisterationService rs = new EtcdRegisterationService("hamster", "http://localhost:2379");
 
     Server<?, ?> server = ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
-        .findExtension("http").createServer();
+        .findExtension("hamster").createServer();
 
     // 服务的配置
     ServerConfig sconfig = new ServerConfig();
@@ -28,9 +28,9 @@ public class TestServer {
     sconfig.setPort(12345);
     server.start(rs, sconfig);
     EndpointConfig sc = new EndpointConfig();
-    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, "testapp", true));
-    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, "default", true));
-    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, "1.0.0", true));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, "testapp"));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, "default"));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, "1.0.0"));
     // sc.addConfigItem(
     // new ConfigItem(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR, "mytestxception", true));
     ServerHelper.exportInterface(server, TestService.class, new TestServiceImpl(), sc);

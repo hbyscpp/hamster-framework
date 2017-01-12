@@ -14,17 +14,23 @@ public class HamsterResponseEncoder extends MessageToByteEncoder<HamsterResponse
   @Override
   protected void encode(ChannelHandlerContext ctx, HamsterResponse msg, ByteBuf out)
       throws Exception {
-    Short version = (Short) msg.getAttachments().get(Constants.PROTOCOL_VERSION_KEY);
-    if (version == null || version != 0)
-      throw new RuntimeException("not support response version :" + version);
-    if (version == 0) {
-      Serializer ser =
-          ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
-      byte[] data = ser.serialize(msg);
-      out.writeInt(data.length + 2);
-      out.writeShort(version);
-      out.writeBytes(data);
+    Byte msgType = (Byte) msg.getAttachments().get(Constants.MSG_TYPE);
+    if (msgType == null) {
+      msgType = Constants.MSG_NORMAL_TYPE;
     }
+    if (msgType != Constants.MSG_NORMAL_TYPE) {
+      // 心跳消息
+      out.writeInt(1);
+      out.writeByte(msgType);
+      return;
+    }
+    Serializer ser =
+        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
+    byte[] data = ser.serialize(msg);
+    out.writeInt(data.length + 2);
+    out.writeByte(msgType);
+    out.writeByte(0);
+    out.writeBytes(data);
   }
 
 }

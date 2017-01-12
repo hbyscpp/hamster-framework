@@ -1,5 +1,7 @@
 package com.seaky.hamster.core.extension;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,6 +37,8 @@ public class ExtensionLoader<T> {
       new ConcurrentHashMap<Class<?>, ExtensionLoader<?>>();
   private ConcurrentHashMap<String, T> allExtInstances = new ConcurrentHashMap<String, T>();
 
+  private Collection<T> allIns = null;
+
   private ExtensionLoader(Class<T> cls) {
 
     if (cls == null)
@@ -67,7 +71,7 @@ public class ExtensionLoader<T> {
         }
       }
     }
-
+    allIns = Collections.unmodifiableCollection(allExtInstances.values());
   }
 
   @SuppressWarnings("unchecked")
@@ -86,5 +90,9 @@ public class ExtensionLoader<T> {
 
   public T findDefaultExtension() {
     return allExtInstances.get(defaultName);
+  }
+
+  public Collection<T> findAllExtension() {
+    return allIns;
   }
 }

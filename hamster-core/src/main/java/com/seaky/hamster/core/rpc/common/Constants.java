@@ -4,9 +4,16 @@ import java.nio.charset.Charset;
 
 public interface Constants {
 
-  public static String SEQ_NUM_KEY = "_seq_";
 
-  public static String PROTOCOL_VERSION_KEY = "_pv_";
+  /** 保留的需要传输的key **/
+
+  // 序列号
+  public static String SEQ_NUM_KEY = "_seq_";
+  // 序列化id
+  public static String SERIALIZATION_ID_KEY = "_si_";
+  // 消息的类型
+  public static final String MSG_TYPE = "_mt_";
+
 
   public static final Charset UTF_8 = Charset.forName("UTF-8");
 
@@ -40,16 +47,16 @@ public interface Constants {
 
 
   // 服务的名字允许的正则表达式
-  public static final String SERVICE_NAME_ALLOW_REG = "[a-zA-Z0-9_\\$\\.]+";
+  public static final String SERVICE_NAME_ALLOW_REG = "[a-zA-Z0-9_\\$\\.]{1,255}";
 
-  public static final String APP_NAME_ALLOW_REG = "[a-zA-Z0-9_\\$\\.-]+";
+  public static final String APP_NAME_ALLOW_REG = "[a-zA-Z0-9_\\$\\.-]+{1,255}";
 
-  public static final String GROUP_NAME_ALLOW_REG = "[a-zA-Z0-9_,]+";
+  public static final String GROUP_NAME_ALLOW_REG = "[a-zA-Z0-9_,]+{1,255}";
 
-  public static final String VERSION_NAME_ALLOW_REG = "[0-9.]+";
+  public static final String VERSION_NAME_ALLOW_REG = "[0-9.]{1,255}";
 
 
-  public static final String INTERCEPTOR_NAME_ALLOW_REG = "[0-9a-zA-Z]+";
+  public static final String INTERCEPTOR_NAME_ALLOW_REG = "[0-9a-zA-Z]{1,255}";
 
 
   //
@@ -65,8 +72,7 @@ public interface Constants {
 
   public static final String MSGPACK_SERIAL = "msgpack";
 
-  // 消息的类型
-  public static final String MSG_TYPE = "__mtype__";
+
 
   // 正常消息
   public static final byte MSG_NORMAL_TYPE = 0;

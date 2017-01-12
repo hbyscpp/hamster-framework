@@ -12,7 +12,7 @@ import com.seaky.hamster.core.rpc.protocol.ProtocolRequestBody;
 import com.seaky.hamster.core.rpc.protocol.ProtocolRequestHeader;
 import com.seaky.hamster.core.rpc.protocol.RequestConvertor;
 import com.seaky.hamster.core.rpc.serialization.Serializer;
-import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
+import com.seaky.hamster.core.rpc.serialization.SerializerManager;
 
 public class HamsterRequestConvertor implements RequestConvertor<HamsterRequest> {
 
@@ -65,8 +65,8 @@ public class HamsterRequestConvertor implements RequestConvertor<HamsterRequest>
 
       byte[][] pbytes = req.getParams();
       if (pbytes != null && pbytes.length > 0) {
-        Serializer ser =
-            ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
+        Serializer ser = SerializerManager
+            .getById(header.getAttachments().getAsByte(Constants.SERIALIZATION_ID_KEY));
         int len = pbytes.length;
         Object[] params = new Object[len];
         for (int i = 0; i < len; ++i) {
@@ -82,9 +82,6 @@ public class HamsterRequestConvertor implements RequestConvertor<HamsterRequest>
 
   @Override
   public HamsterRequest createRequest(ProtocolRequestHeader header, ProtocolRequestBody body) {
-    Short version = header.getAttachments().getAsShort(Constants.PROTOCOL_VERSION_KEY);
-    if (version == null || version != 0)
-      throw new RuntimeException("not support version " + version);
     HamsterRequest request = new HamsterRequest();
     request.setApp(header.getApp());
     request.setGroup(header.getGroup());
@@ -92,8 +89,8 @@ public class HamsterRequestConvertor implements RequestConvertor<HamsterRequest>
     if (body != null) {
       Object[] params = body.getParams();
       if (params != null && params.length > 0) {
-        Serializer ser =
-            ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
+        Serializer ser = SerializerManager
+            .getById(header.getAttachments().getAsByte(Constants.SERIALIZATION_ID_KEY));
         int len = params.length;
         byte[][] pbytes = new byte[len][];
         for (int i = 0; i < len; ++i) {

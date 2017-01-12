@@ -19,7 +19,15 @@ public class HamsterResponseDecoder extends ByteBufToObjectDecoder<HamsterRespon
 
   @Override
   protected HamsterResponse decode(ByteBuf bytebuf) {
-    short version = bytebuf.readShort();
+
+
+    byte msgtype = bytebuf.readByte();
+    if (msgtype != Constants.MSG_NORMAL_TYPE) {
+      HamsterResponse req = new HamsterResponse();
+      req.addAttachment(Constants.MSG_TYPE, msgtype);
+      return req;
+    }
+    byte version = bytebuf.readByte();
     if (version == 0) {
       int allBytelength = bytebuf.readableBytes();
       byte[] allBytes = new byte[allBytelength];

@@ -287,7 +287,6 @@ public abstract class AbstractClient<Req, Rsp> implements Client<Req, Rsp> {
     rd.setConfig(copyOfConfig);
     rd.setPid(Utils.getCurrentVmPid());
     rd.setProtocol(getProtocolExtensionFactory().protocolName());
-    rd.setMaxProtocolVersion(getProtocolExtensionFactory().protocolMaxVersion());
     long time = System.currentTimeMillis();
     rd.setRegistTime(time);
     rd.setHost(this.config.getHost());

@@ -27,16 +27,17 @@ public class TestClient {
     EtcdRegisterationService lrs = new EtcdRegisterationService("hamster", "http://localhost:2379");
     // 连接客户端
     Client<?, ?> cc = ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
-        .findExtension("http").createClient();
+        .findExtension("hamster").createClient();
     ClientConfig conf = new ClientConfig();
     conf.setReadTimeout(5);
     cc.connect(lrs, conf);
     // 引用客户端
 
     EndpointConfig sc = new EndpointConfig();
-    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, "testapp", true));
-    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, "default", true));
-    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0", true));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_SERIALIZATION, "msgpack"));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, "testapp"));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, "default"));
+    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0"));
     // sc.addConfigItem(
     // new ConfigItem(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR, "mytestxception", true));
     // sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_ASYNPOOL_THREAD_EXE, "true", true));
@@ -45,7 +46,7 @@ public class TestClient {
 
     // testCB(hello);
     // testComp(hello);
-    testOk(hello, 1);
+    testOk(hello, 100);
 
     /**
      * Thread.sleep(10000); ClientResourceManager.stop(); cc.close(); zkcc.close(); lrs.close();

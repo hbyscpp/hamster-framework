@@ -17,4 +17,7 @@ public interface Serializer {
   <T> void serializer(T obj, OutputStream output);
 
   boolean isText();
+
+  byte id();
+
 }

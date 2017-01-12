@@ -121,60 +121,76 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
   private static EndpointConfig createEndPonintConfig(ServiceConfig config) {
     EndpointConfig ec = new EndpointConfig();
 
-    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_APP, config.getApp(), true));
-    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_GROUP, config.getGroup(), true));
-    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_VERSION, config.getVersion(), true));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_APP, config.getApp()));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_GROUP, config.getGroup()));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_VERSION, config.getVersion()));
     addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_MAX_CONCURRENT,
-        String.valueOf(config.getMaxConcurrent()), false));
+        String.valueOf(config.getMaxConcurrent())));
     addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_EXCEPTION_CONVERTOR,
-        config.getExceptionConvertor(), false));
+        config.getExceptionConvertor()));
     addConfigItem(ec,
-        new ConfigItem(ConfigConstans.PROVIDER_INTERCEPTORS, config.getInterceptors(), true));
+        new ConfigItem(ConfigConstans.PROVIDER_INTERCEPTORS, config.getInterceptors()));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE,
+        String.valueOf(config.getTheadpoolSize())));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE,
+        String.valueOf(config.getTheadpoolMaxQueueSize())));
     if (config.isHidden() == null) {
       if (System.getProperty("hamster.provider.hidden") != null) {
         addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_HIDDERN,
-            System.getProperty("hamster.provider.hidden"), false));
+            System.getProperty("hamster.provider.hidden")));
       } else {
-        addConfigItem(ec,
-            new ConfigItem(ConfigConstans.PROVIDER_HIDDERN, String.valueOf(false), false));
+        addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_HIDDERN, String.valueOf(false)));
       }
     } else {
-      addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_HIDDERN,
-          String.valueOf(config.isHidden()), false));
+      addConfigItem(ec,
+          new ConfigItem(ConfigConstans.PROVIDER_HIDDERN, String.valueOf(config.isHidden())));
     }
     addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_FORCE_ACCESS,
-        String.valueOf(config.isForceAccess()), false));
+        String.valueOf(config.isForceAccess())));
     return ec;
   }
 
   private static EndpointConfig createEndPonintConfig(ReferenceConfig config) {
     EndpointConfig ec = new EndpointConfig();
-    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_APP, config.getApp(), true));
-    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_GROUP, config.getGroup(), true));
-    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_VERSION, config.getVersion(), true));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_APP, config.getApp()));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_GROUP, config.getGroup()));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_VERSION, config.getVersion()));
     addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_MAX_CONCURRENT,
-        String.valueOf(config.getMaxConcurrent()), false));
+        String.valueOf(config.getMaxConcurrent())));
     addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_READ_TIMEOUT,
-        String.valueOf(config.getReadtimeout()), false));
+        String.valueOf(config.getReadtimeout())));
     addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR,
-        config.getExceptionConvertor(), false));
+        config.getExceptionConvertor()));
     // 断路器
     addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_CLOSE_SUCCESS_NUMBER,
-        String.valueOf(config.getCircuitbreakerCloseSuccessNumber()), false));
+        String.valueOf(config.getCircuitbreakerCloseSuccessNumber())));
     addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_CLOSE_TOTAL_NUMBER,
-        String.valueOf(config.getCircuitbreakerCloseTotalNumber()), false));
+        String.valueOf(config.getCircuitbreakerCloseTotalNumber())));
     addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_OPEN_FAIL_NUMBER,
-        String.valueOf(config.getCircuitbreakerOpenFailNumber()), false));
+        String.valueOf(config.getCircuitbreakerOpenFailNumber())));
     addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_OPEN_TOTAL_NUMBER,
-        String.valueOf(config.getCircuitbreakerOpenTotalNumber()), false));
+        String.valueOf(config.getCircuitbreakerOpenTotalNumber())));
     addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CIRCUITBREAKER_HALFOPEN_DELAY,
-        String.valueOf(config.getCircuitbreakerHalfopenDelay()), false));
+        String.valueOf(config.getCircuitbreakerHalfopenDelay())));
+    addConfigItem(ec,
+        new ConfigItem(ConfigConstans.REFERENCE_SERIALIZATION, config.getSerializerName()));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_ASYNPOOL_THREAD_EXE,
+        String.valueOf(config.isUseThreadPoolExe())));
+    addConfigItem(ec,
+        new ConfigItem(ConfigConstans.REFERENCE_LOADBALANCER, config.getLoadbalancer()));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_CLUSTER, config.getCluster()));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_ROUTER, config.getRouter()));
+
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_THREADPOOL_MAXSIZE,
+        String.valueOf(config.getTheadpoolSize())));
+    addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_THREADPOOL_MAXQUEUE,
+        String.valueOf(config.getTheadpoolMaxQueueSize())));
     if (StringUtils.isNotBlank(config.getProviderAddresses()))
       addConfigItem(ec, new ConfigItem(ConfigConstans.REFERENCE_SERVICE_PROVIDER_ADDRESSES,
-          config.getProviderAddresses(), false));
+          config.getProviderAddresses()));
     if (config.getInterceptors() != null) {
       addConfigItem(ec,
-          new ConfigItem(ConfigConstans.PROVIDER_INTERCEPTORS, config.getInterceptors(), true));
+          new ConfigItem(ConfigConstans.PROVIDER_INTERCEPTORS, config.getInterceptors()));
     }
     return ec;
   }

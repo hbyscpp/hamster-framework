@@ -1,5 +1,7 @@
 package com.seaky.hamster.spring;
 
+import com.seaky.hamster.core.rpc.config.ConfigConstans;
+
 public class ServiceConfig {
 
   private String app;
@@ -17,8 +19,10 @@ public class ServiceConfig {
   // 是否使用dispatcher线程执行服务
   private boolean useDispatcherThreadExe = false;
 
-  // 线程池的名字
-  private String threadPoolName = null;
+  // 线程池
+  private Integer theadpoolMaxQueueSize = ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT;
+
+  private Integer theadpoolSize = ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE_DEFAULT;
 
   // 是否隐藏，隐藏的服务只能通过直连来访问，用于测试
   private Boolean isHidden = null;
@@ -81,19 +85,6 @@ public class ServiceConfig {
     this.useDispatcherThreadExe = useDispatcherThreadExe;
   }
 
-  /**
-   * @return the threadPoolName
-   */
-  public String getThreadPoolName() {
-    return threadPoolName;
-  }
-
-  /**
-   * @param threadPoolName the threadPoolName to set
-   */
-  public void setThreadPoolName(String threadPoolName) {
-    this.threadPoolName = threadPoolName;
-  }
 
   public Boolean isHidden() {
     return isHidden;
@@ -117,6 +108,22 @@ public class ServiceConfig {
 
   public void setInterceptors(String interceptors) {
     this.interceptors = interceptors;
+  }
+
+  public Integer getTheadpoolMaxQueueSize() {
+    return theadpoolMaxQueueSize;
+  }
+
+  public void setTheadpoolMaxQueueSize(Integer theadpoolMaxQueueSize) {
+    this.theadpoolMaxQueueSize = theadpoolMaxQueueSize;
+  }
+
+  public Integer getTheadpoolSize() {
+    return theadpoolSize;
+  }
+
+  public void setTheadpoolSize(Integer theadpoolSize) {
+    this.theadpoolSize = theadpoolSize;
   }
 
 

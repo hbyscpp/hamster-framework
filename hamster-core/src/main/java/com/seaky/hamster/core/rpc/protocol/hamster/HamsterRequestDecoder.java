@@ -18,7 +18,14 @@ public class HamsterRequestDecoder extends ByteBufToObjectDecoder<HamsterRequest
   @Override
   protected HamsterRequest decode(ByteBuf bytebuf) {
 
-    short version = bytebuf.readShort();
+    byte msgtype = bytebuf.readByte();
+    if (msgtype != Constants.MSG_NORMAL_TYPE) {
+
+      HamsterRequest req = new HamsterRequest();
+      req.addAttachment(Constants.MSG_TYPE, msgtype);
+      return req;
+    }
+    byte version = bytebuf.readByte();
     if (version == 0) {
       int allBytelength = bytebuf.readableBytes();
       byte[] allBytes = new byte[allBytelength];
@@ -30,5 +37,7 @@ public class HamsterRequestDecoder extends ByteBufToObjectDecoder<HamsterRequest
     }
     throw new RuntimeException("not support version " + version);
   }
+
+
 
 }

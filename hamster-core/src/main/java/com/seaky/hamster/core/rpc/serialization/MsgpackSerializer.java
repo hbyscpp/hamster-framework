@@ -61,4 +61,9 @@ public class MsgpackSerializer implements Serializer {
     return false;
   }
 
+  @Override
+  public byte id() {
+    return 2;
+  }
+
 }

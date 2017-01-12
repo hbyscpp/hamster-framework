@@ -134,4 +134,9 @@ public class KryoSerializer implements Serializer {
     return false;
   }
 
+  @Override
+  public byte id() {
+    return 1;
+  }
+
 }

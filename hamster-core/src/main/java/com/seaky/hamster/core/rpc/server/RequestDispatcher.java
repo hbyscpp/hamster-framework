@@ -105,9 +105,11 @@ public class RequestDispatcher<Req, Rsp> {
     } else {
       int maxThread = sc.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE,
           ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE_DEFAULT);
+      int maxQueue = sc.getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE,
+          ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT);
       String threadPoolName = threadPoolName(context, server);
-      EventExecutorGroup pool =
-          ServerResourceManager.getServiceThreadpoolManager().create(threadPoolName, maxThread);
+      EventExecutorGroup pool = ServerResourceManager.getServiceThreadpoolManager()
+          .create(threadPoolName, maxThread, maxQueue);
       pool.execute(sr);
     }
   }

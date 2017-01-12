@@ -8,7 +8,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.seaky.hamster.core.rpc.client.AbstractClient;
 import com.seaky.hamster.core.rpc.client.ClientTransport;
 import com.seaky.hamster.core.rpc.client.loadbalancer.ServiceLoadBalancer;
-import com.seaky.hamster.core.rpc.common.Constants;
 import com.seaky.hamster.core.rpc.common.DefaultServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContext;
 import com.seaky.hamster.core.rpc.common.ServiceContextUtils;
@@ -60,10 +59,6 @@ public abstract class AbstractClusterService<Req, Rsp> implements ClusterService
         ServiceContextUtils.getInterceptorExceptionTrace(context));
     Attachments att = new Attachments(header.getAttachments());
     // 设置协议版本，取最低者
-    att.putShort(Constants.PROTOCOL_VERSION_KEY,
-        sd.getMaxProtocolVersion() > client.getProtocolExtensionFactory().protocolMaxVersion()
-            ? client.getProtocolExtensionFactory().protocolMaxVersion()
-            : sd.getMaxProtocolVersion());
     newHeader.setAttachments(att);
     ServiceContextUtils.setRequestHeader(sc, newHeader);
     ServiceContextUtils.setRequestBody(sc, newbody);

@@ -50,10 +50,6 @@ public class HttpProtocolExtensionFactory
     return "http";
   }
 
-  @Override
-  public short protocolMaxVersion() {
-    return 0;
-  }
 
   @Override
   public FullHttpRequest createHeartbeatRequest() {

@@ -12,6 +12,7 @@ import com.seaky.hamster.core.rpc.protocol.ProtocolResponseBody;
 import com.seaky.hamster.core.rpc.protocol.ProtocolResponseHeader;
 import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
 import com.seaky.hamster.core.rpc.serialization.Serializer;
+import com.seaky.hamster.core.rpc.serialization.SerializerManager;
 import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 
 import io.netty.buffer.ByteBuf;
@@ -58,8 +59,8 @@ public class HttpResponseConvertor implements ResponseConvertor<FullHttpResponse
 
 
     if (HttpUtil.getContentLength(rsp, 0) > 0) {
-      Serializer ser =
-          ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.MSGPACK_SERIAL);
+      Serializer ser = SerializerManager
+          .getById(header.getAttachments().getAsByte(Constants.SERIALIZATION_ID_KEY));
       Object result = null;
       byte[] body = new byte[rsp.content().readableBytes()];
       rsp.content().readBytes(body);
@@ -93,8 +94,8 @@ public class HttpResponseConvertor implements ResponseConvertor<FullHttpResponse
       headers.add(HttpConstans.ATTACHMENTS_HEADER_KEY, new String(attch, Constants.UTF_8));
     }
     headers.add(HttpConstans.EXCEPTION_HEADER_KEY, header.isException());
-    Serializer ser =
-        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.MSGPACK_SERIAL);
+    Serializer ser = SerializerManager
+        .getById(header.getAttachments().getAsByte(Constants.SERIALIZATION_ID_KEY));
     ByteBuf result = Unpooled.EMPTY_BUFFER;
     if (body != null && body.getResult() != null) {
       byte[] resultBytes = ser.serialize(body.getResult());

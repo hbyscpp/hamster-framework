@@ -8,14 +8,11 @@ public class HamsterResponse {
 
   private boolean isException = false;
 
-
-
   private byte[] result;
 
   // 出现异常时设置此类
 
   private Map<String, Object> attachments = new HashMap<>();
-
 
   /**
    * @return the attachments

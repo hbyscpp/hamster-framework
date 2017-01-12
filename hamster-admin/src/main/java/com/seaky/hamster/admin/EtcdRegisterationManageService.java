@@ -546,6 +546,9 @@ public class EtcdRegisterationManageService {
         ConfigConstans.PROVIDER_MAX_CONCURRENT_DEFAULT));
     view.setThreadpoolNum(desc.getConfig().getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE,
         ConfigConstans.PROVIDER_THREADPOOL_MAXSIZE_DEFAULT));
+    view.setMaxThreadpoolQueue(
+        desc.getConfig().getValueAsInt(ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE,
+            ConfigConstans.PROVIDER_THREADPOOL_MAXQUEUE_DEFAULT));
     view.setUseThreadpool(
         desc.getConfig().getValueAsBoolean(ConfigConstans.PROVIDER_DISPATCHER_THREAD_EXE, false)
             ? false : true);

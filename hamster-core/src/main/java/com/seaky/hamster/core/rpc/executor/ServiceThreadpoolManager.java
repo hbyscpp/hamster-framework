@@ -4,6 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.RejectedExecutionHandlers;
 
 
 public class ServiceThreadpoolManager {
@@ -18,12 +19,13 @@ public class ServiceThreadpoolManager {
     this.prefix = prefix;
   }
 
-  public EventExecutorGroup create(String name, int maxThread) {
+  public EventExecutorGroup create(String name, int maxThread, int maxQueue) {
     name = prefix + name;
     DefaultEventExecutorGroup threadpool = allThreadpools.get(name);
     if (threadpool == null) {
       threadpool =
-          new DefaultEventExecutorGroup(maxThread, new NamedThreadFactory("servicepool-" + name));
+          new DefaultEventExecutorGroup(maxThread, new NamedThreadFactory("servicepool-" + name),
+              maxQueue < 0 ? Integer.MAX_VALUE : maxQueue, RejectedExecutionHandlers.reject());
       DefaultEventExecutorGroup oldThreadpool = allThreadpools.putIfAbsent(name, threadpool);
       if (oldThreadpool != null) {
         threadpool.shutdownGracefully();

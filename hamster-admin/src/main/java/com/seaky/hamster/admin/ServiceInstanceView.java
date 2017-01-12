@@ -49,6 +49,9 @@ public class ServiceInstanceView {
 
   private String pid;
 
+
+  private int maxThreadpoolQueue;
+
   /**
    * @return the app
    */
@@ -216,6 +219,8 @@ public class ServiceInstanceView {
     this.maxConcurrnet = maxConcurrnet;
   }
 
+
+
   public boolean isHidden() {
     return isHidden;
   }
@@ -246,6 +251,14 @@ public class ServiceInstanceView {
 
   public void setPid(String pid) {
     this.pid = pid;
+  }
+
+  public int getMaxThreadpoolQueue() {
+    return maxThreadpoolQueue;
+  }
+
+  public void setMaxThreadpoolQueue(int maxThreadpoolQueue) {
+    this.maxThreadpoolQueue = maxThreadpoolQueue;
   }
 
 

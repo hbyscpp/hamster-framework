@@ -33,6 +33,7 @@ import com.seaky.hamster.core.rpc.protocol.ProtocolRequestHeader;
 import com.seaky.hamster.core.rpc.protocol.ProtocolResponseBody;
 import com.seaky.hamster.core.rpc.protocol.ProtocolResponseHeader;
 import com.seaky.hamster.core.rpc.registeration.ServiceProviderDescriptor;
+import com.seaky.hamster.core.rpc.serialization.Serializer;
 import com.seaky.hamster.core.rpc.trace.ClientCallExceptionTrace;
 import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
 import com.seaky.hamster.core.rpc.utils.Utils;
@@ -70,9 +71,16 @@ public class AsynServiceExecutor<Req, Rsp> {
     ProtocolResponseHeader rspheader = new ProtocolResponseHeader();
     ServiceContextUtils.setResponseHeader(sc, rspheader);
     ServiceContextUtils.setResponseBody(sc, new ProtocolResponseBody());
+    String serName = config.get(ConfigConstans.REFERENCE_SERIALIZATION,
+        client.getProtocolExtensionFactory().defaultSerialization());
+    Serializer ser = ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(serName);
+    if (ser == null)
+      throw new RuntimeException("not found serializer " + serName);
+    header.getAttachments().putByte(Constants.SERIALIZATION_ID_KEY, ser.id());
 
     final long seqNum = client.getAndIncrementSeqNum();
     header.getAttachments().putLong(Constants.SEQ_NUM_KEY, seqNum);
+    header.getAttachments().putByte(Constants.MSG_TYPE, Constants.MSG_NORMAL_TYPE);
     ServiceContextUtils.setInterceptorExceptionTrace(sc, new ClientCallExceptionTrace(seqNum));
 
     if (!isPreConnect) {
@@ -102,21 +110,31 @@ public class AsynServiceExecutor<Req, Rsp> {
       executor.execute(task);
     } else {
       // 线程池执行
-      String serviceThreadpoolName = config.get(ConfigConstans.REFERENCE_THREADPOOL_NAME,
-          ConfigConstans.REFERENCE_THREADPOOL_NAME_DEFAULT);
+      String serviceThreadpoolName = threadPoolName(sc);
       EventExecutorGroup pool = null;
-
       int maxThread = config.getValueAsInt(ConfigConstans.REFERENCE_THREADPOOL_MAXSIZE,
           ConfigConstans.REFERENCE_THREADPOOL_MAXSIZE_DEFAULT);
-
+      int maxQueue = config.getValueAsInt(ConfigConstans.REFERENCE_THREADPOOL_MAXQUEUE,
+          ConfigConstans.REFERENCE_THREADPOOL_MAXQUEUE_DEFAULT);
       pool = ClientResourceManager.getServiceThreadpoolManager().create(serviceThreadpoolName,
-          maxThread);
+          maxThread, maxQueue);
       EventExecutor executor = pool.next();
       CallRemoteServiceTask<Req, Rsp> task =
           new CallRemoteServiceTask<Req, Rsp>(client, sc, result, executor, isPreConnect);
       executor.execute(task);
     }
 
+  }
+
+  private String threadPoolName(ServiceContext context) {
+
+    ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
+    String serviceName = header.getServiceName();
+    String app = header.getReferenceApp();
+    String serviceVersion = header.getReferenceVersion();
+    String group = header.getReferenceGroup();
+    String key = Utils.generateKey(serviceName, app, serviceVersion, group);
+    return key;
   }
 
   // 代表每一个请求的任务

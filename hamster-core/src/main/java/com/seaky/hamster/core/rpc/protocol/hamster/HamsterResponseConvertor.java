@@ -11,7 +11,7 @@ import com.seaky.hamster.core.rpc.protocol.ProtocolResponseBody;
 import com.seaky.hamster.core.rpc.protocol.ProtocolResponseHeader;
 import com.seaky.hamster.core.rpc.protocol.ResponseConvertor;
 import com.seaky.hamster.core.rpc.serialization.Serializer;
-import com.seaky.hamster.core.rpc.utils.ExtensionLoaderConstants;
+import com.seaky.hamster.core.rpc.serialization.SerializerManager;
 
 public class HamsterResponseConvertor implements ResponseConvertor<HamsterResponse> {
 
@@ -58,8 +58,8 @@ public class HamsterResponseConvertor implements ResponseConvertor<HamsterRespon
       Class<?> type) {
     ProtocolResponseBody info = new ProtocolResponseBody();
 
-    Serializer ser =
-        ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
+    Serializer ser = SerializerManager
+        .getById(header.getAttachments().getAsByte(Constants.SERIALIZATION_ID_KEY));
     Object result = null;
     try {
       if (rsp.isException()) {
@@ -80,27 +80,20 @@ public class HamsterResponseConvertor implements ResponseConvertor<HamsterRespon
 
   @Override
   public HamsterResponse createResponse(ProtocolResponseHeader header, ProtocolResponseBody body) {
-    Short version = header.getAttachments().getAsShort(Constants.PROTOCOL_VERSION_KEY);
-    if (version == null || version != 0)
-      throw new RuntimeException("not support version " + version);
     HamsterResponse rsp = new HamsterResponse();
-    if (version == 0) {
-      if (header != null) {
-        rsp.setAttachments(header.getAttachments().getAllKeyValue());
-      }
-      rsp.setException(header.isException());
-      if (body != null) {
-        if (body.getResult() != null) {
-          Serializer ser =
-              ExtensionLoaderConstants.SERIALIZER_EXTENSION.findExtension(Constants.KRYO_SERIAL);
-          rsp.setResult(ser.serialize(body.getResult()));
-        }
-      }
-      return rsp;
-
+    if (header != null) {
+      rsp.setAttachments(header.getAttachments().getAllKeyValue());
     }
-    throw new RuntimeException("not support version "
-        + header.getAttachments().getAsShort(Constants.PROTOCOL_VERSION_KEY));
+    rsp.setException(header.isException());
+    if (body != null) {
+      if (body.getResult() != null) {
+        Serializer ser = SerializerManager
+            .getById(header.getAttachments().getAsByte(Constants.SERIALIZATION_ID_KEY));
+        rsp.setResult(ser.serialize(body.getResult()));
+      }
+    }
+    return rsp;
+
   }
 
 

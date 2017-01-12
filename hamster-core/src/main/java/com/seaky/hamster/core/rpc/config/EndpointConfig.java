@@ -106,14 +106,7 @@ public class EndpointConfig {
     StringBuilder rwstr = new StringBuilder();
 
     for (ConfigItem ci : configs.values()) {
-      if (ci.isReadOnly()) {
-        rstr.append(ci.getKey()).append(Constants.EQUAL).append(ci.getValue())
-            .append(Constants.AND);
-      } else {
-        rwstr.append(ci.getKey()).append(Constants.EQUAL).append(ci.getValue())
-            .append(Constants.AND);
-
-      }
+      rstr.append(ci.getKey()).append(Constants.EQUAL).append(ci.getValue()).append(Constants.AND);
     }
     return rstr.append(Constants.TILDE_LINE).append(rwstr).toString();
   }
@@ -139,7 +132,7 @@ public class EndpointConfig {
 
       for (String basicAttr : basicAttrs) {
         String[] kv = basicAttr.split(Constants.EQUAL, -1);
-        ec.addConfigItem(new ConfigItem(kv[0], kv[1], true));
+        ec.addConfigItem(new ConfigItem(kv[0], kv[1]));
       }
     }
     if (StringUtils.isNotBlank(rwstr)) {
@@ -147,7 +140,7 @@ public class EndpointConfig {
 
       for (String basicAttr : basicAttrs) {
         String[] kv = basicAttr.split(Constants.EQUAL, -1);
-        ec.addConfigItem(new ConfigItem(kv[0], kv[1], false));
+        ec.addConfigItem(new ConfigItem(kv[0], kv[1]));
       }
     }
     return ec;

@@ -32,7 +32,7 @@ public class ServiceProviderDescriptor {
    * @param name the name to set
    */
   public void setName(String name) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_NAME, name, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_NAME, name));
   }
 
   /**
@@ -46,7 +46,7 @@ public class ServiceProviderDescriptor {
    * @param protocol the protocol to set
    */
   public void setProtocol(String protocol) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PROTOCOL, protocol, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PROTOCOL, protocol));
   }
 
   /**
@@ -57,7 +57,7 @@ public class ServiceProviderDescriptor {
   }
 
   public void setApp(String app) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, app, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_APP, app));
   }
 
   public String getPid() {
@@ -65,7 +65,7 @@ public class ServiceProviderDescriptor {
   }
 
   public void setPid(String pid) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PID, pid, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PID, pid));
   }
 
   public String toString() {
@@ -83,15 +83,14 @@ public class ServiceProviderDescriptor {
    * @param host the host to set
    */
   public void setHost(String host) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_HOST, host, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_HOST, host));
   }
 
   /**
    * @param port the port to set
    */
   public void setPort(int port) {
-    this.config
-        .addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PORT, String.valueOf(port), true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PORT, String.valueOf(port)));
   }
 
   /**
@@ -102,7 +101,7 @@ public class ServiceProviderDescriptor {
   }
 
   public void setVersion(String version) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, version, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_VERSION, version));
   }
 
   public String getGroup() {
@@ -110,7 +109,7 @@ public class ServiceProviderDescriptor {
   }
 
   public void setGroup(String group) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, group, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_GROUP, group));
   }
 
 
@@ -119,8 +118,8 @@ public class ServiceProviderDescriptor {
   }
 
   public void setParamTypes(String[] params) {
-    this.config.addConfigItem(
-        new ConfigItem(ConfigConstans.PROVIDER_PARAMS, paramsToString(params), true));
+    this.config
+        .addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_PARAMS, paramsToString(params)));
   }
 
   public String[] getParamTypes() {
@@ -142,7 +141,7 @@ public class ServiceProviderDescriptor {
   }
 
   public void setReturnType(String returnType) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_RETURN, returnType, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_RETURN, returnType));
   }
 
   public String getReturnType() {
@@ -176,25 +175,15 @@ public class ServiceProviderDescriptor {
 
   public void setRegistTime(long registTime) {
     this.config.addConfigItem(
-        new ConfigItem(ConfigConstans.PROVIDER_REG_TIME, String.valueOf(registTime), true));
+        new ConfigItem(ConfigConstans.PROVIDER_REG_TIME, String.valueOf(registTime)));
   }
 
   public boolean isForceAccess() {
     return this.config.getValueAsBoolean(ConfigConstans.PROVIDER_FORCE_ACCESS, false);
   }
 
-  public void setMaxProtocolVersion(short version) {
-    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_MAX_PROTOCOL_VERSION,
-        String.valueOf(version), true));
-  }
-
-  public short getMaxProtocolVersion() {
-    return this.config.getValueAsShort(ConfigConstans.PROVIDER_MAX_PROTOCOL_VERSION,
-        ConfigConstans.PROVIDER_MAX_PROTOCOL_VERSION_DEFAULT);
-  }
 
   public void setFrameworkVersion(String version) {
-    this.config
-        .addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_FRAMEWORK_VERSION, version, true));
+    this.config.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_FRAMEWORK_VERSION, version));
   }
 }

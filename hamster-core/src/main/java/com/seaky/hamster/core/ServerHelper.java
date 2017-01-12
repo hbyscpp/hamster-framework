@@ -23,14 +23,16 @@ public final class ServerHelper {
   private ServerHelper() {
 
   }
-/**
- * 
-* 创建一个Server，同时启动server
-* @param name 协议的名字
-* @param registerationService 注册中心
-* @param config 服务的配置
-* @return Server<?,?>    server实例
- */
+
+  /**
+   * 
+   * 创建一个Server，同时启动server
+   * 
+   * @param name 协议的名字
+   * @param registerationService 注册中心
+   * @param config 服务的配置
+   * @return Server<?,?> server实例
+   */
   public static Server<?, ?> createServer(String name, RegisterationService registerationService,
       ServerConfig config) {
     ProtocolExtensionFactory<?, ?> factory =
@@ -48,7 +50,8 @@ public final class ServerHelper {
   }
 
   /**
-   * 向server中注册服务，接口中每个方法代表一个服务，<br/>接口不能有重载的方法
+   * 向server中注册服务，接口中每个方法代表一个服务，<br/>
+   * 接口不能有重载的方法
    * 
    * @param server 服务
    * @param cls 服务接口
@@ -75,7 +78,8 @@ public final class ServerHelper {
     for (Method m : methods) {
       // 判断重载
       if (methodNames.contains(m.getName()))
-        throw new RuntimeException("interface "+cls.getName() +" contain overload method "+m.getName());
+        throw new RuntimeException(
+            "interface " + cls.getName() + " contain overload method " + m.getName());
       methodNames.add(m.getName());
     }
 
@@ -100,9 +104,8 @@ public final class ServerHelper {
         sc = new EndpointConfig();
       }
       sc.mergeServiceConfig(commonConfig);
-      sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_NAME, serviceName, true));
-      sc.addConfigItem(
-          new ConfigItem(ConfigConstans.PROVIDER_RETURN, m.getReturnType().getName(), true));
+      sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_NAME, serviceName));
+      sc.addConfigItem(new ConfigItem(ConfigConstans.PROVIDER_RETURN, m.getReturnType().getName()));
       Class<?>[] params = m.getParameterTypes();
       if (params != null) {
         String[] paramNames = new String[params.length];
@@ -110,7 +113,7 @@ public final class ServerHelper {
           paramNames[i] = params[i].getName();
         }
         sc.addConfigItem(
-            new ConfigItem(ConfigConstans.PROVIDER_PARAMS, Utils.paramsToString(paramNames), true));
+            new ConfigItem(ConfigConstans.PROVIDER_PARAMS, Utils.paramsToString(paramNames)));
       }
 
       server.export(cs, sc);

@@ -14,10 +14,7 @@ public class ConfigItem {
   // value为null 不会加入到配置之中
   private String value;
 
-  private boolean isReadOnly;
-
-
-  public ConfigItem(String key, String value, boolean isReadOnly) {
+  public ConfigItem(String key, String value) {
 
     if (StringUtils.containsAny(key, Constants.CONFIG_KEY_NOT_ALLOW_STR)
         || StringUtils.containsAny(value, Constants.CONFIG_VALUE_NOT_ALLOW_STR)) {
@@ -26,7 +23,6 @@ public class ConfigItem {
 
     this.key = key;
     this.value = value;
-    this.isReadOnly = isReadOnly;
   }
 
   public String getKey() {
@@ -36,12 +32,5 @@ public class ConfigItem {
   public String getValue() {
     return value;
   }
-
-
-  public boolean isReadOnly() {
-    return isReadOnly;
-  }
-
-
 
 }

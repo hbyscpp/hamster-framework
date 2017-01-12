@@ -30,9 +30,6 @@ public interface ProtocolExtensionFactory<Req, Rsp> {
 
   String protocolName();
 
-  // 支持的最大协议版本
-  short protocolMaxVersion();
-
   Req createHeartbeatRequest();
 
   Rsp createHeartbeatResponse();

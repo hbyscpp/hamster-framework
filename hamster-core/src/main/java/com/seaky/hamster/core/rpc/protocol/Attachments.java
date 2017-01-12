@@ -112,9 +112,10 @@ public class Attachments {
       this.putString(key, (String) value);
     } else if (value instanceof Boolean) {
       this.putBoolean(key, (Boolean) value);
+    } else {
+      throw new RuntimeException(
+          "hamster attachment not support value class type " + value.getClass());
     }
-    throw new RuntimeException(
-        "hamster attachment not support value class type " + value.getClass());
   }
 
   public void putByte(String key, byte value) {

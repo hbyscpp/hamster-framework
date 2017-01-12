@@ -61,4 +61,9 @@ public class JsonSerializer implements Serializer {
     return true;
   }
 
+  @Override
+  public byte id() {
+    return 0;
+  }
+
 }

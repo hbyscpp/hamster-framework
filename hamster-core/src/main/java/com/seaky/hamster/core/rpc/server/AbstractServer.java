@@ -125,7 +125,6 @@ public abstract class AbstractServer<Req, Rsp> implements Server<Req, Rsp> {
     long curtime = System.currentTimeMillis();
     sd.setRegistTime(curtime);
     sd.setPid(Utils.getCurrentVmPid());
-    sd.setMaxProtocolVersion(protocolExtensionFactory.protocolMaxVersion());
     sd.setFrameworkVersion(VersionConstans.VERSION);
     serviceRegistTimes.put(serviceKey, curtime);
     try {
