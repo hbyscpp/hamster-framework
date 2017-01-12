@@ -12,8 +12,6 @@ import Layout from '../layout/Layout.jsx'
 import Home from '../../page/home'
 import pageRoutes from '../../page/routeConfig.js'
 
-import ytfEvent from '../ytfEvent'
-
 let routes = [
     {
         path: '/',
@@ -52,12 +50,6 @@ class App extends React.Component{
     constructor(props){
         super(props)
         
-    }
-    
-    componentWillMount(){ 
-    }
-    componentDidMount(){
-
     }
 
     render(){
