@@ -5,13 +5,11 @@ const SubMenu = Menu.SubMenu;
 import FAIcon from 'component/faicon'
 import './index.scss'
 import {local ,session} from 'common/util/storage.js'
-import ytfEvent from '../ytfEvent'
 
 class Sidebar extends React.Component{
     constructor(props){
         super(props)
         this.state = {
-            mode: 'vertical',
             menuData: []
         }
 
@@ -25,11 +23,11 @@ class Sidebar extends React.Component{
             icon: 'home'
             },
             {
-                name: '应用依赖关系图',
-                path: '/app-dependency-graph',
-                icon: 'puzzle-piece'
+            name: '应用依赖关系图',
+            path: '/app-dependency-graph',
+            icon: 'puzzle-piece'
             }
-            ]
+        ]
          this.setState({
              menuData: menuData
          })
@@ -46,10 +44,11 @@ class Sidebar extends React.Component{
 /**
  * menuData
  * path name icon
- * @path 重要 既做路劲，又作为唯一key
+ * @path 重要 既做路径，又作为唯一key
  * [{
  *      name: '404',
  *      icon: 'circle',
+ *      path: '404-key'
  *      children: [
  *          {
  *              name: '405',
@@ -59,6 +58,7 @@ class Sidebar extends React.Component{
  *          {
  *              name: '401',
  *              icon: 'circle',
+ *              path: '401-key'
  *              children: [{
  *                  name: '409',
  *                  path: '/409',
@@ -104,8 +104,9 @@ class Sidebar extends React.Component{
     
     }
     getMenuPath(menuData, pathName) {
-        
         let menuPath = []
+        let currentPath = pathName.split('/')
+
         function getPath(data, pathName, parentPath) {
             if (!data) return
 
@@ -121,23 +122,31 @@ class Sidebar extends React.Component{
             }
         }
 
-        getPath(menuData, pathName, [])
-        return menuPath
+        while(menuPath.length === 0 && currentPath.length > 1){
+            getPath(menuData, currentPath.join('/'), [])
+            currentPath.pop()
+        }
+
+        // menuPath array     current array
+ 
+        return {
+            menuPath: menuPath.slice(0, menuPath.length-1).map(v=>'yt_'+v),
+            current: menuPath.slice(menuPath.length-1, menuPath.length).map(v=>'yt_'+v)
+        }
     }
 
     render(){
 
-        const mini = local.get('mini')
+        const mini = this.props.miniMode
         const mode = mini ? 'vertical' : 'inline'
 
-        let menuPath = this.getMenuPath(this.state.menuData, this.props.location.pathname).map(v=>'yt_'+v)
-        menuPath.pop()
-
+        const {menuPath, current} = this.getMenuPath(this.state.menuData, this.props.location.pathname)
+   
         return (
             <aside className="yt-admin-framework-sidebar">
                 <Menu theme="light"
                     defaultOpenKeys={menuPath}
-                    selectedKeys={['yt_'+this.props.location.pathname]}
+                    selectedKeys={current}
                     mode={mode}
                     >
                     {

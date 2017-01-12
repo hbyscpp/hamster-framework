@@ -5,7 +5,6 @@ import Sidebar from '../sidebar/Sidebar.jsx'
 import Content from '../content/Content.jsx'
 import {local ,session} from 'common/util/storage.js'
 import classNames from 'classnames';
-import ytfEvent from '../ytfEvent'
 
 class Layout extends React.Component{
     constructor(props){
@@ -13,17 +12,13 @@ class Layout extends React.Component{
         this.state = {
             mini: local.get('mini')
         }
-        this.setMini = this.setMini.bind(this)
+
     }
-    componentDidMount(){
-       ytfEvent.on('Sidebar:Toggle', this.setMini)
-    }
-    componentWillUnmount(){
-        ytfEvent.removeListener('Sidebar:Toggle', this.setMini)
-    }
-    setMini(){
+
+    handleMiniChange(mode){
+        local.set('mini', mode)
         this.setState({
-            mini: local.get('mini')
+            mini: mode
         })
     }
     render(){
@@ -33,8 +28,8 @@ class Layout extends React.Component{
         })
         return (
             <div className={cls}>
-                <Header />
-                <Sidebar location={this.props.location}/>
+                <Header miniMode={this.state.mini} onMiniChange={this.handleMiniChange.bind(this)} />
+                <Sidebar miniMode={this.state.mini} location={this.props.location}/>
                 <Content>
                     
                     {

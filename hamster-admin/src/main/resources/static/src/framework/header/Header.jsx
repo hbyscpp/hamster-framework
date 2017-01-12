@@ -3,7 +3,6 @@ import {Button, Popconfirm} from "antd";
 
 import FAIcon from 'component/faicon'
 import { hashHistory } from 'react-router'
-import ytfEvent from '../ytfEvent'
 import request from 'common/request/request.js'
 import {local ,session} from 'common/util/storage.js'
 
@@ -12,24 +11,10 @@ import './index.scss'
 class Header extends React.Component{
     constructor(props){
         super(props)
-        this.state = {
-            mini: local.get('mini')
-        }
         this.logout = this.logout.bind(this)
         this.onToggle = this.onToggle.bind(this)
-        this.setMini = this.setMini.bind(this)
     }
-    componentDidMount(){
-        ytfEvent.on('Sidebar:Toggle', this.setMini)
-    }
-    componentWillUnmount(){
-        ytfEvent.removeListener('Sidebar:Toggle', this.setMini)
-    }
-    setMini(){
-        this.setState({
-            mini: local.get('mini')
-        })
-    }
+
     logout(){
         request({
             url: '/logout',
@@ -43,15 +28,10 @@ class Header extends React.Component{
         hashHistory.push('/login')
     }
     onToggle(){
-        if(local.get('mini')){
-            local.set('mini', false)
-        }else{
-            local.set('mini', true)
-        }
-        ytfEvent.emit('Sidebar:Toggle')
+        this.props.onMiniChange(!this.props.miniMode)
     }
     render(){
-        const mini = this.state.mini
+        const mini = this.props.miniMode
 
         return (
             <header className="yt-admin-framework-header clearfix">
