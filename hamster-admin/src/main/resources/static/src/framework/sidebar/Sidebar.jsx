@@ -23,16 +23,11 @@ class Sidebar extends React.Component{
             icon: 'home'
             },
             {
-                name: '应用依赖关系图',
-                path: '/app-dependency-graph-menu',
-                icon: 'puzzle-piece',
-                children: [{
-                name: '应用依赖关系图',
-                path: '/app-dependency-graph',
-                icon: 'puzzle-piece'
-                }]
+            name: '应用依赖关系图',
+            path: '/app-dependency-graph',
+            icon: 'puzzle-piece'
             }
-            ]
+        ]
          this.setState({
              menuData: menuData
          })
