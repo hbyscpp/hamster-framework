@@ -23,6 +23,9 @@ class Login extends React.Component{
     }
     
     login(){
+        this.setState({
+            loading: true
+          })
         let loginData = this.props.form.getFieldsValue()
         request({
             url: '/checkpwd',

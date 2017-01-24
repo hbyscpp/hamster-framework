@@ -24,11 +24,15 @@ class Home extends React.Component {
 
             pagination: {
                 showSizeChanger: true,
-                simple: false
+                simple: false,
+                current: 1,
+                onChange: this.onChange.bind(this)
             },
             paginationMini: {
                 showSizeChanger: true,
-                simple: true
+                simple: true,
+                current: 1,
+                onChange: this.onChange.bind(this)
             },
             dataSource: [],
             columns: [],
@@ -157,6 +161,19 @@ class Home extends React.Component {
         this.handleSubmit = this.handleSubmit.bind(this)
         this.searchList = this.searchList.bind(this)
     }
+    onChange(page) {
+        console.log(page);
+        this.setState({
+            pagination: {
+                ...this.state.pagination,
+                current: page
+            },
+            paginationMini: {
+                ...this.state.paginationMini,
+                current: page
+            }
+        });
+    }
     handleSubmit(e) {
         e.preventDefault()
         request({
@@ -196,7 +213,15 @@ class Home extends React.Component {
             return
         }
         this.setState({
-            isLoading: true
+            isLoading: true,
+            pagination: {
+                ...this.state.pagination,
+                current: 1
+            },
+            paginationMini: {
+                ...this.state.paginationMini,
+                current: 1
+            }
         });
         request({
             url: url,
@@ -275,11 +300,13 @@ class Home extends React.Component {
                 </Form>
                 <Table
                     className={resultMiniCls}
+                    rowKey={record => record.index}
                     dataSource={this.state.dataSource}
                     columns={this.state.columns}
                     pagination={this.state.paginationMini} />
                 <Table
                     className={resultCls}
+                    rowKey={record => record.index}
                     dataSource={this.state.dataSource}
                     columns={this.state.columns}
                     pagination={this.state.pagination} />

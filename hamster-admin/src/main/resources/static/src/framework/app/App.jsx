@@ -2,7 +2,7 @@ import React from 'react'
 
 import { Router, hashHistory } from 'react-router'
 
-import 'normalize.css'
+// import 'normalize.css'
 import './base.css'
 
 import request from 'common/request/request.js'
