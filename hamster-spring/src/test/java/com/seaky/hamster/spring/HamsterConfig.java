@@ -20,7 +20,7 @@ public class HamsterConfig extends HamsterSpringSupport {
   @Override
   public void initRegisterationService() {
 
-    createRegisterationService(getBasepath(), getUrls());
+    createEtcdRegisterationService(getBasepath(), getUrls());
   }
 
   @Override

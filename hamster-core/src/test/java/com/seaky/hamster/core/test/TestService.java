@@ -1,5 +1,7 @@
 package com.seaky.hamster.core.test;
 
+import java.util.List;
+
 public interface TestService {
 
   long sub(long x, Short y);
@@ -18,4 +20,5 @@ public interface TestService {
 
   void testCircuitbreaker(int time);
 
+  List<TestDto> getAll();
 }

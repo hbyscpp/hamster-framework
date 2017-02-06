@@ -185,6 +185,8 @@ public class AsynServiceExecutor<Req, Rsp> {
       ServiceLoadBalancer loadBalancer = null;
       try {
         sds = chooseServiceInstances(isPreConnect);
+        if (isPreConnect)
+          return;
         loadBalancer = getLoadBalancer();
         clusterService = getClusterService(loadBalancer);
       } catch (Exception e) {

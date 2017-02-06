@@ -1,5 +1,6 @@
 package com.seaky.hamster.core.test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.NotImplementedException;
@@ -56,4 +57,13 @@ public class TestServiceImpl implements TestService {
       e.printStackTrace();
     }
   }
+
+  @Override
+  public List<TestDto> getAll() {
+    List<TestDto> all = new ArrayList<>();
+    all.add(new TestDto());
+    all.add(new TestDto());
+    return all;
+  }
+
 }

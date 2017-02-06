@@ -27,6 +27,8 @@ public class MsgpackSerializer implements Serializer {
   @Override
   public <T> T deSerialize(byte[] data, Class<T> cls) {
     try {
+      if (data == null)
+        return null;
       T obj = msgpackMapper.readValue(data, cls);
       return obj;
     } catch (IOException e) {

@@ -33,7 +33,6 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
 
   private ApplicationContext context;
 
-  private RegisterationService service;
 
   private ConcurrentHashMap<String, Server<?, ?>> allServers =
       new ConcurrentHashMap<String, Server<?, ?>>();
@@ -41,42 +40,58 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
   private ConcurrentHashMap<String, Client<?, ?>> allClients =
       new ConcurrentHashMap<String, Client<?, ?>>();
 
+  private ConcurrentHashMap<String, RegisterationService> allRegisterationService =
+      new ConcurrentHashMap<String, RegisterationService>();
 
-  public void createRegisterationService(String basePath, String urls) {
-    this.service = new EtcdRegisterationService(basePath, urls);
+  public void createEtcdRegisterationService(String id, String basePath, String urls) {
+    if (allRegisterationService.get(id) != null)
+      throw new RuntimeException("RegisterationService " + id + " exists");
+    EtcdRegisterationService service = new EtcdRegisterationService(basePath, urls);
+    allRegisterationService.put(id, service);
   }
 
-  public void createRegisterationService(String urls) {
-    this.service = new EtcdRegisterationService("hamster", urls);
+  public void createEtcdRegisterationService(String basePath, String urls) {
+    createEtcdRegisterationService("default", basePath, urls);
   }
 
-  public Server<?, ?> createServer(String id, String protocolName, ServerConfig config) {
+
+  public Server<?, ?> createServer(String id, String registerationServiceId, String protocolName,
+      ServerConfig config) {
 
     if (allServers.get(id) != null)
       throw new RuntimeException("server " + id + " exists");
+
+    RegisterationService rs = allRegisterationService.get(registerationServiceId);
+    if (rs == null)
+      throw new RuntimeException("RegisterationService " + id + " not exists");
+
     Server<?, ?> server = ExtensionLoaderConstants.PROTOCOLFACTORY_EXTENSION
         .findExtension(protocolName).createServer();
 
-    server.start(service, config);
+    server.start(rs, config);
     allServers.putIfAbsent(id, server);
     return server;
   }
 
   public Server<?, ?> createServer(String protocolName, ServerConfig config) {
-    return createServer("default", protocolName, config);
+    return createServer("default", "default", protocolName, config);
   }
 
   public Client<?, ?> createClient(String protocolName, ClientConfig config) {
-    return createClient("default", protocolName, config);
+    return createClient("default", "default", protocolName, config);
   }
 
-  public Client<?, ?> createClient(String id, String name, ClientConfig config) {
+  public Client<?, ?> createClient(String id, String registerationServiceId, String name,
+      ClientConfig config) {
     if (allClients.get(id) != null)
       throw new RuntimeException("client " + id + " exists");
+    RegisterationService rs = allRegisterationService.get(registerationServiceId);
+    if (rs == null)
+      throw new RuntimeException("RegisterationService " + id + " not exists");
     Client<?, ?> cc =
         ExtensionLoaderConstants.PROTOCOLFACTORY_EXTENSION.findExtension(name).createClient();
     ClientConfig conf = new ClientConfig();
-    cc.connect(service, conf);
+    cc.connect(rs, conf);
     allClients.putIfAbsent(id, cc);
     return cc;
   }
@@ -89,7 +104,7 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
     } else {
       obj = context.getBean(cls);
     }
-    EndpointConfig ec = createEndPonintConfig(config);
+    EndpointConfig ec = createEndPointConfig(config);
     Map<String, EndpointConfig> mconfigs = createExportMethodConfig(config.getMethodConfigs());
     ServerHelper.exportInterface(allServers.get(config.getServerId()), cls, obj, ec, mconfigs);
   }
@@ -99,7 +114,7 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
     Map<String, EndpointConfig> configs = new HashMap<String, EndpointConfig>();
     if (sconfigs != null) {
       for (Entry<String, ServiceConfig> entry : sconfigs.entrySet()) {
-        configs.put(entry.getKey(), createEndPonintConfig(entry.getValue()));
+        configs.put(entry.getKey(), createEndPointConfig(entry.getValue()));
       }
     }
     return configs;
@@ -118,7 +133,7 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
 
   }
 
-  private static EndpointConfig createEndPonintConfig(ServiceConfig config) {
+  private static EndpointConfig createEndPointConfig(ServiceConfig config) {
     EndpointConfig ec = new EndpointConfig();
 
     addConfigItem(ec, new ConfigItem(ConfigConstans.PROVIDER_APP, config.getApp()));
@@ -256,8 +271,9 @@ public abstract class HamsterSpringSupport implements ApplicationContextAware {
       server.close();
     }
     ServerResourceManager.stop();
-    if (service != null)
-      service.close();
+    for (RegisterationService rs : allRegisterationService.values()) {
+      rs.close();
+    }
 
   }
 

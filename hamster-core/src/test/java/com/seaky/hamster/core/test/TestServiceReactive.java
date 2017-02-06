@@ -1,5 +1,7 @@
 package com.seaky.hamster.core.test;
 
+import java.util.List;
+
 import rx.Observable;
 
 public interface TestServiceReactive {
@@ -19,4 +21,7 @@ public interface TestServiceReactive {
   Observable<Void> testException();
 
   Observable<Void> testCircuitbreaker(int time);
+
+  Observable<List<TestDto>> getAll();
+
 }

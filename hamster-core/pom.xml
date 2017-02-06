@@ -104,15 +104,28 @@
 			<artifactId>failsafe</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.esotericsoftware/kryo-shaded -->
 		<dependency>
 			<groupId>com.esotericsoftware</groupId>
-			<artifactId>kryo</artifactId>
+			<artifactId>kryo-shaded</artifactId>
 			<version>4.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>de.javakaffee</groupId>
 			<artifactId>kryo-serializers</artifactId>
 			<version>0.41</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+			<version>1.1.7</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.1.7</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<repositories>

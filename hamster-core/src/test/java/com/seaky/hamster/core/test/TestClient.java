@@ -24,29 +24,44 @@ public class TestClient {
   public static void main(String[] args) throws InterruptedException, ExecutionException {
 
     // 注册中心和配置中心
-    EtcdRegisterationService lrs = new EtcdRegisterationService("hamster", "http://localhost:2379");
+    EtcdRegisterationService lrs = new EtcdRegisterationService("hamster",
+        "http://192.168.20.171:2379,http://192.168.20.172:2379,http://192.168.20.173:2379");
+
+    EtcdRegisterationService lrs1 =
+        new EtcdRegisterationService("hamster", "http://localhost:2379");
     // 连接客户端
     Client<?, ?> cc = ExtensionLoader.getExtensionLoaders(ProtocolExtensionFactory.class)
         .findExtension("hamster").createClient();
     ClientConfig conf = new ClientConfig();
     conf.setReadTimeout(5);
-    cc.connect(lrs, conf);
+    cc.connect(lrs1, conf);
     // 引用客户端
 
     EndpointConfig sc = new EndpointConfig();
-    sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_SERIALIZATION, "msgpack"));
+    // sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_SERIALIZATION, "msgpack"));
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_APP, "testapp"));
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_GROUP, "default"));
     sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0"));
     // sc.addConfigItem(
     // new ConfigItem(ConfigConstans.REFERENCE_EXCEPTION_CONVERTOR, "mytestxception", true));
     // sc.addConfigItem(new ConfigItem(ConfigConstans.REFERENCE_ASYNPOOL_THREAD_EXE, "true", true));
+
     final TestServiceReactive hello = ClientHelper.referReactiveInterface(cc, TestService.class,
         TestServiceReactive.class, sc, null);
-
+    /*
+     * EndpointConfig sc1 = new EndpointConfig(); sc1.addConfigItem(new
+     * ConfigItem(ConfigConstans.REFERENCE_SERIALIZATION, "msgpack")); sc1.addConfigItem(new
+     * ConfigItem(ConfigConstans.REFERENCE_APP, "testapp")); sc1.addConfigItem(new
+     * ConfigItem(ConfigConstans.REFERENCE_GROUP, "default")); sc1.addConfigItem(new
+     * ConfigItem(ConfigConstans.REFERENCE_VERSION, "1.0.0")); sc1.addConfigItem( new
+     * ConfigItem(ConfigConstans.REFERENCE_SERVICE_PROVIDER_ADDRESSES, "192.168.122.1:-1")); final
+     * SysAuthService hello1 = ClientHelper.referInterface(cc, SysAuthService.class, sc1);
+     * List<com.yuntu.carnet.operate.system.api.vo.SmAuthVo> vos = hello1.getMenuList();
+     * System.out.println(vos.size());
+     */
     // testCB(hello);
-    // testComp(hello);
-    testOk(hello, 100);
+    testComp(hello);
+    // testOk(hello, 100);
 
     /**
      * Thread.sleep(10000); ClientResourceManager.stop(); cc.close(); zkcc.close(); lrs.close();
@@ -60,7 +75,7 @@ public class TestClient {
     // System.out.println(hello.add(new Integer(2), 4).toBlocking().first());
     // hello.testVoid().toBlocking().first();
     // hello.testException().toBlocking().first();
-
+    System.out.println(hello.getAll().toBlocking().first().size());
   }
 
   private static void testOk(TestServiceReactive hello, int n) throws InterruptedException {
