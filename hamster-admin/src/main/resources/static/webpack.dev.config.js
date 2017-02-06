@@ -138,6 +138,7 @@ var webpackConfig = {
             filename: './index.html', //生成的html存放路径，相对于path
             template: './src/entry/index.html.ejs', //html模板路径
             title: '管理台',
+            favicon: './src/entry/favicon.ico',
             inject: true, //js插入的位置，true/'head'/'body'/false
             hash: false, //为静态资源生成hash值
             minify: { //压缩HTML文件    
