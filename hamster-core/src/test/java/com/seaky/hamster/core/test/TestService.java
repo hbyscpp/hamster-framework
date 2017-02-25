@@ -21,4 +21,5 @@ public interface TestService {
   void testCircuitbreaker(int time);
 
   List<TestDto> getAll();
+
 }

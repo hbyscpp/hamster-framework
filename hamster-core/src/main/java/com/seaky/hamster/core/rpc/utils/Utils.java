@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -408,6 +409,11 @@ public class Utils {
       return getActualException(inner);
     } else if (throwable instanceof InvocationTargetException) {
       Throwable inner = ((InvocationTargetException) throwable).getTargetException();
+      if (inner == null)
+        return throwable;
+      return getActualException(inner);
+    } else if (throwable instanceof ExecutionException) {
+      Throwable inner = ((ExecutionException) throwable).getCause();
       if (inner == null)
         return throwable;
       return getActualException(inner);

@@ -48,6 +48,9 @@ public class TestClient {
 
     final TestServiceReactive hello = ClientHelper.referReactiveInterface(cc, TestService.class,
         TestServiceReactive.class, sc, null);
+    final TestServiceFuture hellofuture =
+        ClientHelper.referAsynInterface(cc, TestService.class, TestServiceFuture.class, sc, null);
+    final TestService helloservice = ClientHelper.referInterface(cc, TestService.class, sc, null);
     /*
      * EndpointConfig sc1 = new EndpointConfig(); sc1.addConfigItem(new
      * ConfigItem(ConfigConstans.REFERENCE_SERIALIZATION, "msgpack")); sc1.addConfigItem(new
@@ -59,14 +62,35 @@ public class TestClient {
      * List<com.yuntu.carnet.operate.system.api.vo.SmAuthVo> vos = hello1.getMenuList();
      * System.out.println(vos.size());
      */
+    testException(hello, hellofuture, helloservice);
     // testCB(hello);
-    testComp(hello);
+    // testComp(hello);
     // testOk(hello, 100);
 
     /**
      * Thread.sleep(10000); ClientResourceManager.stop(); cc.close(); zkcc.close(); lrs.close();
      **/
     Thread.currentThread().join();
+  }
+
+  private static void testException(TestServiceReactive helloreact, TestServiceFuture hellofuture,
+      TestService service) throws InterruptedException {
+
+    try {
+      helloreact.testException().toBlocking().first();
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+    try {
+      hellofuture.testException().get();
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+    try {
+      service.testException();
+    } catch (Exception e) {
+      System.out.println(e);
+    }
   }
 
   private static void testComp(TestServiceReactive hello) throws InterruptedException {

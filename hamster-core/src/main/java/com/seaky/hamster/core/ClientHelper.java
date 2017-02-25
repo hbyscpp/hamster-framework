@@ -59,7 +59,17 @@ public final class ClientHelper {
           @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             JavaService service = methodServices.get(method.getName());
-            Object r = service.process(args).toBlocking().first();
+            Object r = null;
+            try {
+              r = service.process(args).toBlocking().first();
+            } catch (Exception e) {
+              Throwable cause = e.getCause();
+              if (cause == null)
+                throw e;
+              Throwable actualThrowable = Utils.getActualException(cause);
+              throw actualThrowable;
+
+            }
             return r;
           }
         });

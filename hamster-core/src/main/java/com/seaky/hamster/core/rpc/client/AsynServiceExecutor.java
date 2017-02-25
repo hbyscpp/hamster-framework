@@ -261,7 +261,7 @@ public class AsynServiceExecutor<Req, Rsp> {
       ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(context);
       Collection<ServiceProviderDescriptor> allServiceDescriptors =
           client.getAllServices(header.getServiceName());
-      if (allServiceDescriptors == null || allServiceDescriptors.size() == 0) {
+      if ((allServiceDescriptors == null || allServiceDescriptors.size() == 0) && !isPreConnect) {
         throw new ServiceProviderNotFoundException(
             String.format("service %s,reference app %s,reference group %s,reference version %s",
                 header.getServiceName(), header.getReferenceApp(), header.getReferenceGroup(),
@@ -304,7 +304,7 @@ public class AsynServiceExecutor<Req, Rsp> {
         allAvaiableSd.add(sd);
       }
 
-      if (allAvaiableSd.size() == 0) {
+      if (allAvaiableSd.size() == 0 && !isPreConnect) {
         throw new ServiceProviderNotFoundException(
             String.format("service %s,reference app %s,reference group %s,reference version %s",
                 header.getServiceName(), header.getReferenceApp(), header.getReferenceGroup(),
@@ -353,7 +353,7 @@ public class AsynServiceExecutor<Req, Rsp> {
           }
         }
       }
-      if (allSd.size() == 0) {
+      if (allSd.size() == 0 && !isPreConnect) {
         throw new NoServiceProviderMatchException(
             String.format("service %s,reference app %s,reference group %s,reference version %s",
                 header.getServiceName(), header.getReferenceApp(), header.getReferenceGroup(),
