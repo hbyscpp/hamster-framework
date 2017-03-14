@@ -116,7 +116,7 @@ public final class ClientHelper {
           @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             JavaService service = methodServices.get(method.getName());
-            Object r = service.process(args).toBlocking().toFuture();
+            Future<Object> r = service.process(args).toBlocking().toFuture();
             return r;
           }
         });

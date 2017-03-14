@@ -20,7 +20,7 @@ public class HamsterClientChannelPipelineConfigurator implements
     pipeline.addLast(new HamsterResponseDecoder());
     pipeline
         .addLast(new IdleStateHandler(config.getHeartbeatIdleTime() + config.getReadTimeout() + 1,
-            config.getHeartbeatIdleTime(), 0));
+            config.getHeartbeatIdleTime() / 2, 0));
     pipeline.addLast(new Netty4ClientHandler<HamsterRequest, HamsterResponse>(transport,
         ExtensionLoaderConstants.PROTOCOLFACTORY_EXTENSION.findExtension("hamster")));
 

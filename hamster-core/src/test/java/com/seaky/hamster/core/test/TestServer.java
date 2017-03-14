@@ -15,7 +15,6 @@ public class TestServer {
 
   public static void main(String[] args) throws InterruptedException {
 
-
     // 注册中心
     EtcdRegisterationService rs = new EtcdRegisterationService("hamster", "http://localhost:2379");
 

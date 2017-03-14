@@ -355,6 +355,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
 
     private SettableFuture<Rsp> resultFuture;
 
+
     public SendDoneChannelFutureListener(ServiceContext sc, SettableFuture<Rsp> resultFuture) {
       this.sc = sc;
       this.resultFuture = resultFuture;
@@ -377,7 +378,7 @@ public class NettyClientTransport<Req, Rsp> implements ClientTransport<Req, Rsp>
         // 发送成功，设置异步超时
         int seconds = ServiceContextUtils.getReferenceConfig(sc).getValueAsInt(
             ConfigConstans.REFERENCE_READ_TIMEOUT, ConfigConstans.REFERENCE_READ_TIMEOUT_DEFAULT);
-
+        ProtocolRequestHeader header = ServiceContextUtils.getRequestHeader(sc);
         ClientResourceManager.getHashedWheelTimer().newTimeout(new TimerTask() {
           @Override
           public void run(Timeout timeout) throws Exception {

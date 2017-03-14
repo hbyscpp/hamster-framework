@@ -16,6 +16,9 @@ public class HamsterReferConfig {
   public Math math() {
     ClassReferenceConfig config = new ClassReferenceConfig();
     config.setApp("test");
+    ReferenceConfig cf = new ReferenceConfig();
+    cf.setReadtimeout(100 * 1000);
+    config.addMethodConfig("delay", cf);
     return support.referenceService(Math.class, config);
   }
 }

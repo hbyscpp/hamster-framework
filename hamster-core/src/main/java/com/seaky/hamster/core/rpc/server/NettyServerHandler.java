@@ -41,7 +41,9 @@ public class NettyServerHandler<Req, Rsp> extends ChannelInboundHandlerAdapter {
       Byte type = header.getAttachments().getAsByte(Constants.MSG_TYPE);
       if (type != null && Constants.MSG_HEARTBEAT_TYPE == type) {
         // 发送心跳响应
+        long time = System.currentTimeMillis();
         ctx.writeAndFlush(heartBeatRsp).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+        logger.info("send heartbeat {} to {}", time, ctx.channel().remoteAddress().toString());
       } else {
         transport.getServer().getRequestDispatcher().dispatchMessage((Req) msg, header, transport);
       }
@@ -68,7 +70,7 @@ public class NettyServerHandler<Req, Rsp> extends ChannelInboundHandlerAdapter {
       IdleState state = ((IdleStateEvent) evt).state();
       if (state == IdleState.READER_IDLE) {
         // 读超时
-        logger.warn("", "read timeout");
+        logger.warn("{}", "read timeout");
         ctx.close();
       }
     } else {

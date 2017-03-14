@@ -21,8 +21,17 @@ public class HamsterSpringTest {
 
   @Test
   public void testMath() {
-    System.out.println(math.add(1, 2));
-    System.out.println(math.sub(1, 2));
+
+    long begin = System.currentTimeMillis();
+    try {
+      math.delay(120 * 1000);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    long end = System.currentTimeMillis();
+    System.out.println("call time " + (end - begin));
+    // System.out.println(math.add(1, 2));
+    // System.out.println(math.sub(1, 2));
   }
 
 }
