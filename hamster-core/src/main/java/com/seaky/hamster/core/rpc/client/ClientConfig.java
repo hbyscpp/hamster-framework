@@ -13,7 +13,7 @@ public class ClientConfig {
 
 
   // 心跳发送时间
-  private int heartbeatIdleTime = 30;
+  private int heartbeatIdleTime = 15;
 
   // 指定ip
   private String host;
